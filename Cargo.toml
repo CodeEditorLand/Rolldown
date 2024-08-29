@@ -6,7 +6,7 @@ resolver = "2"
 edition    = "2021"
 homepage   = "https://rolldown.rs/"
 license    = "MIT"
-repository = "https://github.com/rolldown/rolldown"
+repository = "HTTPS://GitHub.Com/rolldown/rolldown"
 
 [profile.release-debug]
 debug    = true
