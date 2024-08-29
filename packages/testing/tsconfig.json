@@ -9,6 +9,7 @@
 		"src/**/*.js",
 		"index.d.ts",
 		"src",
+		"src",
 		"src"
 	]
 }
