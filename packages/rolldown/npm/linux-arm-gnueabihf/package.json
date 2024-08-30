@@ -12,7 +12,7 @@
 	],
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
 	"devDependencies": {
-		"@playform/build": "0.1.3"
+		"@playform/build": "0.1.4"
 	},
 	"files": [
 		"rolldown-binding.linux-arm-gnueabihf.node"

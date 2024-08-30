@@ -9,9 +9,9 @@
 	},
 	"devDependencies": {
 		"@iconify-json/vscode-icons": "1.1.37",
-		"@playform/build": "0.1.3",
-		"vitepress": "1.2.3",
-		"vitepress-plugin-group-icons": "1.0.0"
+		"@playform/build": "0.1.4",
+		"vitepress": "1.3.4",
+		"vitepress-plugin-group-icons": "1.0.4"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [
