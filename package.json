@@ -1,12 +1,4 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
 	"description": "Rollup in Rust",
 	"devDependencies": {
 		"@ls-lint/ls-lint": "2.2.3",
@@ -22,22 +14,7 @@
 		"oxlint": "0.9.2",
 		"rolldown": "workspace:*"
 	},
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
 	"name": "monorepo",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
 	"scripts": {
 		"build": "echo \"Use just build\"",
 		"build:release": "echo \"Use just build native release\"",
@@ -57,7 +34,5 @@
 		"lint-toml:fix": "taplo format",
 		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"type-check": "pnpm --recursive run type-check"
-	},
-	"type": "module",
-	"version": "0.0.1"
+	}
 }
