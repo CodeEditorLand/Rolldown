@@ -1,3 +1,4 @@
+pub mod advanced_chunks_options;
 pub mod es_module_flag;
 pub mod experimental_options;
 pub mod filename_template;

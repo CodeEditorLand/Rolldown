@@ -97,6 +97,7 @@
     "insta",
     "instanceof",
     "Itertools",
+    "itoa",
     "iwanabethatguy",
     "izip",
     "Jrcy",
@@ -183,6 +184,7 @@
     "webp",
     "Xiangjun",
     "Yinan",
-    "Yunfei"
+    "Yunfei",
+    "lvalue"
   ]
 }

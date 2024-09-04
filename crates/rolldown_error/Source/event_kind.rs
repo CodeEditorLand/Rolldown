@@ -10,6 +10,7 @@ pub enum EventKind {
   MissingNameOptionForIifeExport,
   IllegalIdentifierAsName,
   ParseError,
+  InvalidOption,
 
   Eval,
   CircularDependency,
@@ -19,6 +20,7 @@ pub enum EventKind {
   // --- These kinds are rolldown specific
   IllegalReassignment,
   UnloadableDependency,
+  DiagnosableResolveError,
   // !! Only add new kind if it's not covered by the kinds from rollup !!
 
   // TODO remove following kinds
@@ -48,11 +50,13 @@ impl Display for EventKind {
       EventKind::CircularDependency => write!(f, "CIRCULAR_DEPENDENCY"),
       EventKind::MissingExport => write!(f, "MISSING_EXPORT"),
       EventKind::InvalidExportOption => write!(f, "INVALID_EXPORT_OPTION"),
+      EventKind::InvalidOption => write!(f, "INVALID_OPTION"),
       // --- Rolldown specific
       EventKind::NapiError => write!(f, "NAPI_ERROR"),
       EventKind::IoError => write!(f, "IO_ERROR"),
       EventKind::CommonJsVariableInEsm => write!(f, "COMMONJS_VARIABLE_IN_ESM"),
       EventKind::ExportUndefinedVariable => write!(f, "EXPORT_UNDEFINED_VARIABLE"),
+      EventKind::DiagnosableResolveError => write!(f, "DIAGNOSABLE_RESOLVE_ERROR"),
     }
   }
 }

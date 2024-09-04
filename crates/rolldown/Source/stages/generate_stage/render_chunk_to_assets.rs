@@ -1,14 +1,18 @@
+use std::path::Path;
+
 use futures::future::try_join_all;
 use indexmap::IndexSet;
 use oxc::index::{index_vec, IndexVec};
-use rolldown_common::{Asset, AssetMeta, Output, OutputAsset, OutputChunk, SourceMapType};
+use rolldown_common::{Asset, InstantiationKind, Output, OutputAsset, OutputChunk, SourceMapType};
+use rolldown_ecmascript::EcmaCompiler;
 use rolldown_error::BuildDiagnostic;
+use rolldown_utils::rayon::{IntoParallelRefIterator, ParallelIterator};
 use sugar_path::SugarPath;
 
 use crate::{
   chunk_graph::ChunkGraph,
   ecmascript::ecma_generator::EcmaGenerator,
-  type_alias::{IndexChunkToAssets, IndexPreliminaryAssets},
+  type_alias::{IndexChunkToAssets, IndexInstantiatedChunks},
   types::generator::{GenerateContext, Generator},
   utils::{
     augment_chunk_hash::augment_chunk_hash, chunk::finalize_chunks::finalize_assets,
@@ -27,18 +31,19 @@ impl<'a> GenerateStage<'a> {
   ) -> anyhow::Result<BundleOutput> {
     let mut errors = std::mem::take(&mut self.link_output.errors);
     let mut warnings = std::mem::take(&mut self.link_output.warnings);
-    let (mut preliminary_assets, index_chunk_to_assets) =
-      self.render_preliminary_assets(chunk_graph, &mut errors, &mut warnings).await?;
+    let (mut instantiated_chunks, index_chunk_to_assets) =
+      self.instantiate_chunks(chunk_graph, &mut errors, &mut warnings).await?;
 
-    render_chunks(self.plugin_driver, &mut preliminary_assets).await?;
+    render_chunks(self.plugin_driver, &mut instantiated_chunks).await?;
 
-    augment_chunk_hash(self.plugin_driver, &mut preliminary_assets).await?;
+    augment_chunk_hash(self.plugin_driver, &mut instantiated_chunks).await?;
 
-    let mut assets = finalize_assets(chunk_graph, preliminary_assets, &index_chunk_to_assets);
+    let mut assets = finalize_assets(chunk_graph, instantiated_chunks, &index_chunk_to_assets);
 
     self.minify_assets(&mut assets)?;
 
-    let mut outputs = vec![];
+    let mut output = Vec::with_capacity(assets.len());
+    let mut output_assets = vec![];
     for Asset {
       mut map,
       meta: rendered_chunk,
@@ -48,7 +53,7 @@ impl<'a> GenerateStage<'a> {
       ..
     } in assets
     {
-      if let AssetMeta::Ecma(ecma_meta) = rendered_chunk {
+      if let InstantiationKind::Ecma(ecma_meta) = rendered_chunk {
         let rendered_chunk = ecma_meta.rendered_chunk;
         if let Some(map) = map.as_mut() {
           map.set_file(&rendered_chunk.filename);
@@ -87,13 +92,19 @@ impl<'a> GenerateStage<'a> {
           match self.options.sourcemap {
             SourceMapType::File => {
               let source = map.to_json_string();
-              outputs.push(Output::Asset(Box::new(OutputAsset {
+              output_assets.push(Output::Asset(Box::new(OutputAsset {
                 filename: map_filename.clone(),
                 source: source.into(),
                 original_file_name: None,
                 name: None,
               })));
-              code.push_str(&format!("\n//# sourceMappingURL={map_filename}"));
+              code.push_str(&format!(
+                "\n//# sourceMappingURL={}",
+                Path::new(&map_filename)
+                  .file_name()
+                  .expect("should have filename")
+                  .to_string_lossy()
+              ));
             }
             SourceMapType::Inline => {
               let data_url = map.to_data_url();
@@ -104,7 +115,7 @@ impl<'a> GenerateStage<'a> {
         }
         let sourcemap_filename =
           map.as_ref().map(|_| format!("{}.map", rendered_chunk.filename.as_str()));
-        outputs.push(Output::Chunk(Box::new(OutputChunk {
+        output.push(Output::Chunk(Box::new(OutputChunk {
           name: rendered_chunk.name,
           filename: rendered_chunk.filename,
           code,
@@ -125,38 +136,58 @@ impl<'a> GenerateStage<'a> {
 
     // Make sure order of assets are deterministic
     // TODO: use `preliminary_filename` on `Output::Asset` instead
-    outputs.sort_unstable_by(|a, b| a.filename().cmp(b.filename()));
+    output_assets.sort_unstable_by(|a, b| a.filename().cmp(b.filename()));
 
-    Ok(BundleOutput { assets: outputs, errors, warnings })
+    // The chunks order make sure the entry chunk at first, the assets at last, see https://github.com/rollup/rollup/blob/master/src/rollup/rollup.ts#L266
+    output.sort_unstable_by(|a, b| match (a, b) {
+      (Output::Chunk(a), Output::Chunk(b)) => {
+        if a.is_entry || b.is_entry {
+          std::cmp::Ordering::Greater
+        } else {
+          a.filename.cmp(&b.filename)
+        }
+      }
+      _ => unreachable!("here only sort chunks"),
+    });
+
+    output.extend(output_assets);
+
+    Ok(BundleOutput { assets: output, errors, warnings })
   }
 
-  async fn render_preliminary_assets(
+  async fn instantiate_chunks(
     &self,
     chunk_graph: &ChunkGraph,
     errors: &mut Vec<BuildDiagnostic>,
     warnings: &mut Vec<BuildDiagnostic>,
-  ) -> anyhow::Result<(IndexPreliminaryAssets, IndexChunkToAssets)> {
+  ) -> anyhow::Result<(IndexInstantiatedChunks, IndexChunkToAssets)> {
     let mut index_chunk_to_assets: IndexChunkToAssets =
-      index_vec![IndexSet::default(); chunk_graph.chunks.len()];
-    let mut index_preliminary_assets: IndexPreliminaryAssets =
-      IndexVec::with_capacity(chunk_graph.chunks.len());
-    try_join_all(chunk_graph.chunks.iter_enumerated().map(|(chunk_idx, chunk)| async move {
-      let mut ctx = GenerateContext {
-        chunk_idx,
-        chunk,
-        options: self.options,
-        link_output: self.link_output,
-        chunk_graph,
-        plugin_driver: self.plugin_driver,
-        warnings: vec![],
-      };
-      EcmaGenerator::render_preliminary_assets(&mut ctx).await
-    }))
+      index_vec![IndexSet::default(); chunk_graph.chunk_table.len()];
+    let mut index_preliminary_assets: IndexInstantiatedChunks =
+      IndexVec::with_capacity(chunk_graph.chunk_table.len());
+    let chunk_index_to_codegen_rets = self.create_chunk_to_codegen_ret_map(chunk_graph);
+    try_join_all(
+      chunk_graph.chunk_table.iter_enumerated().zip(chunk_index_to_codegen_rets.into_iter()).map(
+        |((chunk_idx, chunk), module_id_to_codegen_ret)| async move {
+          let mut ctx = GenerateContext {
+            chunk_idx,
+            chunk,
+            options: self.options,
+            link_output: self.link_output,
+            chunk_graph,
+            plugin_driver: self.plugin_driver,
+            warnings: vec![],
+            module_id_to_codegen_ret,
+          };
+          EcmaGenerator::instantiate_chunk(&mut ctx).await
+        },
+      ),
+    )
     .await?
     .into_iter()
     .for_each(|result| match result {
       Ok(generate_output) => {
-        generate_output.assets.into_iter().for_each(|asset| {
+        generate_output.chunks.into_iter().for_each(|asset| {
           let origin_chunk = asset.origin_chunk;
           let asset_idx = index_preliminary_assets.push(asset);
           index_chunk_to_assets[origin_chunk].insert(asset_idx);
@@ -173,5 +204,49 @@ impl<'a> GenerateStage<'a> {
     });
 
     Ok((index_preliminary_assets, index_chunk_to_assets))
+  }
+
+  /// Create a IndexVecMap from chunk index to related modules codegen return list.
+  /// e.g.
+  /// modules of chunk1: [ecma1, ecma2, external1]
+  /// modules of chunk2: [ecma3, external2]
+  /// ret: [
+  ///   [Some(ecma1_codegen), Some(ecma2_codegen), None],
+  ///   [Some(ecma3_codegen), None],
+  /// ]
+  fn create_chunk_to_codegen_ret_map(
+    &self,
+    chunk_graph: &ChunkGraph,
+  ) -> Vec<Vec<Option<oxc::codegen::CodegenReturn>>> {
+    let chunk_to_codegen_ret = chunk_graph
+      .chunk_table
+      .raw
+      // TODO: don't use `.raw` when `oxc_index` support rayon related trait
+      .par_iter()
+      .map(|item| {
+        item
+          .modules
+          .par_iter()
+          .map(|&module_idx| {
+            if let Some(module) = self.link_output.module_table.modules[module_idx].as_ecma() {
+              let enable_sourcemap = !self.options.sourcemap.is_hidden() && !module.is_virtual();
+
+              // Because oxc codegen sourcemap is last of sourcemap chain,
+              // If here no extra sourcemap need remapping, we using it as final module sourcemap.
+              // So here make sure using correct `source_name` and `source_content.
+              let render_output = EcmaCompiler::print(
+                &self.link_output.ast_table[module.ecma_ast_idx()].0,
+                &module.id,
+                enable_sourcemap,
+              );
+              Some(render_output)
+            } else {
+              None
+            }
+          })
+          .collect::<Vec<_>>()
+      })
+      .collect::<Vec<_>>();
+    chunk_to_codegen_ret
   }
 }

@@ -4,6 +4,7 @@ mod ecmascript;
 mod file_emitter;
 mod inner_bundler_options;
 mod module;
+mod type_aliases;
 mod types;
 
 /// This module is to help `rolldown` crate could export types related bundler options easily.
@@ -36,6 +37,7 @@ pub mod bundler_options {
 // We don't want internal position adjustment of files affect users, so all items are exported in the root.
 pub use crate::{
   chunk::{
+    chunk_table::ChunkTable,
     types::{
       cross_chunk_import_item::CrossChunkImportItem, preliminary_filename::PreliminaryFilename,
     },
@@ -46,9 +48,9 @@ pub use crate::{
   file_emitter::{EmittedAsset, FileEmitter, SharedFileEmitter},
   module::external_module::ExternalModule,
   module::Module,
-  types::asset::{Asset, PreliminaryAsset},
+  types::asset::Asset,
   types::asset_idx::AssetIdx,
-  types::asset_meta::AssetMeta,
+  types::asset_meta::InstantiationKind,
   types::asset_source::AssetSource,
   types::ast_scopes::AstScopes,
   types::bundler_file_system::BundlerFileSystem,
@@ -62,6 +64,7 @@ pub use crate::{
     ImportKind, ImportRecord, ImportRecordIdx, ImportRecordMeta, RawImportRecord,
   },
   types::importer_record::ImporterRecord,
+  types::instantiated_chunk::InstantiatedChunk,
   types::member_expr_ref::MemberExprRef,
   types::module_def_format::ModuleDefFormat,
   types::module_id::ModuleId,

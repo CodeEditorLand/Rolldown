@@ -114,10 +114,10 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
             // If `foo` is split into another chunk, we need to convert the code `console.log(foo);` to `console.log(require_xxxx.foo);`
             // instead of keeping `console.log(foo)` as we did in esm output. The reason here is wee need to keep live binding in cjs output.
 
-            let exported_name = &self.ctx.chunk_graph.chunks[chunk_idx_of_canonical_symbol]
+            let exported_name = &self.ctx.chunk_graph.chunk_table[chunk_idx_of_canonical_symbol]
               .exports_to_other_chunks[&canonical_ref];
 
-            let require_binding = &self.ctx.chunk_graph.chunks[cur_chunk_idx]
+            let require_binding = &self.ctx.chunk_graph.chunk_table[cur_chunk_idx]
               .require_binding_names_for_other_chunks[&chunk_idx_of_canonical_symbol];
 
             self.snippet.literal_prop_access_member_expr_expr(require_binding, exported_name)
@@ -205,9 +205,6 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
       ast::Declaration::FunctionDeclaration(_) => {
         // Function declaration itself as a whole will be hoisted, so we don't need to convert it to an assignment.
         None
-      }
-      ast::Declaration::UsingDeclaration(_) => {
-        todo!("`using` declaration is not supported yet")
       }
       _ => unreachable!("TypeScript code should be preprocessed"),
     }

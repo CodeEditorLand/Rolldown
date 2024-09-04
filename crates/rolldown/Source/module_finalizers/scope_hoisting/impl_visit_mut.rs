@@ -249,7 +249,6 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
             ast::Statement::FunctionDeclaration(_) => {
               fn_stmts.push(stmt);
             }
-            ast::Statement::UsingDeclaration(_) => unimplemented!(),
             ast::match_module_declaration!(Statement) => {
               if stmt.is_typescript_syntax() {
                 unreachable!(
@@ -427,8 +426,8 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
       _ => {}
     };
 
-    // iife inline dynamic import
-    if matches!(self.ctx.options.format, rolldown_common::OutputFormat::Iife) {
+    // inline dynamic import
+    if self.ctx.options.inline_dynamic_imports {
       if let Expression::ImportExpression(import_expr) = expr {
         let rec_id = self.ctx.module.imports[&import_expr.span];
         let rec = &self.ctx.module.import_records[rec_id];
@@ -558,10 +557,10 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
           Module::Ecma(_importee) => {
             let importer_chunk_id = self.ctx.chunk_graph.module_to_chunk[self.ctx.module.idx]
               .expect("Normal module should belong to a chunk");
-            let importer_chunk = &self.ctx.chunk_graph.chunks[importer_chunk_id];
+            let importer_chunk = &self.ctx.chunk_graph.chunk_table[importer_chunk_id];
 
             let importee_chunk_id = self.ctx.chunk_graph.entry_module_to_entry_chunk[&importee_id];
-            let importee_chunk = &self.ctx.chunk_graph.chunks[importee_chunk_id];
+            let importee_chunk = &self.ctx.chunk_graph.chunk_table[importee_chunk_id];
 
             let import_path = importer_chunk.import_path_for(importee_chunk);
 

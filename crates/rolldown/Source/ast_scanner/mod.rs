@@ -2,6 +2,7 @@ pub mod impl_visit;
 pub mod side_effect_detector;
 
 use arcstr::ArcStr;
+use oxc::ast::ast;
 use oxc::index::IndexVec;
 use oxc::{
   ast::{
@@ -59,8 +60,15 @@ pub struct AstScanner<'me> {
   esm_import_keyword: Option<Span>,
   /// Represents [Module Namespace Object](https://tc39.es/ecma262/#sec-module-namespace-exotic-objects)
   pub namespace_object_ref: SymbolRef,
+  /// cjs ident span used for emit `commonjs_variable_in_esm` warning
   cjs_exports_ident: Option<Span>,
   cjs_module_ident: Option<Span>,
+  /// Whether the module is a commonjs module
+  /// The reason why we can't reuse `cjs_exports_ident` and `cjs_module_ident` is that
+  /// any `module` or `exports` in the top-level scope should be treated as a commonjs module.
+  /// `cjs_exports_ident` and `cjs_module_ident` only only recorded when they are appear in
+  /// lhs of AssignmentExpression
+  is_cjs_module: bool,
 }
 
 impl<'me> AstScanner<'me> {
@@ -118,6 +126,7 @@ impl<'me> AstScanner<'me> {
       source,
       file_path,
       trivias,
+      is_cjs_module: false,
     }
   }
 
@@ -151,7 +160,7 @@ impl<'me> AstScanner<'me> {
           .with_severity_warning(),
         );
       }
-    } else if self.cjs_exports_ident.is_some() || self.cjs_module_ident.is_some() {
+    } else if self.is_cjs_module {
       exports_kind = ExportsKind::CommonJs;
     } else {
       // TODO(hyf0): Should add warnings if the module type doesn't satisfy the exports kind.
@@ -223,8 +232,11 @@ impl<'me> AstScanner<'me> {
     let namespace_ref: SymbolRef = (
       self.idx,
       self.symbols.create_symbol(
-        format!("#LOCAL_NAMESPACE_IN_{}#", self.current_stmt_info.stmt_idx.unwrap_or_default())
-          .into(),
+        format!(
+          "#LOCAL_NAMESPACE_IN_{}#",
+          itoa::Buffer::new().format(self.current_stmt_info.stmt_idx.unwrap_or_default())
+        )
+        .into(),
         self.scopes.root_scope_id(),
       ),
     )
@@ -421,7 +433,7 @@ impl<'me> AstScanner<'me> {
       });
       if let Some(decl) = decl.declaration.as_ref() {
         match decl {
-          oxc::ast::ast::Declaration::VariableDeclaration(var_decl) => {
+          ast::Declaration::VariableDeclaration(var_decl) => {
             var_decl.declarations.iter().for_each(|decl| {
               decl.id.binding_identifiers().into_iter().for_each(|id| {
                 self.result.named_exports.insert(
@@ -434,11 +446,11 @@ impl<'me> AstScanner<'me> {
               });
             });
           }
-          oxc::ast::ast::Declaration::FunctionDeclaration(fn_decl) => {
+          ast::Declaration::FunctionDeclaration(fn_decl) => {
             let id = fn_decl.id.as_ref().unwrap();
             self.add_local_export(id.name.as_str(), id.expect_symbol_id(), id.span);
           }
-          oxc::ast::ast::Declaration::ClassDeclaration(cls_decl) => {
+          ast::Declaration::ClassDeclaration(cls_decl) => {
             let id = cls_decl.id.as_ref().unwrap();
             self.add_local_export(id.name.as_str(), id.expect_symbol_id(), id.span);
           }
@@ -462,15 +474,15 @@ impl<'me> AstScanner<'me> {
     use oxc::ast::ast::ExportDefaultDeclarationKind;
     let local_binding_for_default_export = match &decl.declaration {
       oxc::ast::match_expression!(ExportDefaultDeclarationKind) => None,
-      oxc::ast::ast::ExportDefaultDeclarationKind::FunctionDeclaration(fn_decl) => fn_decl
+      ast::ExportDefaultDeclarationKind::FunctionDeclaration(fn_decl) => fn_decl
         .id
         .as_ref()
         .map(|id| (rolldown_ecmascript::BindingIdentifierExt::expect_symbol_id(id), id.span)),
-      oxc::ast::ast::ExportDefaultDeclarationKind::ClassDeclaration(cls_decl) => cls_decl
+      ast::ExportDefaultDeclarationKind::ClassDeclaration(cls_decl) => cls_decl
         .id
         .as_ref()
         .map(|id| (rolldown_ecmascript::BindingIdentifierExt::expect_symbol_id(id), id.span)),
-      oxc::ast::ast::ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => unreachable!(),
+      ast::ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => unreachable!(),
     };
 
     let (reference, span) = local_binding_for_default_export
@@ -494,7 +506,7 @@ impl<'me> AstScanner<'me> {
 
     let Some(specifiers) = &decl.specifiers else { return };
     specifiers.iter().for_each(|spec| match spec {
-      oxc::ast::ast::ImportDeclarationSpecifier::ImportSpecifier(spec) => {
+      ast::ImportDeclarationSpecifier::ImportSpecifier(spec) => {
         let sym = spec.local.expect_symbol_id();
         let imported = spec.imported.name();
         self.add_named_import(sym, imported.as_str(), rec_id, spec.imported.span());
@@ -502,11 +514,11 @@ impl<'me> AstScanner<'me> {
           self.result.import_records[rec_id].meta.insert(ImportRecordMeta::CONTAINS_IMPORT_DEFAULT);
         }
       }
-      oxc::ast::ast::ImportDeclarationSpecifier::ImportDefaultSpecifier(spec) => {
+      ast::ImportDeclarationSpecifier::ImportDefaultSpecifier(spec) => {
         self.add_named_import(spec.local.expect_symbol_id(), "default", rec_id, spec.span);
         self.result.import_records[rec_id].meta.insert(ImportRecordMeta::CONTAINS_IMPORT_DEFAULT);
       }
-      oxc::ast::ast::ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
+      ast::ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
         self.add_star_import(spec.local.expect_symbol_id(), rec_id, spec.span);
         self.result.import_records[rec_id].meta.insert(ImportRecordMeta::CONTAINS_IMPORT_STAR);
       }
@@ -514,19 +526,19 @@ impl<'me> AstScanner<'me> {
   }
   fn scan_module_decl(&mut self, decl: &ModuleDeclaration) {
     match decl {
-      oxc::ast::ast::ModuleDeclaration::ImportDeclaration(decl) => {
+      ast::ModuleDeclaration::ImportDeclaration(decl) => {
         self.esm_import_keyword.get_or_insert(Span::new(decl.span.start, decl.span.start + 6));
         self.scan_import_decl(decl);
       }
-      oxc::ast::ast::ModuleDeclaration::ExportAllDeclaration(decl) => {
+      ast::ModuleDeclaration::ExportAllDeclaration(decl) => {
         self.set_esm_export_keyword(Span::new(decl.span.start, decl.span.start + 6));
         self.scan_export_all_decl(decl);
       }
-      oxc::ast::ast::ModuleDeclaration::ExportNamedDeclaration(decl) => {
+      ast::ModuleDeclaration::ExportNamedDeclaration(decl) => {
         self.set_esm_export_keyword(Span::new(decl.span.start, decl.span.start + 6));
         self.scan_export_named_decl(decl);
       }
-      oxc::ast::ast::ModuleDeclaration::ExportDefaultDeclaration(decl) => {
+      ast::ModuleDeclaration::ExportDefaultDeclaration(decl) => {
         self.set_esm_export_keyword(Span::new(decl.span.start, decl.span.start + 6));
         self.scan_export_default_decl(decl);
       }
@@ -590,11 +602,8 @@ impl<'me> AstScanner<'me> {
         }
       }
       None => {
-        if ident.name == "module" {
-          self.cjs_module_ident.get_or_insert(Span::new(ident.span.start, ident.span.start + 6));
-        }
-        if ident.name == "exports" {
-          self.cjs_exports_ident.get_or_insert(Span::new(ident.span.start, ident.span.start + 7));
+        if !self.is_cjs_module {
+          self.is_cjs_module = ident.name == "module" || ident.name == "exports";
         }
         None
       }

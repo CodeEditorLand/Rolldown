@@ -1,21 +1,26 @@
 {
-	"dependencies": {
-		"fixturify": "3.0.0",
-		"fs-extra": "11.2.0",
-		"rolldown": "workspace:*",
-		"source-map-support": "0.5.21"
-	},
-	"devDependencies": {
-		"@playform/build": "0.1.4",
-		"@types/node": "22.5.3",
-		"buble": "0.20.0",
-		"source-map": "0.7.4",
-		"terser": "5.31.6"
-	},
-	"name": "rollup-tests",
-	"scripts": {
-		"prepublishOnly": "Build 'Source/**/*.ts'",
-		"test--update": "mocha --jobs 1 --file ./src/intercept/update-test-status.js test/test.js",
-		"type-check": "tsc --noEmit"
-	}
+  "name": "rollup-tests",
+  "private": true,
+  "scripts": {
+    "test": "mocha --file ./src/intercept/check.js test/test.js",
+    "test--update": "mocha --jobs 1 --file ./src/intercept/update-test-status.js test/test.js",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "fixturify": "^3.0.0",
+    "fs-extra": "^11.2.0",
+    "mocha": "^10.4.0",
+    "rolldown": "workspace:*",
+    "source-map-support": "^0.5.21"
+  },
+  "devDependencies": {
+    "@types/mocha": "10.0.7",
+    "@types/node": "22.5.2",
+    "source-map": "^0.7.4",
+    "buble": "^0.20.0",
+    "terser": "^5.31.1"
+  }
 }

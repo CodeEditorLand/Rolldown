@@ -49,9 +49,34 @@
   },
   "additionalProperties": false,
   "definitions": {
+    "AdvancedChunksOptions": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/MatchGroup"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "BundlerOptions": {
       "type": "object",
       "properties": {
+        "advancedChunks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/AdvancedChunksOptions"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "assetFilenames": {
           "type": [
             "string",
@@ -193,6 +218,12 @@
           "items": {
             "$ref": "#/definitions/InjectImport"
           }
+        },
+        "inlineDynamicImports": {
+          "type": [
+            "boolean",
+            "null"
+          ]
         },
         "input": {
           "type": [
@@ -403,6 +434,32 @@
           ]
         }
       }
+    },
+    "MatchGroup": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "priority": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "test": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
     },
     "ModuleType": {
       "oneOf": [

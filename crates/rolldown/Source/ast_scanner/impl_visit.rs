@@ -1,13 +1,13 @@
 use oxc::{
   ast::{
-    ast::{Expression, IdentifierReference, MemberExpression},
+    ast::{self, Expression, IdentifierReference, MemberExpression},
     visit::walk,
     Visit,
   },
-  codegen::{self, CodeGenerator, Gen},
-  span::GetSpan,
+  span::{GetSpan, Span},
 };
 use rolldown_common::ImportKind;
+use rolldown_ecmascript::ToSourceString;
 use rolldown_error::BuildDiagnostic;
 
 use crate::utils::call_expression_ext::CallExpressionExt;
@@ -15,7 +15,7 @@ use crate::utils::call_expression_ext::CallExpressionExt;
 use super::{side_effect_detector::SideEffectDetector, AstScanner};
 
 impl<'me, 'ast> Visit<'ast> for AstScanner<'me> {
-  fn visit_program(&mut self, program: &oxc::ast::ast::Program<'ast>) {
+  fn visit_program(&mut self, program: &ast::Program<'ast>) {
     for (idx, stmt) in program.body.iter().enumerate() {
       self.current_stmt_info.stmt_idx = Some(idx);
       self.current_stmt_info.side_effect =
@@ -23,9 +23,7 @@ impl<'me, 'ast> Visit<'ast> for AstScanner<'me> {
           .detect_side_effect_of_stmt(stmt);
 
       if cfg!(debug_assertions) {
-        let mut codegen = CodeGenerator::new();
-        stmt.gen(&mut codegen, codegen::Context::default());
-        self.current_stmt_info.debug_label = Some(codegen.into_source_text());
+        self.current_stmt_info.debug_label = Some(stmt.to_source_string());
       }
 
       self.visit_statement(stmt);
@@ -33,7 +31,7 @@ impl<'me, 'ast> Visit<'ast> for AstScanner<'me> {
     }
   }
 
-  fn visit_binding_identifier(&mut self, ident: &oxc::ast::ast::BindingIdentifier) {
+  fn visit_binding_identifier(&mut self, ident: &ast::BindingIdentifier) {
     let symbol_id = ident.symbol_id.get().unwrap();
     if self.is_top_level(symbol_id) {
       self.add_declared_id(symbol_id);
@@ -88,15 +86,15 @@ impl<'me, 'ast> Visit<'ast> for AstScanner<'me> {
     }
   }
 
-  fn visit_statement(&mut self, stmt: &oxc::ast::ast::Statement<'ast>) {
+  fn visit_statement(&mut self, stmt: &ast::Statement<'ast>) {
     if let Some(decl) = stmt.as_module_declaration() {
       self.scan_module_decl(decl);
     }
     walk::walk_statement(self, stmt);
   }
 
-  fn visit_import_expression(&mut self, expr: &oxc::ast::ast::ImportExpression<'ast>) {
-    if let oxc::ast::ast::Expression::StringLiteral(request) = &expr.source {
+  fn visit_import_expression(&mut self, expr: &ast::ImportExpression<'ast>) {
+    if let ast::Expression::StringLiteral(request) = &expr.source {
       let id = self.add_import_record(
         request.value.as_str(),
         ImportKind::DynamicImport,
@@ -107,17 +105,43 @@ impl<'me, 'ast> Visit<'ast> for AstScanner<'me> {
     walk::walk_import_expression(self, expr);
   }
 
-  fn visit_assignment_expression(&mut self, node: &oxc::ast::ast::AssignmentExpression<'ast>) {
+  fn visit_assignment_expression(&mut self, node: &ast::AssignmentExpression<'ast>) {
     match &node.left {
-      oxc::ast::ast::AssignmentTarget::AssignmentTargetIdentifier(id_ref) => {
+      ast::AssignmentTarget::AssignmentTargetIdentifier(id_ref) => {
         self.try_diagnostic_forbid_const_assign(id_ref);
       }
+      // Detect `module.exports` and `exports.ANY`
+      ast::AssignmentTarget::StaticMemberExpression(member_expr) => match member_expr.object {
+        Expression::Identifier(ref id) => {
+          if id.name == "module"
+            && self.resolve_identifier_to_top_level_symbol(id).is_none()
+            && member_expr.property.name == "exports"
+          {
+            self.cjs_module_ident.get_or_insert(Span::new(id.span.start, id.span.start + 6));
+          }
+          if id.name == "exports" && self.resolve_identifier_to_top_level_symbol(id).is_none() {
+            self.cjs_exports_ident.get_or_insert(Span::new(id.span.start, id.span.start + 7));
+          }
+        }
+        // `module.exports.test` is also considered as commonjs keyword
+        Expression::StaticMemberExpression(ref member_expr) => {
+          if let Expression::Identifier(ref id) = member_expr.object {
+            if id.name == "module"
+              && self.resolve_identifier_to_top_level_symbol(id).is_none()
+              && member_expr.property.name == "exports"
+            {
+              self.cjs_module_ident.get_or_insert(Span::new(id.span.start, id.span.start + 6));
+            }
+          }
+        }
+        _ => {}
+      },
       _ => {}
     }
     walk::walk_assignment_expression(self, node);
   }
 
-  fn visit_call_expression(&mut self, expr: &oxc::ast::ast::CallExpression<'ast>) {
+  fn visit_call_expression(&mut self, expr: &ast::CallExpression<'ast>) {
     match &expr.callee {
       Expression::Identifier(id_ref) if id_ref.name == "eval" => {
         // TODO: esbuild track has_eval for each scope, this could reduce bailout range, and may
@@ -133,7 +157,7 @@ impl<'me, 'ast> Visit<'ast> for AstScanner<'me> {
       _ => {}
     }
     if expr.is_global_require_call(self.scopes) {
-      if let Some(oxc::ast::ast::Argument::StringLiteral(request)) = &expr.arguments.first() {
+      if let Some(ast::Argument::StringLiteral(request)) = &expr.arguments.first() {
         let id =
           self.add_import_record(request.value.as_str(), ImportKind::Require, request.span().start);
         self.result.imports.insert(expr.span, id);

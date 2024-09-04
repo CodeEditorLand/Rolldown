@@ -72,16 +72,12 @@ impl<'a> LinkStage<'a> {
           dependencies: module
             .import_records()
             .iter()
-            .filter_map(|rec| match options.format {
-              OutputFormat::Cjs | OutputFormat::App | OutputFormat::Esm => {
-                if matches!(rec.kind, ImportKind::DynamicImport) {
-                  None
-                } else {
-                  Some(rec.resolved_module)
-                }
+            .filter_map(|rec| {
+              if options.inline_dynamic_imports || !matches!(rec.kind, ImportKind::DynamicImport) {
+                Some(rec.resolved_module)
+              } else {
+                None
               }
-              // IIFE format will inline dynamic imported modules
-              OutputFormat::Iife => Some(rec.resolved_module),
             })
             .collect(),
           star_exports_from_external_modules: module.as_ecma().map_or(vec![], |inner| {
@@ -193,7 +189,7 @@ impl<'a> LinkStage<'a> {
             }
           },
           ImportKind::DynamicImport => {
-            if matches!(self.options.format, OutputFormat::Iife) {
+            if self.options.inline_dynamic_imports {
               // For iife, then import() is just a require() that
               // returns a promise, so the imported file must also be wrapped
               match importee.exports_kind {
@@ -301,7 +297,30 @@ impl<'a> LinkStage<'a> {
                   ImportKind::Import => {
                     let is_reexport_all = importer.star_exports.contains(rec_id);
                     match importee_linking_info.wrap_kind {
-                      WrapKind::None => {}
+                      WrapKind::None => {
+                        // for case:
+                        // ```js
+                        // // index.js
+                        // export * from './foo'; /* importee wrap kind is `none`, but since `foo` has dynamic_export, we need to preserve the `__reExport(index_ns, foo_ns)` */
+                        //
+                        // // foo.js
+                        // export * from './bar' /* importee wrap kind is `cjs`, preserve by
+                        // default*/
+                        //
+                        // // bar.js
+                        // module.exports = 1000
+                        // ```
+                        if is_reexport_all {
+                          let meta = &self.metas[importee.idx];
+                          if meta.has_dynamic_exports {
+                            stmt_info.side_effect = true;
+                            stmt_info
+                              .referenced_symbols
+                              .push(self.runtime.resolve_symbol("__reExport").into());
+                            stmt_info.referenced_symbols.push(importer.namespace_object_ref.into());
+                          }
+                        }
+                      }
                       WrapKind::Cjs => {
                         if is_reexport_all {
                           stmt_info.side_effect = true;
@@ -375,7 +394,7 @@ impl<'a> LinkStage<'a> {
                     }
                   },
                   ImportKind::DynamicImport => {
-                    if matches!(self.options.format, OutputFormat::Iife) {
+                    if self.options.inline_dynamic_imports {
                       match importee_linking_info.wrap_kind {
                         WrapKind::None => {}
                         WrapKind::Cjs => {
