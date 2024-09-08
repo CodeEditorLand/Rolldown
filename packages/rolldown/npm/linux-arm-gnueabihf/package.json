@@ -1,45 +1,34 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"cpu": [
-		"arm"
-	],
-	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-	"devDependencies": {
-		"@playform/build": "0.1.4"
-	},
-	"files": [
-		"rolldown-binding.linux-arm-gnueabihf.node"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
-	"main": "rolldown-binding.linux-arm-gnueabihf.node",
-	"name": "@rolldown/binding-linux-arm-gnueabihf",
-	"os": [
-		"linux"
-	],
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"scripts": {
-		"prepublishOnly": "Build 'Source/**/*.ts'"
-	},
-	"type": "module",
-	"version": "0.0.1"
+  "name": "@rolldown/binding-linux-arm-gnueabihf",
+  "version": "0.13.2",
+  "cpu": [
+    "arm"
+  ],
+  "main": "rolldown-binding.linux-arm-gnueabihf.node",
+  "files": [
+    "rolldown-binding.linux-arm-gnueabihf.node"
+  ],
+  "description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+  "keywords": [
+    "webpack",
+    "parcel",
+    "esbuild",
+    "rollup",
+    "bundler",
+    "rolldown"
+  ],
+  "homepage": "https://rolldown.rs/",
+  "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rolldown/rolldown.git",
+    "directory": "packages/rolldown"
+  },
+  "os": [
+    "linux"
+  ]
 }

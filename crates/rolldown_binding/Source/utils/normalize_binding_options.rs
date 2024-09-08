@@ -190,6 +190,8 @@ pub fn normalize_binding_options(
     external_live_bindings: output_options.external_live_bindings,
     inline_dynamic_imports: output_options.inline_dynamic_imports,
     advanced_chunks: output_options.advanced_chunks.map(|inner| AdvancedChunksOptions {
+      min_size: inner.min_size,
+      min_share_count: inner.min_share_count,
       groups: inner.groups.map(|inner| {
         inner
           .into_iter()
@@ -199,6 +201,8 @@ pub fn normalize_binding_options(
               .test
               .map(|inner| HybridRegex::new(&inner).expect("Invalid regex pass to test")),
             priority: item.priority,
+            min_size: item.min_size,
+            min_share_count: item.min_share_count,
           })
           .collect::<Vec<_>>()
       }),

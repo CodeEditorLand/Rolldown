@@ -93,7 +93,7 @@ impl<'a> GenerateStage<'a> {
             SourceMapType::File => {
               let source = map.to_json_string();
               output_assets.push(Output::Asset(Box::new(OutputAsset {
-                filename: map_filename.clone(),
+                filename: map_filename.as_str().into(),
                 source: source.into(),
                 original_file_name: None,
                 name: None,
@@ -220,8 +220,6 @@ impl<'a> GenerateStage<'a> {
   ) -> Vec<Vec<Option<oxc::codegen::CodegenReturn>>> {
     let chunk_to_codegen_ret = chunk_graph
       .chunk_table
-      .raw
-      // TODO: don't use `.raw` when `oxc_index` support rayon related trait
       .par_iter()
       .map(|item| {
         item
