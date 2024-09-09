@@ -25,7 +25,7 @@
 		"zx": "8.1.5"
 	},
 	"devDependencies": {
-		"@playform/build": "0.1.4",
+		"@playform/build": "0.1.6",
 		"web-tree-sitter": "0.23.0"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
