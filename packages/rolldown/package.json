@@ -1,14 +1,6 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
 	"bin": {
 		"rolldown": "./bin/cli.js"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
 	},
 	"dependencies": {
 		"zod": "^3.23.8"
@@ -17,7 +9,6 @@
 	"devDependencies": {
 		"@napi-rs/cli": "^3.0.0-alpha.60",
 		"@napi-rs/wasm-runtime": "^0.2.4",
-		"@playform/build": "0.1.6",
 		"@rolldown/testing": "workspace:*",
 		"@types/lodash-es": "^4.17.12",
 		"colorette": "^2.0.20",
@@ -60,16 +51,9 @@
 		"dist",
 		"!dist/*.node"
 	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"imports": {
 		"#parallel-plugin-worker": "./dist/esm/parallel-plugin-worker.mjs"
 	},
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
 	"main": "./dist/cjs/index.cjs",
 	"name": "rolldown",
 	"napi": {
@@ -111,14 +95,6 @@
 		"@rolldown/binding-win32-ia32-msvc": "workspace:*",
 		"@rolldown/binding-win32-x64-msvc": "workspace:*"
 	},
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
 	"scripts": {
 		"# Scrips for binding #": "_",
 		"# Scrips for checking #": "_",
@@ -136,11 +112,8 @@
 		"build-types-check": "tsc -p ./tsconfig.check.json",
 		"build-wasi:debug": "run-s build-binding:wasi build-node",
 		"build-wasi:release": "run-s build-binding:wasi:release build-node",
-		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"test:update": "vitest run -u",
 		"type-check": "tsc"
 	},
-	"type": "module",
-	"types": "./dist/types/index.d.ts",
-	"version": "0.0.1"
+	"types": "./dist/types/index.d.ts"
 }
