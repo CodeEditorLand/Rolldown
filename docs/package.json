@@ -1,40 +1,15 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"devDependencies": {
-		"@iconify-json/vscode-icons": "^1.1.37",
-		"@playform/build": "0.1.6",
-		"vitepress": "^1.2.3",
-		"vitepress-plugin-group-icons": "^1.0.0"
-	},
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
-	"name": "rolldown-docs",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"scripts": {
-		"build": "vitepress build",
-		"dev": "vitepress dev",
-		"prepublishOnly": "Build 'Source/**/*.ts'",
-		"preview": "vitepress preview"
-	},
-	"type": "module",
-	"version": "0.0.1"
+  "name": "rolldown-docs",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "@iconify-json/vscode-icons": "^1.1.37",
+    "vitepress": "^1.2.3",
+    "vitepress-plugin-group-icons": "^1.0.0"
+  }
 }
