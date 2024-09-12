@@ -3,8 +3,9 @@ use oxc::{
   ast::{
     ast::{
       self, Argument, BindingIdentifier, BindingRestElement, Expression, ImportOrExportKind,
-      Statement, TSThisParameter, TSTypeAnnotation, TSTypeParameterDeclaration,
-      TSTypeParameterInstantiation, VariableDeclarationKind,
+      ObjectPropertyKind, PropertyKind, Statement, TSThisParameter, TSTypeAnnotation,
+      TSTypeParameterDeclaration, TSTypeParameterInstantiation, VariableDeclarationKind,
+      WithClause,
     },
     AstBuilder,
   },
@@ -474,7 +475,7 @@ impl<'ast> AstSnippet<'ast> {
       SPAN,
       Some(specifiers),
       self.builder.string_literal(SPAN, source),
-      None,
+      None::<WithClause>,
       ImportOrExportKind::Value,
     ))
   }
@@ -651,6 +652,29 @@ impl<'ast> AstSnippet<'ast> {
     ast::Statement::ReturnStatement(
       ast::ReturnStatement { argument: Some(argument), ..TakeIn::dummy(self.alloc()) }
         .into_in(self.alloc()),
+    )
+  }
+
+  // create `a: () => expr` for  `{ a: () => expr }``
+  pub fn object_property_kind_object_property(
+    &self,
+    key: PassedStr,
+    expr: ast::Expression<'ast>,
+    computed: bool,
+  ) -> ObjectPropertyKind<'ast> {
+    self.builder.object_property_kind_object_property(
+      SPAN,
+      PropertyKind::Init,
+      if computed {
+        self.builder.property_key_expression(self.builder.expression_string_literal(SPAN, key))
+      } else {
+        self.builder.property_key_identifier_name(SPAN, key)
+      },
+      self.only_return_arrow_expr(expr),
+      None,
+      true,
+      false,
+      computed,
     )
   }
 }
