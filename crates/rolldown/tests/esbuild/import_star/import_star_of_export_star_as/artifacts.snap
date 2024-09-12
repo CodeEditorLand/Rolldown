@@ -1,0 +1,28 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry_js.mjs
+
+```js
+import { default as assert } from "node:assert";
+
+
+//#region bar.js
+var bar_ns = {};
+__export(bar_ns, { bar: () => bar });
+const bar = 123;
+
+//#endregion
+//#region foo.js
+var foo_ns = {};
+__export(foo_ns, { bar_ns: () => bar_ns });
+
+//#endregion
+//#region entry.js
+console.log(foo_ns);
+assert.deepEqual(foo_ns, { bar_ns: { bar: 123 } });
+
+//#endregion
+```

@@ -1,8 +1,11 @@
 {
-	"exports": {
-		"default": "./src/index.js",
-		"import": "./src/index.js",
-		"types": "./index.d.ts"
-	},
-	"name": "@rolldown/testing"
+  "name": "@rolldown/testing",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    "types": "./index.d.ts",
+    "import": "./src/index.js",
+    "default": "./src/index.js"
+  }
 }

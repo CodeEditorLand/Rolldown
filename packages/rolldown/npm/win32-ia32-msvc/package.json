@@ -1,14 +1,34 @@
 {
-	"cpu": [
-		"ia32"
-	],
-	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-	"files": [
-		"rolldown-binding.win32-ia32-msvc.node"
-	],
-	"main": "rolldown-binding.win32-ia32-msvc.node",
-	"name": "@rolldown/binding-win32-ia32-msvc",
-	"os": [
-		"win32"
-	]
+  "name": "@rolldown/binding-win32-ia32-msvc",
+  "version": "0.13.2",
+  "cpu": [
+    "ia32"
+  ],
+  "main": "rolldown-binding.win32-ia32-msvc.node",
+  "files": [
+    "rolldown-binding.win32-ia32-msvc.node"
+  ],
+  "description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+  "keywords": [
+    "webpack",
+    "parcel",
+    "esbuild",
+    "rollup",
+    "bundler",
+    "rolldown"
+  ],
+  "homepage": "https://rolldown.rs/",
+  "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rolldown/rolldown.git",
+    "directory": "packages/rolldown"
+  },
+  "os": [
+    "win32"
+  ]
 }
