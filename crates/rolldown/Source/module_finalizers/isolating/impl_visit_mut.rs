@@ -1,4 +1,4 @@
-use oxc::ast::ast::{self, ExportDefaultDeclarationKind, Expression, Statement};
+use oxc::ast::ast::{self, ExportDefaultDeclarationKind, Expression, NumberBase, Statement};
 use oxc::ast::visit::walk_mut;
 use oxc::ast::VisitMut;
 use oxc::span::{CompactStr, Span, SPAN};
@@ -6,13 +6,32 @@ use rolldown_common::Module;
 use rolldown_ecmascript::TakeIn;
 use rolldown_utils::ecma_script::legitimize_identifier_name;
 
+use crate::utils::interop::{calculate_interop_from_module, Interop};
+
 use super::IsolatingModuleFinalizer;
 
 impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
   fn visit_program(&mut self, program: &mut ast::Program<'ast>) {
-    walk_mut::walk_program(self, program);
+    let mut stmts = self.snippet.builder.vec();
 
-    let original_body = program.body.take_in(self.alloc);
+    for mut stmt in program.body.take_in(self.alloc) {
+      walk_mut::walk_statement(self, &mut stmt);
+      match &mut stmt {
+        Statement::ImportDeclaration(import_decl) => {
+          self.transform_import_declaration(import_decl);
+        }
+        ast::Statement::ExportDefaultDeclaration(export_default_decl) => {
+          stmts.push(self.transform_export_default_declaration(export_default_decl));
+        }
+        ast::Statement::ExportNamedDeclaration(export_named_decl) => {
+          self.transform_named_declaration(export_named_decl);
+        }
+        ast::Statement::ExportAllDeclaration(export_all_decl) => {
+          self.transform_export_all_declaration(export_all_decl);
+        }
+        _ => stmts.push(stmt),
+      };
+    }
 
     // Add __esModule flag for esm module
     if self.ctx.module.exports_kind.is_esm() {
@@ -38,23 +57,10 @@ impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
       ));
     }
 
-    program.body.extend(original_body);
-  }
+    // Add generated imports
+    program.body.extend(self.generated_imports.drain(..));
 
-  fn visit_statement(&mut self, stmt: &mut Statement<'ast>) {
-    match stmt {
-      Statement::ImportDeclaration(import_decl) => {
-        *stmt = self.transform_import_declaration(import_decl);
-      }
-      ast::Statement::ExportDefaultDeclaration(export_default_decl) => {
-        *stmt = self.transform_export_default_declaration(export_default_decl);
-      }
-      ast::Statement::ExportNamedDeclaration(export_named_decl) => {
-        *stmt = self.transform_named_declaration(export_named_decl);
-      }
-      _ => {}
-    };
-    walk_mut::walk_statement(self, stmt);
+    program.body.extend(stmts);
   }
 
   fn visit_expression(&mut self, expr: &mut Expression<'ast>) {
@@ -97,19 +103,19 @@ impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
 }
 
 impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
-  pub fn transform_import_declaration(
-    &mut self,
-    import_decl: &ast::ImportDeclaration<'ast>,
-  ) -> Statement<'ast> {
+  pub fn transform_import_declaration(&mut self, import_decl: &ast::ImportDeclaration<'ast>) {
     // The specifiers rewrite with reference the namespace object, see `IsolatingModuleFinalizer#visit_expression`
 
     // Create a require call statement for import declaration
-    let namespace_object_ref = self.create_namespace_object_ref_for_import(import_decl.span);
+    let module = self.get_importee_module(import_decl.span);
+    let namespace_object_ref = self.create_namespace_object_ref_for_module(module);
+    let interop = calculate_interop_from_module(module);
     self.create_require_call_stmt(
-      import_decl.source.value.as_str(),
+      &module.stable_id().into(),
+      interop,
       &namespace_object_ref,
       import_decl.span,
-    )
+    );
   }
 
   pub fn transform_export_default_declaration(
@@ -166,11 +172,18 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
   pub fn transform_named_declaration(
     &mut self,
     export_named_decl: &mut ast::ExportNamedDeclaration<'ast>,
-  ) -> Statement<'ast> {
+  ) {
     match &export_named_decl.source {
-      Some(source) => {
-        let namespace_object_ref =
-          self.create_namespace_object_ref_for_import(export_named_decl.span);
+      Some(_) => {
+        let module = self.get_importee_module(export_named_decl.span);
+        let namespace_object_ref = self.create_namespace_object_ref_for_module(module);
+        let interop = calculate_interop_from_module(module);
+        self.create_require_call_stmt(
+          &module.stable_id().into(),
+          interop,
+          &namespace_object_ref,
+          export_named_decl.span,
+        );
 
         self.generated_exports.extend(export_named_decl.specifiers.iter().map(|specifier| {
           self.snippet.object_property_kind_object_property(
@@ -207,12 +220,6 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
             matches!(specifier.exported, ast::ModuleExportName::StringLiteral(_))
           )
         }));
-
-        self.create_require_call_stmt(
-          source.value.as_str(),
-          &namespace_object_ref,
-          export_named_decl.span,
-        )
       }
       None => {
         self.generated_exports.extend(export_named_decl.specifiers.iter().map(|specifier| {
@@ -232,31 +239,79 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
             matches!(specifier.exported, ast::ModuleExportName::StringLiteral(_)
           ))
         }));
+      }
+    }
+  }
 
-        self.snippet.builder.statement_empty(export_named_decl.span)
+  pub fn transform_export_all_declaration(
+    &mut self,
+    export_all_decl: &ast::ExportAllDeclaration<'ast>,
+  ) {
+    let module = self.get_importee_module(export_all_decl.span);
+    let namespace_object_ref = self.create_namespace_object_ref_for_module(module);
+    let interop = calculate_interop_from_module(module);
+    self.create_require_call_stmt(
+      &module.stable_id().into(),
+      interop,
+      &namespace_object_ref,
+      export_all_decl.span,
+    );
+
+    match &export_all_decl.exported {
+      Some(exported) => {
+        self.generated_exports.push(self.snippet.object_property_kind_object_property(
+          &exported.name(),
+          self.snippet.id_ref_expr(&namespace_object_ref, SPAN),
+          matches!(exported, ast::ModuleExportName::StringLiteral(_)),
+        ));
+      }
+      None => {
+        self.generated_imports.push(self.snippet.builder.statement_expression(
+          SPAN,
+          self.snippet.call_expr_with_2arg_expr("__reExport", "exports", &namespace_object_ref),
+        ));
       }
     }
   }
 
   fn create_require_call_stmt(
     &mut self,
-    source: &str,
+    module_stable_id: &CompactStr,
+    interop: Option<Interop>,
     namespace_object_ref: &CompactStr,
     span: Span,
-  ) -> Statement<'ast> {
-    if self.generated_imports.contains(namespace_object_ref) {
-      return self.snippet.builder.statement_empty(span);
+  ) {
+    if self.generated_imports_set.contains(namespace_object_ref) {
+      return;
     }
 
-    self.generated_imports.insert(namespace_object_ref.clone());
+    self.generated_imports_set.insert(namespace_object_ref.clone());
 
-    self.snippet.variable_declarator_require_call_stmt(source.as_ref(), namespace_object_ref, span)
+    let require_call = self.snippet.require_call_expr(module_stable_id.as_str());
+
+    let init_expr = match interop {
+      None => require_call,
+      Some(interop) => match interop {
+        Interop::Babel => self.snippet.call_expr_with_arg_expr_expr("__toESM", require_call),
+        Interop::Node => self.snippet.alloc_call_expr_with_2arg_expr_expr(
+          "__toESM",
+          require_call,
+          self.snippet.builder.expression_from_numeric_literal(
+            self.snippet.builder.numeric_literal(SPAN, 1.0, "1", NumberBase::Decimal),
+          ),
+        ),
+      },
+    };
+
+    self.generated_imports.push(self.snippet.variable_declarator_require_call_stmt(
+      namespace_object_ref,
+      init_expr,
+      span,
+    ));
   }
 
-  fn create_namespace_object_ref_for_import(&self, span: Span) -> CompactStr {
-    let rec_id = self.ctx.module.imports[&span];
-    let rec = &self.ctx.module.import_records[rec_id];
-    match &self.ctx.modules[rec.resolved_module] {
+  fn create_namespace_object_ref_for_module(&self, module: &Module) -> CompactStr {
+    match module {
       Module::Ecma(importee) => {
         // TODO deconflict namespace_ref
         self.ctx.symbols.get_original_name(importee.namespace_object_ref).clone()
@@ -266,5 +321,11 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
         legitimize_identifier_name(&external_module.name).to_string().into()
       }
     }
+  }
+
+  fn get_importee_module(&self, span: Span) -> &Module {
+    let rec_id = self.ctx.module.imports[&span];
+    let rec = &self.ctx.module.import_records[rec_id];
+    &self.ctx.modules[rec.resolved_module]
   }
 }
