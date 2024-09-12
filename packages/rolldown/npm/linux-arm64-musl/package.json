@@ -1,17 +1,48 @@
 {
+	"author": {
+		"email": "Source/Open@Editor.Land",
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"url": "HTTPS://Editor.Land"
+	},
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
 	"cpu": [
 		"arm64"
 	],
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"devDependencies": {
+		"@playform/build": "0.1.6"
+	},
 	"files": [
 		"rolldown-binding.linux-arm64-musl.node"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
 	],
 	"libc": [
 		"musl"
 	],
+	"license": "SEE LICENSE IN LICENSE",
 	"main": "rolldown-binding.linux-arm64-musl.node",
 	"name": "@rolldown/binding-linux-arm64-musl",
 	"os": [
 		"linux"
-	]
+	],
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"scripts": {
+		"prepublishOnly": "Build 'Source/**/*.ts'"
+	},
+	"type": "module",
+	"version": "0.0.1"
 }
