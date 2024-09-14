@@ -1,39 +1,11 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com//issues"
-	},
-	"devDependencies": {
-		"@playform/build": "0.1.6"
-	},
-	"exports": {
-		"default": "./src/index.js",
-		"import": "./src/index.js",
-		"types": "./index.d.ts"
-	},
-	"homepage": "HTTPS://GitHub.Com/#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
-	"name": "@rolldown/testing",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/.git"
-	},
-	"scripts": {
-		"prepublishOnly": "Build 'Source/**/*.ts'"
-	},
-	"type": "module",
-	"version": "0.0.1"
+  "name": "@rolldown/testing",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "exports": {
+    "types": "./index.d.ts",
+    "import": "./src/index.js",
+    "default": "./src/index.js"
+  }
 }

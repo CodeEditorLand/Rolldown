@@ -1,0 +1,25 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.mjs
+
+```js
+
+
+//#region esm.js
+var esm_ns, esm_default;
+var init_esm = __esmMin(() => {
+	esm_ns = {};
+	__export(esm_ns, { default: () => esm_default });
+	esm_default = "esm";
+});
+
+//#endregion
+//#region main.js
+const esm = (init_esm(), __toCommonJS(esm_ns));
+
+//#endregion
+export { esm };
+```
