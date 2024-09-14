@@ -9,7 +9,7 @@ use oxc::{
   },
   span::{GetSpan, Span, SPAN},
 };
-use rolldown_common::{ExportsKind, Module, ModuleType, SymbolRef, WrapKind};
+use rolldown_common::{ExportsKind, Module, ModuleType, StmtInfoIdx, SymbolRef, WrapKind};
 use rolldown_ecmascript::{AllocatorExt, ExpressionExt, StatementExt, TakeIn};
 
 use crate::utils::call_expression_ext::CallExpressionExt;
@@ -22,7 +22,7 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
     let old_body = self.alloc.take(&mut program.body);
 
     let is_namespace_referenced = matches!(self.ctx.module.exports_kind, ExportsKind::Esm)
-      && self.ctx.module.stmt_infos[0].is_included;
+      && self.ctx.module.stmt_infos[StmtInfoIdx::new(0)].is_included;
 
     let mut stmt_infos = self.ctx.module.stmt_infos.iter();
     // Skip the first statement info, which is the namespace variable declaration
@@ -94,9 +94,10 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
                         .alloc_call_expr_with_2arg_expr_expr(
                           re_export_fn_name,
                           self.snippet.id_ref_expr(importer_namespace_name, SPAN),
-                          self.snippet.call_expr_with_arg_expr_expr(
+                          self.snippet.to_esm_call_with_interop(
                             to_esm_fn_name,
                             self.snippet.call_expr_expr(importee_wrapper_ref_name),
+                            importee.interop(),
                           ),
                         )
                         .into_in(self.alloc),
@@ -462,9 +463,10 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
                 *expr = self.snippet.promise_resolve_then_call_expr(
                   expr.span(),
                   self.snippet.builder.vec1(self.snippet.return_stmt(
-                    self.snippet.call_expr_with_arg_expr_expr(
+                    self.snippet.to_esm_call_with_interop(
                       to_esm_fn_name,
                       self.snippet.call_expr_expr(importee_wrapper_ref_name),
+                      importee.interop(),
                     ),
                   )),
                 );
