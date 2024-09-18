@@ -5,7 +5,8 @@ use oxc::{
 };
 use rolldown_common::{
   side_effects::{DeterminedSideEffects, HookSideEffects},
-  AstScopes, EcmaModule, ModuleDefFormat, ModuleId, ModuleIdx, SymbolRef, TreeshakeOptions,
+  AstScopes, EcmaModule, ModuleDefFormat, ModuleId, ModuleIdx, ModuleType, SymbolRef,
+  TreeshakeOptions,
 };
 use rolldown_ecmascript::EcmaAst;
 use rolldown_error::{DiagnosableResult, UnhandleableResult};
@@ -14,6 +15,7 @@ use sugar_path::SugarPath;
 
 use crate::{
   ast_scanner::{AstScanner, ScanResult},
+  css::create_css_view,
   types::{
     ast_symbols::AstSymbols,
     module_factory::{CreateModuleArgs, CreateModuleContext, CreateModuleReturn, ModuleFactory},
@@ -72,7 +74,7 @@ impl ModuleFactory for EcmaModuleFactory {
       &stable_id,
       ctx.options,
       &ctx.module_type,
-      args.source,
+      args.source.clone(),
       ctx.replace_global_define_config.as_ref(),
     )?;
 
@@ -135,6 +137,10 @@ impl ModuleFactory for EcmaModuleFactory {
     // 3. Analyzed side effects
     // We should skip the `check_side_effects_for` if the hook side effects is not `None`.
     let lazy_check_side_effects = || {
+      if matches!(ctx.module_type, ModuleType::Css) {
+        // CSS modules are considered to have side effects by default
+        return DeterminedSideEffects::Analyzed(true);
+      }
       ctx
         .resolved_id
         .package_json
@@ -165,6 +171,13 @@ impl ModuleFactory for EcmaModuleFactory {
         }
       },
     };
+
+    let css_view = if matches!(ctx.module_type, ModuleType::Css) {
+      Some(create_css_view(&args.source.try_into_string()?.into()))
+    } else {
+      None
+    };
+
     // TODO: Should we check if there are `check_side_effects_for` returns false but there are side effects in the module?
     let module = EcmaModule {
       source: ast.source().clone(),
@@ -196,6 +209,7 @@ impl ModuleFactory for EcmaModuleFactory {
       side_effects,
       module_type: ctx.module_type.clone(),
       has_eval,
+      css_view,
     };
 
     Ok(Ok(CreateModuleReturn {
