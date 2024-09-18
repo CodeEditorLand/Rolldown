@@ -1,0 +1,21 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.cjs
+
+```js
+"use strict";
+
+//#region foo.js
+const devil = "devil";
+
+//#endregion
+Object.defineProperty(exports, '😈', {
+  enumerable: true,
+  get: function () {
+    return devil;
+  }
+});
+```
