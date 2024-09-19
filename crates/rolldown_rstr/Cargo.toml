@@ -1,10 +1,12 @@
 [package]
-edition.workspace = true
-homepage.workspace = true
-license.workspace = true
-name = "rolldown_rstr"
+edition.workspace    = true
+homepage.workspace   = true
+license.workspace    = true
+name                 = "rolldown_rstr"
 repository.workspace = true
-version = "0.1.0"
+version              = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 doctest = false
