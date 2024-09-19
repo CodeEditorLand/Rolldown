@@ -1,4 +1,4 @@
-use oxc_resolver::{FileMetadata, FileSystem as OxcResolverFileSystem};
+use oxc_resolver::{FileMetadata, FileSystem as OXCResolverFileSystem};
 
 use std::{
   io,
@@ -33,7 +33,7 @@ impl FileSystem for OsFileSystem {
   }
 }
 
-impl OxcResolverFileSystem for OsFileSystem {
+impl OXCResolverFileSystem for OsFileSystem {
   fn read_to_string(&self, path: &Path) -> io::Result<String> {
     // `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string` uses internally
     let bytes = std::fs::read(path)?;

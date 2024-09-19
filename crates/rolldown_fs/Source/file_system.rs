@@ -1,8 +1,8 @@
 use std::{io, path::Path};
 
-use oxc_resolver::FileSystem as OxcResolverFileSystem;
+use oxc_resolver::FileSystem as OXCResolverFileSystem;
 
-pub trait FileSystem: Send + Sync + OxcResolverFileSystem {
+pub trait FileSystem: Send + Sync + OXCResolverFileSystem {
   /// # Errors
   ///
   /// * See [std::fs::remove_dir_all]
