@@ -6,6 +6,8 @@ use rolldown_common::{Interop, Module};
 use rolldown_ecmascript::TakeIn;
 use rolldown_utils::ecma_script::legitimize_identifier_name;
 
+use crate::utils::call_expression_ext::CallExpressionExt;
+
 use super::IsolatingModuleFinalizer;
 
 impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
@@ -22,7 +24,9 @@ impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
           stmts.push(self.transform_export_default_declaration(export_default_decl));
         }
         ast::Statement::ExportNamedDeclaration(export_named_decl) => {
-          self.transform_named_declaration(export_named_decl);
+          if let Some(stmt) = self.transform_named_declaration(export_named_decl) {
+            stmts.push(stmt);
+          }
         }
         ast::Statement::ExportAllDeclaration(export_all_decl) => {
           self.transform_export_all_declaration(export_all_decl);
@@ -98,6 +102,16 @@ impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
     }
     walk_mut::walk_expression(self, expr);
   }
+
+  fn visit_call_expression(&mut self, expr: &mut ast::CallExpression<'ast>) {
+    if expr.is_global_require_call(self.scope) {
+      if let Some(ast::Argument::StringLiteral(request)) = expr.arguments.first_mut() {
+        request.value = self.snippet.atom(self.get_importee_module(expr.span).stable_id());
+      }
+    }
+
+    walk_mut::walk_call_expression(self, expr);
+  }
 }
 
 impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
@@ -166,10 +180,11 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
     }
   }
 
+  #[allow(clippy::too_many_lines)]
   pub fn transform_named_declaration(
     &mut self,
     export_named_decl: &mut ast::ExportNamedDeclaration<'ast>,
-  ) {
+  ) -> Option<Statement<'ast>> {
     match &export_named_decl.source {
       Some(_) => {
         let module = self.get_importee_module(export_named_decl.span);
@@ -216,8 +231,63 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
             matches!(specifier.exported, ast::ModuleExportName::StringLiteral(_))
           )
         }));
+        None
       }
       None => {
+        if let Some(decl) = &mut export_named_decl.declaration {
+          match decl {
+            ast::Declaration::VariableDeclaration(var_decl) => {
+              self.generated_exports.extend(var_decl.declarations.iter().filter_map(|decl| {
+                decl.id.get_identifier().map(|ident| {
+                  self.snippet.object_property_kind_object_property(
+                    ident.as_str(),
+                    self.snippet.id_ref_expr(ident.as_str(), SPAN),
+                    false,
+                  )
+                })
+              }));
+
+              return Some(self.snippet.builder.statement_declaration(
+                self.snippet.builder.declaration_from_variable(
+                  self.snippet.builder.variable_declaration(
+                    SPAN,
+                    var_decl.kind,
+                    var_decl.declarations.take_in(self.alloc),
+                    false,
+                  ),
+                ),
+              ));
+            }
+            ast::Declaration::FunctionDeclaration(func_decl) => {
+              let from =
+                func_decl.id.as_ref().expect("FunctionDeclaration should have ident").name.as_str();
+              self.generated_exports.push(self.snippet.object_property_kind_object_property(
+                from,
+                self.snippet.id_ref_expr(from, SPAN),
+                false,
+              ));
+              return Some(self.snippet.builder.statement_expression(
+                SPAN,
+                Expression::FunctionExpression(func_decl.take_in(self.alloc)),
+              ));
+            }
+            ast::Declaration::ClassDeclaration(class_decl) => {
+              let from =
+                class_decl.id.as_ref().expect("ClassDeclaration should have ident").name.as_str();
+              self.generated_exports.push(self.snippet.object_property_kind_object_property(
+                from,
+                self.snippet.id_ref_expr(from, SPAN),
+                false,
+              ));
+              return Some(self.snippet.builder.statement_expression(
+                SPAN,
+                Expression::ClassExpression(class_decl.take_in(self.alloc)),
+              ));
+            }
+            _ => {}
+          }
+        }
+
         self.generated_exports.extend(export_named_decl.specifiers.iter().map(|specifier| {
           self.snippet.object_property_kind_object_property(
             &specifier.exported.name(),
@@ -235,6 +305,7 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
             matches!(specifier.exported, ast::ModuleExportName::StringLiteral(_)
           ))
         }));
+        None
       }
     }
   }

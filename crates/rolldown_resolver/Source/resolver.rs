@@ -11,7 +11,7 @@ use sugar_path::SugarPath;
 
 use oxc_resolver::{
   EnforceExtension, PackageJson as OxcPackageJson, Resolution, ResolveError,
-  ResolveOptions as OXCResolverOptions, ResolverGeneric, TsconfigOptions,
+  ResolveOptions as OxcResolverOptions, ResolverGeneric, TsconfigOptions,
 };
 
 #[derive(Debug)]
@@ -64,7 +64,7 @@ impl<F: FileSystem + Default> Resolver<F> {
       Platform::Browser | Platform::Neutral => false,
     };
 
-    let resolve_options_with_default_conditions = OXCResolverOptions {
+    let resolve_options_with_default_conditions = OxcResolverOptions {
       tsconfig: raw_resolve.tsconfig_filename.map(|p| {
         let path = PathBuf::from(&p);
         TsconfigOptions {
@@ -108,11 +108,11 @@ impl<F: FileSystem + Default> Resolver<F> {
       symlinks: raw_resolve.symlinks.unwrap_or(true),
       builtin_modules,
     };
-    let resolve_options_with_import_conditions = OXCResolverOptions {
+    let resolve_options_with_import_conditions = OxcResolverOptions {
       condition_names: import_conditions,
       ..resolve_options_with_default_conditions.clone()
     };
-    let resolve_options_with_require_conditions = OXCResolverOptions {
+    let resolve_options_with_require_conditions = OxcResolverOptions {
       condition_names: require_conditions,
       ..resolve_options_with_default_conditions.clone()
     };

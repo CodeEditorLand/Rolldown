@@ -4,7 +4,7 @@ use std::{
   sync::Arc,
 };
 
-use oxc_resolver::{FileMetadata, FileSystem as OXCResolverFileSystem};
+use oxc_resolver::{FileMetadata, FileSystem as OxcResolverFileSystem};
 use vfs::{FileSystem as _, MemoryFS};
 
 use crate::file_system::FileSystem;
@@ -87,7 +87,7 @@ impl FileSystem for MemoryFileSystem {
   }
 }
 
-impl OXCResolverFileSystem for MemoryFileSystem {
+impl OxcResolverFileSystem for MemoryFileSystem {
   fn read_to_string(&self, path: &Path) -> io::Result<String> {
     let mut buf = String::new();
     self
