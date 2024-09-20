@@ -1,0 +1,16 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## input.mjs
+
+```js
+
+//#region input.js
+if (typeof process !== "undefined" && typeof process.env === "object" && true) {
+	console.log("production");
+}
+
+//#endregion
+```
