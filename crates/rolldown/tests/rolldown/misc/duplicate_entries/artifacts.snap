@@ -1,0 +1,29 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.mjs
+
+```js
+import { main_default } from "./main3.mjs";
+
+export { main_default as default };
+```
+## main2.mjs
+
+```js
+import { main_default } from "./main3.mjs";
+
+export { main_default as default };
+```
+## main3.mjs
+
+```js
+
+//#region main.js
+var main_default = {};
+
+//#endregion
+export { main_default };
+```
