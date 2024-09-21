@@ -1,4 +1,17 @@
-# reference: https://github.com/rust-lang/cargo/issues/3946
+[build]
+target-dir = "Target"
+
+[cargo-new]
+vcs = "git"
+
+[profile.release]
+opt-level = 3
+codegen-units = 1
+debug = false
+lto = true
+panic = "abort"
+strip = true
+
 [env]
 WORKSPACE_DIR = { value = "", relative = true }
 
@@ -18,5 +31,6 @@ rustflags = ["-C", "link-args=/FORCE"]
 
 [target.x86_64-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
+
 [target.i686-pc-windows-msvc]
 rustflags = ["-C", "target-feature=+crt-static"]
