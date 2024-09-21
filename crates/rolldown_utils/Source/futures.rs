@@ -6,34 +6,34 @@ use futures::Future;
 #[allow(clippy::unused_async)]
 pub async fn block_on_spawn_all<Iter, Out>(iter: Iter) -> Vec<Out>
 where
-  Iter: Iterator,
-  Out: Send + 'static,
-  Iter::Item: Future<Output = Out> + Send,
+	Iter: Iterator,
+	Out: Send + 'static,
+	Iter::Item: Future<Output = Out> + Send,
 {
-  use async_scoped::TokioScope;
-  let (_ret, collections) =
-    async_scoped::Scope::scope_and_block(|scope: &mut TokioScope<'_, _>| {
-      iter.into_iter().for_each(|fut| scope.spawn(fut));
-    });
-  collections.into_iter().map(Result::unwrap).collect()
+	use async_scoped::TokioScope;
+	let (_ret, collections) =
+		async_scoped::Scope::scope_and_block(|scope: &mut TokioScope<'_, _>| {
+			iter.into_iter().for_each(|fut| scope.spawn(fut));
+		});
+	collections.into_iter().map(Result::unwrap).collect()
 }
 
 async fn _test_block_on_spawn_all_non_static_future() {
-  let mut words = String::new();
-  let non_static_future = async {
-    words.push_str("hello");
-  };
-  let _ = block_on_spawn_all(std::iter::once(non_static_future)).await;
+	let mut words = String::new();
+	let non_static_future = async {
+		words.push_str("hello");
+	};
+	let _ = block_on_spawn_all(std::iter::once(non_static_future)).await;
 }
 
 #[cfg(target_arch = "wasm32")]
 pub async fn block_on_spawn_all<Iter, Out>(iter: Iter) -> Vec<Out>
 where
-  Iter: Iterator,
-  Out: Send + 'static,
-  Iter::Item: Future<Output = Out> + Send,
+	Iter: Iterator,
+	Out: Send + 'static,
+	Iter::Item: Future<Output = Out> + Send,
 {
-  use futures::future::join_all;
-  let outs = join_all(iter).await;
-  outs
+	use futures::future::join_all;
+	let outs = join_all(iter).await;
+	outs
 }

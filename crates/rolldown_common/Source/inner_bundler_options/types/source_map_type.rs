@@ -6,18 +6,18 @@ use serde::Deserialize;
 #[derive(Debug)]
 #[cfg_attr(feature = "deserialize_bundler_options", derive(Deserialize, JsonSchema))]
 pub enum SourceMapType {
-  File,
-  Inline,
-  Hidden,
+	File,
+	Inline,
+	Hidden,
 }
 
 impl From<String> for SourceMapType {
-  fn from(value: String) -> Self {
-    match value.as_str() {
-      "file" => SourceMapType::File,
-      "inline" => SourceMapType::Inline,
-      "hidden" => SourceMapType::Hidden,
-      _ => unreachable!("unknown sourcemap type"),
-    }
-  }
+	fn from(value: String) -> Self {
+		match value.as_str() {
+			"file" => SourceMapType::File,
+			"inline" => SourceMapType::Inline,
+			"hidden" => SourceMapType::Hidden,
+			_ => unreachable!("unknown sourcemap type"),
+		}
+	}
 }
