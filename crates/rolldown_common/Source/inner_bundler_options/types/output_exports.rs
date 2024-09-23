@@ -5,19 +5,19 @@ use serde::Deserialize;
 
 #[derive(Debug)]
 #[cfg_attr(
-	feature = "deserialize_bundler_options",
-	derive(Deserialize, JsonSchema),
-	serde(rename_all = "camelCase", deny_unknown_fields)
+  feature = "deserialize_bundler_options",
+  derive(Deserialize, JsonSchema),
+  serde(rename_all = "camelCase", deny_unknown_fields)
 )]
 pub enum OutputExports {
-	Auto,
-	Default,
-	Named,
-	None,
+  Auto,
+  Default,
+  Named,
+  None,
 }
 
 impl Default for OutputExports {
-	fn default() -> Self {
-		Self::Auto
-	}
+  fn default() -> Self {
+    Self::Auto
+  }
 }

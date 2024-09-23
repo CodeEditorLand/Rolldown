@@ -5,12 +5,12 @@ mod ecma_compiler;
 mod ext;
 
 pub use crate::{
-	allocator_helpers::take_in::TakeIn,
-	ast_snippet::AstSnippet,
-	ecma_ast::{program_cell::WithMutFields, EcmaAst, ToSourceString},
-	ecma_compiler::EcmaCompiler,
-	ext::{
-		allocator_ext::AllocatorExt, span_ext::SpanExt, BindingIdentifierExt, BindingPatternExt,
-		ExpressionExt, StatementExt,
-	},
+  allocator_helpers::take_in::TakeIn,
+  ast_snippet::AstSnippet,
+  ecma_ast::{program_cell::WithMutFields, EcmaAst, ToSourceString},
+  ecma_compiler::EcmaCompiler,
+  ext::{
+    allocator_ext::AllocatorExt, span_ext::SpanExt, BindingIdentifierExt, BindingPatternExt,
+    ExpressionExt, StatementExt,
+  },
 };

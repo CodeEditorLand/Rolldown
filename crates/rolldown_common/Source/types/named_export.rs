@@ -7,6 +7,6 @@ use oxc::span::Span;
 /// - Case C: `const foo = 1; export { foo as foo2 }`
 #[derive(Debug)]
 pub struct LocalExport {
-	pub span: Span,
-	pub referenced: SymbolRef,
+  pub span: Span,
+  pub referenced: SymbolRef,
 }

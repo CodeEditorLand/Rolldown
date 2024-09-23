@@ -4,25 +4,25 @@ use crate::type_aliases::IndexChunks;
 
 #[derive(Debug, Default)]
 pub struct ChunkTable {
-	pub chunks: IndexChunks,
+  pub chunks: IndexChunks,
 }
 
 impl Deref for ChunkTable {
-	type Target = IndexChunks;
+  type Target = IndexChunks;
 
-	fn deref(&self) -> &Self::Target {
-		&self.chunks
-	}
+  fn deref(&self) -> &Self::Target {
+    &self.chunks
+  }
 }
 
 impl DerefMut for ChunkTable {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.chunks
-	}
+  fn deref_mut(&mut self) -> &mut Self::Target {
+    &mut self.chunks
+  }
 }
 
 impl ChunkTable {
-	pub fn new(chunks: IndexChunks) -> Self {
-		Self { chunks }
-	}
+  pub fn new(chunks: IndexChunks) -> Self {
+    Self { chunks }
+  }
 }
