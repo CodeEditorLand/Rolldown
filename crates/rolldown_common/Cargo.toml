@@ -1,37 +1,38 @@
 [package]
 description = "This crate is mostly for sharing code between rolldwon crates."
-name = "rolldown_common"
-version = "0.1.0"
+name        = "rolldown_common"
+version     = "0.1.0"
 
-edition.workspace = true
-homepage.workspace = true
-license.workspace = true
+edition.workspace    = true
+homepage.workspace   = true
+license.workspace    = true
 repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 doctest = false
-path = "Source/lib.rs"
 
 [lints]
 workspace = true
 
 [dependencies]
-anyhow = { workspace = true }
-arcstr = { workspace = true }
-bitflags = { workspace = true }
-dashmap = { workspace = true }
-glob-match = { workspace = true }
-lightningcss = { workspace = true }
-oxc = { workspace = true, features = ["semantic"] }
-rolldown_fs = { workspace = true }
-rolldown_rstr = { workspace = true }
+anyhow             = { workspace = true }
+arcstr             = { workspace = true }
+bitflags           = { workspace = true }
+dashmap            = { workspace = true }
+glob-match         = { workspace = true }
+lightningcss       = { workspace = true }
+oxc                = { workspace = true, features = ["semantic"] }
+rolldown_fs        = { workspace = true }
+rolldown_rstr      = { workspace = true }
 rolldown_sourcemap = { workspace = true }
-rolldown_utils = { workspace = true }
-rustc-hash = { workspace = true }
-schemars = { workspace = true, optional = true }
-serde = { workspace = true, features = ["derive"], optional = true }
-serde_json = { workspace = true }
-sugar_path = { workspace = true }
+rolldown_utils     = { workspace = true }
+rustc-hash         = { workspace = true }
+schemars           = { workspace = true, optional = true }
+serde              = { workspace = true, features = ["derive"], optional = true }
+serde_json         = { workspace = true }
+sugar_path         = { workspace = true }
 
 [features]
 deserialize_bundler_options = ["dep:schemars", "dep:serde"]

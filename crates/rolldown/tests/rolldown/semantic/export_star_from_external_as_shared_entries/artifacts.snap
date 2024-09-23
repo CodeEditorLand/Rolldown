@@ -1,0 +1,27 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.mjs
+
+```js
+import "./main.mjs";
+
+export * from "node:fs"
+
+```
+## entry2.mjs
+
+```js
+import "./main.mjs";
+
+export * from "node:fs"
+
+```
+## main.mjs
+
+```js
+import "node:fs";
+
+```

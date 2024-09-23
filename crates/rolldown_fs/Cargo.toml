@@ -1,24 +1,25 @@
 [package]
-edition.workspace = true
-homepage.workspace = true
-license.workspace = true
-name = "rolldown_fs"
+edition.workspace    = true
+homepage.workspace   = true
+license.workspace    = true
+name                 = "rolldown_fs"
 repository.workspace = true
-version = "0.1.0"
+version              = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 doctest = false
-path = "Source/lib.rs"
 
 [lints]
 workspace = true
 
 [features]
 memory = []
-os = []
+os     = []
 
 [dependencies]
-dunce = { workspace = true }
+dunce        = { workspace = true }
 oxc_resolver = { workspace = true }
-simdutf8 = { workspace = true }
-vfs = { workspace = true }
+simdutf8     = { workspace = true }
+vfs          = { workspace = true }
