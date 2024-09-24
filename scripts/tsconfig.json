@@ -1,14 +1,18 @@
 {
-  "extends": "../tsconfig.pure-js.json",
-  "include": [
-    "ci/**/*.js",
-    "meta/**/*.js",
-    "misc/**/*.js",
-    "misc/**/*.d.ts",
-    "snap-diff/**/*.ts"
-  ],
-  "compilerOptions": {
-    "moduleResolution": "Bundler",
-    "module": "ESNext"
-  }
+	"compilerOptions": {
+		"baseUrl": "./",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"outDir": "Target",
+		"rootDir": "src"
+	},
+	"extends": "@playform/build/tsconfig",
+	"include": [
+		"ci/**/*.js",
+		"meta/**/*.js",
+		"misc/**/*.js",
+		"misc/**/*.d.ts",
+		"snap-diff/**/*.ts",
+		"src"
+	]
 }
