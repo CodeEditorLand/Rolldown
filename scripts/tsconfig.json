@@ -1,17 +1,14 @@
 {
-	"compilerOptions": {
-		"baseUrl": "./",
-		"outDir": "Target",
-		"rootDir": "src"
-	},
-	"extends": "@playform/build/tsconfig",
-	"include": [
-		"ci/**/*.js",
-		"meta/**/*.js",
-		"misc/**/*.js",
-		"misc/**/*.d.ts",
-		"src",
-		"src",
-		"src"
-	]
+  "extends": "../tsconfig.pure-js.json",
+  "include": [
+    "ci/**/*.js",
+    "meta/**/*.js",
+    "misc/**/*.js",
+    "misc/**/*.d.ts",
+    "snap-diff/**/*.ts"
+  ],
+  "compilerOptions": {
+    "moduleResolution": "Bundler",
+    "module": "ESNext"
+  }
 }

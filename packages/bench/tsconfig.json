@@ -1,21 +1,13 @@
 {
-	"compilerOptions": {
-		"baseUrl": "./",
-		"outDir": "Target",
-		"rootDir": "src"
-	},
-	"extends": "@playform/build/tsconfig",
-	"include": [
-		"src/**/*.js",
-		"src/**/*.mjs",
-		"src/**/*.cjs",
-		"src/**/*.d.ts",
-		"benches/**/*.js",
-		"benches/**/*.mjs",
-		"benches/**/*.cjs",
-		"benches/**/*.d.ts",
-		"src",
-		"src",
-		"src"
-	]
+  "extends": "../../tsconfig.pure-js.json",
+  "include": [
+    "src/**/*.js",
+    "src/**/*.mjs",
+    "src/**/*.cjs",
+    "src/**/*.d.ts",
+    "benches/**/*.js",
+    "benches/**/*.mjs",
+    "benches/**/*.cjs",
+    "benches/**/*.d.ts"
+  ]
 }

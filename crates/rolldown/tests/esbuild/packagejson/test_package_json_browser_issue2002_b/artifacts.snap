@@ -1,0 +1,29 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# warnings
+
+## UNRESOLVED_IMPORT
+
+```text
+[UNRESOLVED_IMPORT] Warning: "sub" is imported by "src/node_modules/pkg/sub/foo.js", but could not be resolved – treating it as an external dependency.
+
+```
+# Assets
+
+## entry.mjs
+
+```js
+
+
+//#region src/node_modules/pkg/sub/foo.js
+var require_foo = __commonJSMin((exports, module) => {
+	require("sub");
+});
+
+//#endregion
+//#region src/entry.js
+require_foo();
+
+//#endregion
+```

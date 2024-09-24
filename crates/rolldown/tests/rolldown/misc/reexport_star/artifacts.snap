@@ -1,0 +1,32 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## a.mjs
+
+```js
+
+
+//#region a.js
+var a_exports = {};
+__export(a_exports, { abc: () => abc });
+const abc = undefined;
+
+//#endregion
+export { a_exports };
+```
+## entry.mjs
+
+```js
+import { a_exports } from "./a.mjs";
+
+export { a_exports as a };
+```
+## main.mjs
+
+```js
+import { a_exports } from "./a.mjs";
+
+export { a_exports as a };
+```
