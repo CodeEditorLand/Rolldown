@@ -28,7 +28,7 @@
 	},
 	"dependencies": {},
 	"devDependencies": {
-		"@playform/build": "0.1.6",
+		"@playform/build": "0.1.7",
 		"rolldown": "workspace:*"
 	},
 	"publishConfig": {
