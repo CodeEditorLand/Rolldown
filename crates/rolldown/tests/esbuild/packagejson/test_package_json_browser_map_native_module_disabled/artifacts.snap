@@ -1,0 +1,29 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.mjs
+
+```js
+
+
+//#region (ignored) node_modules/demo-pkg
+var require_demo_pkg = __commonJSMin(() => {});
+
+//#endregion
+//#region node_modules/demo-pkg/index.js
+var require_demo_pkg_index = __commonJSMin((exports, module) => {
+	const fs = require_demo_pkg();
+	module.exports = function() {
+		return fs.readFile();
+	};
+});
+
+//#endregion
+//#region src/entry.js
+var import_demo_pkg_index = __toESM(require_demo_pkg_index());
+console.log((0, import_demo_pkg_index.default)());
+
+//#endregion
+```

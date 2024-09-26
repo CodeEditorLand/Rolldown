@@ -1,0 +1,22 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry_js.mjs
+
+```js
+
+//#region entry.js
+class Foo {
+	*#g() {}
+	async #a() {}
+	async *#ag() {}
+	static *#sg() {}
+	static async #sa() {}
+	static async *#sag() {}
+}
+
+//#endregion
+export { Foo };
+```

@@ -1,0 +1,27 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry_js.cjs
+
+```js
+
+
+//#region foo.js
+var require_foo = __commonJSMin((exports) => {
+	exports.foo = 123;
+});
+
+//#endregion
+//#region bar.js
+var import_foo = __toESM(require_foo());
+
+//#endregion
+Object.defineProperty(exports, 'y', {
+  enumerable: true,
+  get: function () {
+    return import_foo.x;
+  }
+});
+```
