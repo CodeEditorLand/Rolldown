@@ -1,15 +1,13 @@
 {
-  "name": "rolldown-docs",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "dev": "vitepress dev",
-    "build": "vitepress build",
-    "preview": "vitepress preview"
-  },
-  "devDependencies": {
-    "@iconify-json/vscode-icons": "^1.1.37",
-    "vitepress": "^1.2.3",
-    "vitepress-plugin-group-icons": "^1.0.0"
-  }
+	"devDependencies": {
+		"@iconify-json/vscode-icons": "^1.1.37",
+		"vitepress": "^1.2.3",
+		"vitepress-plugin-group-icons": "^1.0.0"
+	},
+	"name": "rolldown-docs",
+	"scripts": {
+		"build": "vitepress build",
+		"dev": "vitepress dev",
+		"preview": "vitepress preview"
+	}
 }
