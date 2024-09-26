@@ -1,4 +1,12 @@
 {
+	"author": {
+		"email": "Source/Open@Editor.Land",
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"url": "HTTPS://Editor.Land"
+	},
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
 	"dependencies": {
 		"@pnpm/find-workspace-packages": "^6.0.9",
 		"@rolldown/testing": "workspace:*",
@@ -18,6 +26,7 @@
 	},
 	"devDependencies": {
 		"@oxc-node/core": "^0.0.15",
+		"@playform/build": "0.1.7",
 		"@types/diff": "^5.2.2",
 		"@types/escodegen": "^0.0.10",
 		"@types/lodash-es": "^4.17.12",
@@ -30,9 +39,27 @@
 		"markdown-it": "^14.1.0",
 		"web-tree-sitter": "^0.23.0"
 	},
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"license": "SEE LICENSE IN LICENSE",
 	"name": "scripts",
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
 	"scripts": {
 		"esbuild-snap-diff": "node --import @oxc-node/core/register ./snap-diff/index.ts",
+		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"type-check": "tsc -b"
-	}
+	},
+	"type": "module",
+	"version": "0.0.1"
 }

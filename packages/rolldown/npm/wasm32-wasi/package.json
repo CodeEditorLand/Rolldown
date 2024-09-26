@@ -1,5 +1,13 @@
 {
+	"author": {
+		"email": "Source/Open@Editor.Land",
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"url": "HTTPS://Editor.Land"
+	},
 	"browser": "rolldown-binding.wasi-browser.js",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
 	"cpu": [
 		"wasm32"
 	],
@@ -7,6 +15,9 @@
 		"@napi-rs/wasm-runtime": "^0.2.4"
 	},
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"devDependencies": {
+		"@playform/build": "0.1.7"
+	},
 	"files": [
 		"rolldown-binding.wasm32-wasi.wasm",
 		"rolldown-binding.wasi.cjs",
@@ -14,6 +25,26 @@
 		"wasi-worker.mjs",
 		"wasi-worker-browser.mjs"
 	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"license": "SEE LICENSE IN LICENSE",
 	"main": "rolldown-binding.wasi.cjs",
-	"name": "@rolldown/binding-wasm32-wasi"
+	"name": "@rolldown/binding-wasm32-wasi",
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"scripts": {
+		"prepublishOnly": "Build 'Source/**/*.ts'"
+	},
+	"type": "module",
+	"version": "0.0.1"
 }
