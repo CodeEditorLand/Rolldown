@@ -8,12 +8,12 @@
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
 	},
 	"dependencies": {
-		"@types/lodash": "^4.17.5",
-		"chalk": "^5.3.0",
-		"esbuild": "^0.23.0",
-		"lodash": "^4.17.21",
+		"@types/lodash": "4.17.5",
+		"chalk": "5.3.0",
+		"esbuild": "0.23.0",
+		"lodash": "4.17.21",
 		"rolldown": "workspace:*",
-		"tinybench": "^2.8.0"
+		"tinybench": "2.8.0"
 	},
 	"devDependencies": {
 		"@playform/build": "0.1.6"
