@@ -1,12 +1,10 @@
 [package]
-edition.workspace    = true
-homepage.workspace   = true
-license.workspace    = true
-name                 = "rolldown"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+name = "rolldown"
 repository.workspace = true
-version              = "0.1.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+version = "0.1.0"
 
 [lib]
 doctest = false
@@ -15,41 +13,46 @@ doctest = false
 workspace = true
 
 [dependencies]
-anyhow                   = { workspace = true }
-append-only-vec          = { workspace = true }
-arcstr                   = { workspace = true }
-daachorse                = { workspace = true }
-dunce                    = { workspace = true }
-futures                  = { workspace = true }
-indexmap                 = { workspace = true }
-itertools                = { workspace = true }
-itoa                     = { workspace = true }
-memchr                   = { workspace = true }
-oxc                      = { workspace = true }
-regex                    = { workspace = true }
-rolldown_common          = { workspace = true }
-rolldown_ecmascript      = { workspace = true }
-rolldown_error           = { workspace = true }
-rolldown_fs              = { workspace = true, features = ["os"] }
-rolldown_loader_utils    = { workspace = true }
-rolldown_plugin          = { workspace = true, features = ["inner"] }
+anyhow = { workspace = true }
+append-only-vec = { workspace = true }
+arcstr = { workspace = true }
+daachorse = { workspace = true }
+dunce = { workspace = true }
+futures = { workspace = true }
+indexmap = { workspace = true }
+itertools = { workspace = true }
+itoa = { workspace = true }
+memchr = { workspace = true }
+oxc = { workspace = true }
+regex = { workspace = true }
+rolldown_common = { workspace = true }
+rolldown_ecmascript = { workspace = true }
+rolldown_error = { workspace = true }
+rolldown_fs = { workspace = true, features = ["os"] }
+rolldown_loader_utils = { workspace = true }
+rolldown_plugin = { workspace = true, features = ["inner"] }
 rolldown_plugin_data_url = { workspace = true }
-rolldown_resolver        = { workspace = true }
-rolldown_rstr            = { workspace = true }
-rolldown_sourcemap       = { workspace = true }
-rolldown_tracing         = { workspace = true }
-rolldown_utils           = { workspace = true }
-rustc-hash               = { workspace = true }
-sugar_path               = { workspace = true }
-tokio                    = { workspace = true, features = ["rt", "macros", "sync"] }
-tracing                  = { workspace = true }
-tracing-chrome           = { workspace = true }
-xxhash-rust              = { workspace = true, features = ["xxh3"] }
+rolldown_resolver = { workspace = true }
+rolldown_rstr = { workspace = true }
+rolldown_sourcemap = { workspace = true }
+rolldown_tracing = { workspace = true }
+rolldown_utils = { workspace = true }
+rustc-hash = { workspace = true }
+sugar_path = { workspace = true }
+tokio = { workspace = true, features = ["rt", "macros", "sync"] }
+tracing = { workspace = true }
+tracing-chrome = { workspace = true }
+xxhash-rust = { workspace = true, features = ["xxh3"] }
 
 [dev-dependencies]
-glob             = { workspace = true }
-insta            = { workspace = true }
+glob = { workspace = true }
+insta = { workspace = true }
 rolldown_testing = { workspace = true }
-sugar_path       = { workspace = true }
-testing_macros   = { workspace = true }
-tokio            = { workspace = true, features = ["rt", "macros", "sync", "rt-multi-thread"] }
+sugar_path = { workspace = true }
+testing_macros = { workspace = true }
+tokio = { workspace = true, features = [
+	"rt",
+	"macros",
+	"sync",
+	"rt-multi-thread",
+] }
