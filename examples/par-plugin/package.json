@@ -1,40 +1,18 @@
 {
-	"name": "@example/par-plugin",
-	"version": "0.0.1",
-	"private": false,
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
-	"scripts": {
-		"bench-babel": "hyperfine --warmup 1 --runs 3 'pnpm rolldown -c ./cases/babel-rome-ts/par-babel.rolldown.config.js' 'pnpm rolldown -c ./cases/babel-rome-ts/single-babel.rolldown.config.js'",
-		"bench-esbuild": "hyperfine --warmup 1 --runs 3 'pnpm rolldown -c ./cases/esbuild-rome-ts/par.rolldown.config.js' 'pnpm rolldown -c ./cases/esbuild-rome-ts/single.rolldown.config.js' 'pnpm rolldown -c ./cases/esbuild-rome-ts/single-async.rolldown.config.js'",
-		"bench-noop": "hyperfine --warmup 1 --runs 3 'pnpm rolldown -c ./cases/noop-threejs10x/par-noop.rolldown.config.js' 'pnpm rolldown -c ./cases/noop-threejs10x/single-noop.rolldown.config.js'",
-		"build": "echo success",
-		"prepublishOnly": "Build 'Source/**/*.ts'"
-	},
-	"dependencies": {},
-	"devDependencies": {
-		"@playform/build": "0.1.6",
-		"rolldown": "workspace:*"
-	},
-	"publishConfig": {
-		"access": "public"
-	}
+  "name": "@example/par-plugin",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench-babel": "hyperfine --warmup 1 --runs 3 'pnpm rolldown -c ./cases/babel-rome-ts/par-babel.rolldown.config.js' 'pnpm rolldown -c ./cases/babel-rome-ts/single-babel.rolldown.config.js'",
+    "bench-esbuild": "hyperfine --warmup 1 --runs 3 'pnpm rolldown -c ./cases/esbuild-rome-ts/par.rolldown.config.js' 'pnpm rolldown -c ./cases/esbuild-rome-ts/single.rolldown.config.js' 'pnpm rolldown -c ./cases/esbuild-rome-ts/single-async.rolldown.config.js'",
+    "bench-noop": "hyperfine --warmup 1 --runs 3 'pnpm rolldown -c ./cases/noop-threejs10x/par-noop.rolldown.config.js' 'pnpm rolldown -c ./cases/noop-threejs10x/single-noop.rolldown.config.js'",
+    "build": "echo success"
+  },
+  "devDependencies": {
+    "rolldown": "workspace:*",
+    "@babel/core": "^7.24.4",
+    "@babel/preset-env": "^7.24.4",
+    "@babel/preset-typescript": "^7.24.1"
+  },
+  "dependencies": {}
 }

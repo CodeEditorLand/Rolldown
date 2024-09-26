@@ -1,39 +1,14 @@
 {
-	"name": "@example/rollup-plugin-esbuild",
-	"version": "0.0.1",
-	"private": false,
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
-	"scripts": {
-		"build": "rolldown --config ./rolldown.config.js",
-		"prepublishOnly": "Build 'Source/**/*.ts'"
-	},
-	"dependencies": {
-		"rollup-plugin-esbuild": "6.1.1"
-	},
-	"devDependencies": {
-		"@playform/build": "0.1.6",
-		"rolldown": "workspace:*"
-	},
-	"publishConfig": {
-		"access": "public"
-	}
+  "name": "@example/rollup-plugin-esbuild",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "rolldown --config ./rolldown.config.js"
+  },
+  "devDependencies": {
+    "rolldown": "workspace:*"
+  },
+  "dependencies": {
+    "rollup-plugin-esbuild": "^6.1.1"
+  }
 }

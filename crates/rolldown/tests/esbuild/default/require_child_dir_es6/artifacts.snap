@@ -1,0 +1,19 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry_js.mjs
+
+```js
+import { default as assert } from "node:assert";
+
+//#region dir/index.js
+var dir_index_default = 123;
+
+//#endregion
+//#region entry.js
+assert.equal(dir_index_default, 123);
+
+//#endregion
+```
