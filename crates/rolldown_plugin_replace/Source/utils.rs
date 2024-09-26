@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::LazyLock};
 
-use fancy_regex::Regex;
+use regex::Regex;
 
 static OBJECT_RE: LazyLock<Regex> = LazyLock::new(|| {
   let pattern = r"^([_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*)(\.([_$a-zA-Z\xA0-\uFFFF][_$a-zA-Z0-9\xA0-\uFFFF]*))+$";
@@ -9,37 +9,20 @@ static OBJECT_RE: LazyLock<Regex> = LazyLock::new(|| {
 
 pub(crate) fn expand_typeof_replacements(
   values: &HashMap<String, String>,
-) -> HashMap<String, String> {
+) -> Vec<(String, String)> {
   let mut replacements: Vec<(String, String)> = Vec::new();
 
   for key in values.keys() {
-    if let Ok(matched) = OBJECT_RE.captures(key) {
-      let capture_str = matched.unwrap().get(0).unwrap().as_str();
-
-      let capture_vec: Vec<&str> = capture_str.split('.').collect::<Vec<&str>>();
-
-      let capture_arr = capture_vec.as_slice();
-
-      let replaces: Vec<(String, String)> = capture_arr[0..capture_arr.len() - 1]
-        .iter()
-        .flat_map(|x| {
-          vec![
-            (format!("typeof {} ===", *x), "\"object\" ===".to_string()),
-            (format!("typeof {}===", *x), "\"object\"===".to_string()),
-            (format!("typeof {} !==", *x), "\"object\" !==".to_string()),
-            (format!("typeof {}!==", *x), "\"object\"!==".to_string()),
-            (format!("typeof {} ==", *x), "\"object\" ===".to_string()),
-            (format!("typeof {}==", *x), "\"object\"===".to_string()),
-            (format!("typeof {}!=", *x), "\"object\"!==".to_string()),
-            (format!("typeof {} !=", *x), "\"object\" !==".to_string()),
-          ]
-        })
-        .collect();
-      replacements.extend(replaces);
+    if OBJECT_RE.is_match(key) {
+      // Skip last part
+      replacements.extend(key.match_indices('.').map(|(index, _)| {
+        let match_str = &key[..index];
+        (format!("typeof {match_str}"), "\"object\"".to_string())
+      }));
     };
   }
 
-  HashMap::from_iter(replacements)
+  replacements
 }
 
 #[cfg(test)]
@@ -48,39 +31,76 @@ mod tests {
 
   use super::expand_typeof_replacements;
 
+  fn run_test(keys: &[&str], expected: &[(&str, &str)]) {
+    let map = keys.iter().copied().map(|key| (key.to_string(), "x".to_string())).collect();
+    let result = expand_typeof_replacements(&map).into_iter().collect::<HashMap<_, _>>();
+    let expected = expected
+      .iter()
+      .copied()
+      .map(|(key, replacement)| (key.to_string(), replacement.to_string()))
+      .collect::<HashMap<_, _>>();
+    assert_eq!(result, expected);
+  }
+
   #[test]
   fn test_expand() {
-    let map = HashMap::from([("a.b.c.d".to_string(), "x".to_string())]);
+    run_test(&["a"], &[]);
+    run_test(&["abc"], &[]);
 
-    let result = expand_typeof_replacements(&map);
+    run_test(&["abc.def"], &[("typeof abc", "\"object\"")]);
 
-    let expected = HashMap::from([
-      ("typeof a===".to_string(), "\"object\"===".to_string()),
-      ("typeof a ===".to_string(), "\"object\" ===".to_string()),
-      ("typeof a==".to_string(), "\"object\"===".to_string()),
-      ("typeof a ==".to_string(), "\"object\" ===".to_string()),
-      ("typeof a!==".to_string(), "\"object\"!==".to_string()),
-      ("typeof a !==".to_string(), "\"object\" !==".to_string()),
-      ("typeof a!=".to_string(), "\"object\"!==".to_string()),
-      ("typeof a !=".to_string(), "\"object\" !==".to_string()),
-      ("typeof b===".to_string(), "\"object\"===".to_string()),
-      ("typeof b ===".to_string(), "\"object\" ===".to_string()),
-      ("typeof b==".to_string(), "\"object\"===".to_string()),
-      ("typeof b ==".to_string(), "\"object\" ===".to_string()),
-      ("typeof b!==".to_string(), "\"object\"!==".to_string()),
-      ("typeof b !==".to_string(), "\"object\" !==".to_string()),
-      ("typeof b!=".to_string(), "\"object\"!==".to_string()),
-      ("typeof b !=".to_string(), "\"object\" !==".to_string()),
-      ("typeof c===".to_string(), "\"object\"===".to_string()),
-      ("typeof c ===".to_string(), "\"object\" ===".to_string()),
-      ("typeof c==".to_string(), "\"object\"===".to_string()),
-      ("typeof c ==".to_string(), "\"object\" ===".to_string()),
-      ("typeof c!==".to_string(), "\"object\"!==".to_string()),
-      ("typeof c !==".to_string(), "\"object\" !==".to_string()),
-      ("typeof c!=".to_string(), "\"object\"!==".to_string()),
-      ("typeof c !=".to_string(), "\"object\" !==".to_string()),
-    ]);
+    run_test(
+      &["process.env.NODE_ENV"],
+      &[("typeof process", "\"object\""), ("typeof process.env", "\"object\"")],
+    );
 
-    assert_eq!(result, expected);
+    run_test(
+      &["a.b.c.d"],
+      &[("typeof a", "\"object\""), ("typeof a.b", "\"object\""), ("typeof a.b.c", "\"object\"")],
+    );
+  }
+
+  #[test]
+  fn test_expand_unicode() {
+    run_test(
+      &["कुत्तेपरपानी.पतलूनमेंआग.मेरेशॉर्ट्सखाओ"],
+      &[("typeof कुत्तेपरपानी", "\"object\""), ("typeof कुत्तेपरपानी.पतलूनमेंआग", "\"object\"")],
+    );
+  }
+
+  #[test]
+  fn test_expand_multiple() {
+    run_test(
+      &["a.x", "b.y", "c.z", "d.e.f", "g.h"],
+      &[
+        ("typeof a", "\"object\""),
+        ("typeof b", "\"object\""),
+        ("typeof c", "\"object\""),
+        ("typeof d", "\"object\""),
+        ("typeof d.e", "\"object\""),
+        ("typeof g", "\"object\""),
+      ],
+    );
+  }
+
+  #[test]
+  fn test_expand_invalid() {
+    run_test(&[""], &[]);
+    run_test(&["~"], &[]);
+    run_test(&["."], &[]);
+    run_test(&["a."], &[]);
+    run_test(&[".a"], &[]);
+    run_test(&["a.b."], &[]);
+    run_test(&["a.b..c"], &[]);
+    run_test(&["!a.b.c"], &[]);
+    run_test(&["a!.b.c"], &[]);
+    run_test(&["a.!b.c"], &[]);
+    run_test(&["a.b!.d"], &[]);
+    run_test(&["a.b!c.d"], &[]);
+    run_test(&["a.b.!cde"], &[]);
+    run_test(&["a.b.cde!"], &[]);
+    run_test(&["a.b.c.d!e"], &[]);
+
+    run_test(&["a.x", "!", "b.y"], &[("typeof a", "\"object\""), ("typeof b", "\"object\"")]);
   }
 }
