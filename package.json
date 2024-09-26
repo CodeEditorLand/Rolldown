@@ -55,7 +55,7 @@
 		"@ls-lint/ls-lint": "2.2.3",
 		"@playform/build": "0.1.7",
 		"@taplo/cli": "0.7.0",
-		"@types/node": "22.7.2",
+		"@types/node": "22.7.3",
 		"cjs-module-lexer": "1.4.1",
 		"conventional-changelog-cli": "5.0.0",
 		"cspell": "8.14.4",
