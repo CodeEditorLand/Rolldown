@@ -1,0 +1,24 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## a_index.mjs
+
+```js
+
+//#region node_modules/c/index.js
+let foo = "foo";
+
+//#endregion
+export { foo };
+```
+## src_entry_js.mjs
+
+```js
+
+//#region src/entry.js
+import("./a_index.mjs").then((x) => assert(x.foo === "foo"));
+
+//#endregion
+```

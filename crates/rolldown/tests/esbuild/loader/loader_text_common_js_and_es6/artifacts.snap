@@ -1,0 +1,31 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry_js.mjs
+
+```js
+import { default as assert } from "node:assert";
+
+
+//#region y.txt
+var y_default = "y";
+
+//#endregion
+//#region x.txt
+var x_exports, x_default;
+var init_x = __esm({ "x.txt"() {
+	x_exports = {};
+	__export(x_exports, { default: () => x_default });
+	x_default = "x";
+} });
+
+//#endregion
+//#region entry.js
+const x_txt = (init_x(), __toCommonJS(x_exports));
+assert.deepEqual(x_txt, { default: "x" });
+assert.equal(y_default, "y");
+
+//#endregion
+```
