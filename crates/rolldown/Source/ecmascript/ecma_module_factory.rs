@@ -40,8 +40,11 @@ impl EcmaModuleFactory {
 		module_def_format: ModuleDefFormat,
 	) -> UnhandleableResult<(AstScopes, ScanResult, AstSymbols, SymbolRef)> {
 		let (mut ast_symbols, ast_scopes) = make_ast_scopes_and_symbols(symbols, scopes);
+
 		let module_id = ModuleId::new(ArcStr::clone(id));
+
 		let repr_name = module_id.as_path().representative_file_name();
+
 		let repr_name = legitimize_identifier_name(&repr_name);
 
 		let scanner = AstScanner::new(
@@ -54,7 +57,9 @@ impl EcmaModuleFactory {
 			&module_id,
 			&ast.trivias,
 		);
+
 		let namespace_object_ref = scanner.namespace_object_ref;
+
 		let scan_result = scanner.scan(ast.program())?;
 
 		Ok((ast_scopes, scan_result, ast_symbols, namespace_object_ref))
@@ -68,6 +73,7 @@ impl ModuleFactory for EcmaModuleFactory {
 		args: CreateModuleArgs,
 	) -> anyhow::Result<DiagnosableResult<CreateModuleReturn>> {
 		let id = ModuleId::new(ArcStr::clone(&ctx.resolved_id.id));
+
 		let stable_id = id.stabilize(&ctx.options.cwd);
 
 		let parse_result = parse_to_ecma_ast(
@@ -125,6 +131,7 @@ impl ModuleFactory for EcmaModuleFactory {
 		ctx.warnings.extend(scan_warnings);
 
 		let mut imported_ids = vec![];
+
 		let mut dynamically_imported_ids = vec![];
 
 		for (record, info) in import_records.iter().zip(&resolved_deps) {
@@ -157,6 +164,7 @@ impl ModuleFactory for EcmaModuleFactory {
 					DeterminedSideEffects::Analyzed(analyzed_side_effects)
 				})
 		};
+
 		let side_effects = match args.hook_side_effects {
 			Some(side_effects) => match side_effects {
 				HookSideEffects::True => lazy_check_side_effects(),
