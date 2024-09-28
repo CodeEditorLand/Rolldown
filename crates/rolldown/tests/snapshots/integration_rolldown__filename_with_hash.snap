@@ -917,6 +917,10 @@ expression: output
 
 - entry_js-!~{000}~.mjs => entry_js-KkOuFAbd.mjs
 
+# tests/esbuild/loader/loader_data_url_unknown_mime
+
+- entry_js-!~{000}~.mjs => entry_js-LFrNCB2G.mjs
+
 # tests/esbuild/loader/loader_json_missing_es6
 
 - entry_js-!~{000}~.mjs => entry_js-768RV9YH.mjs
@@ -925,9 +929,21 @@ expression: output
 
 - entry_js-!~{000}~.mjs => entry_js-S2fdzq3V.mjs
 
+# tests/esbuild/loader/require_custom_extension_base64
+
+- entry_js-!~{000}~.mjs => entry_js-1F0jLoQy.mjs
+
 # tests/esbuild/loader/require_custom_extension_data_url
 
 - entry_js-!~{000}~.mjs => entry_js-M7ZBsA49.mjs
+
+# tests/esbuild/loader/require_custom_extension_prefer_longest
+
+- entry_js-!~{000}~.mjs => entry_js-IhgIe8J1.mjs
+
+# tests/esbuild/loader/require_custom_extension_string
+
+- entry_js-!~{000}~.mjs => entry_js-zVHbv-tD.mjs
 
 # tests/esbuild/lower/lower_async_es5
 
