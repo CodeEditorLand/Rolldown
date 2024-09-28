@@ -18,7 +18,7 @@
 		"esbuild": "0.23.0",
 		"lodash": "4.17.21",
 		"rolldown": "workspace:*",
-		"rollup": "4.18.0",
+		"rollup": "4.22.4",
 		"tinybench": "2.8.0"
 	},
 	"devDependencies": {
