@@ -10,17 +10,17 @@
 		"type-check": "tsc --noEmit"
 	},
 	"dependencies": {
-		"fixturify": "^3.0.0",
-		"fs-extra": "^11.2.0",
-		"mocha": "^10.4.0",
+		"fixturify": "3.0.0",
+		"fs-extra": "11.2.0",
+		"mocha": "10.4.0",
 		"rolldown": "workspace:*",
-		"source-map-support": "^0.5.21"
+		"source-map-support": "0.5.21"
 	},
 	"devDependencies": {
 		"@types/mocha": "10.0.7",
 		"@types/node": "22.5.2",
-		"buble": "^0.20.0",
-		"source-map": "^0.7.4",
-		"terser": "^5.31.1"
+		"buble": "0.20.0",
+		"source-map": "0.7.4",
+		"terser": "5.31.1"
 	}
 }
