@@ -1,37 +1,37 @@
 {
-  "name": "@rolldown/binding-linux-arm64-gnu",
-  "version": "0.13.2",
-  "cpu": [
-    "arm64"
-  ],
-  "main": "rolldown-binding.linux-arm64-gnu.node",
-  "files": [
-    "rolldown-binding.linux-arm64-gnu.node"
-  ],
-  "description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-  "keywords": [
-    "webpack",
-    "parcel",
-    "esbuild",
-    "rollup",
-    "bundler",
-    "rolldown"
-  ],
-  "homepage": "https://rolldown.rs/",
-  "license": "MIT",
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/rolldown/rolldown.git",
-    "directory": "packages/rolldown"
-  },
-  "os": [
-    "linux"
-  ],
-  "libc": [
-    "glibc"
-  ]
+	"name": "@rolldown/binding-linux-arm64-gnu",
+	"version": "0.13.2",
+	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"keywords": [
+		"webpack",
+		"parcel",
+		"esbuild",
+		"rollup",
+		"bundler",
+		"rolldown"
+	],
+	"homepage": "https://rolldown.rs/",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/rolldown/rolldown.git",
+		"directory": "packages/rolldown"
+	},
+	"license": "MIT",
+	"main": "rolldown-binding.linux-arm64-gnu.node",
+	"files": [
+		"rolldown-binding.linux-arm64-gnu.node"
+	],
+	"os": [
+		"linux"
+	],
+	"cpu": [
+		"arm64"
+	],
+	"publishConfig": {
+		"access": "public",
+		"registry": "https://registry.npmjs.org/"
+	},
+	"libc": [
+		"glibc"
+	]
 }

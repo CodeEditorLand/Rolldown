@@ -1,4 +1,4 @@
 {
-  "main": "./src/index.js",
-  "type": "./src/index.d.ts"
+	"type": "./src/index.d.ts",
+	"main": "./src/index.js"
 }

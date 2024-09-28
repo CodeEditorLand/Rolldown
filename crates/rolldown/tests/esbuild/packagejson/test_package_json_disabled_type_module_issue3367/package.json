@@ -1,5 +1,5 @@
 {
-  "browser": {
-    "foo": false
-  }
+	"browser": {
+		"foo": false
+	}
 }
