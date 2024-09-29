@@ -1,0 +1,39 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.mjs
+
+```js
+
+
+//#region cjs.js
+var require_cjs = __commonJS({ "cjs.js"(exports, module) {
+	module.exports = {};
+} });
+
+//#endregion
+//#region main.js
+require_cjs();
+var cjs = require_cjs();
+
+//#endregion
+//# sourceMappingURL=main.mjs.map
+```
+
+# Sourcemap Visualizer
+
+```
+- ../cjs.js
+(0:0-0:7) "module." --> (9:0-10:8) "\nvar require_cjs = __commonJS({ \"cjs.js\"(exports, module) {\n\tmodule"
+(0:7-0:17) "exports = " --> (10:8-10:18) ".exports ="
+(0:17-0:19) "{}" --> (10:18-10:19) " "
+(0:19-0:0) "module.exports = {}" --> (10:19-11:0) "{};"
+(0:0-1:1) "module.exports = {}\n" --> (11:0-15:0) "\n} });\n\n//#endregion\n//#region main.js"
+- ../main.js
+(0:0-1:0) "require('./cjs.js');" --> (15:0-16:0) "\nrequire_cjs();"
+(1:0-1:4) "\nvar" --> (16:0-16:4) "\nvar"
+(1:4-0:0) "" --> (16:4-16:10) " cjs ="
+(0:0-2:1) "require('./cjs.js');\nvar cjs = require('./cjs.js');\n" --> (16:10-19:34) " require_cjs();\n\n//#endregion\n//# sourceMappingURL=main.mjs.map"
+```

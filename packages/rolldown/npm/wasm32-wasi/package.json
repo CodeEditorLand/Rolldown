@@ -1,50 +1,42 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"browser": "rolldown-binding.wasi-browser.js",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"cpu": [
-		"wasm32"
-	],
-	"dependencies": {
-		"@napi-rs/wasm-runtime": "^0.2.4"
-	},
-	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-	"devDependencies": {
-		"@playform/build": ""
-	},
-	"files": [
-		"rolldown-binding.wasm32-wasi.wasm",
-		"rolldown-binding.wasi.cjs",
-		"rolldown-binding.wasi-browser.js",
-		"wasi-worker.mjs",
-		"wasi-worker-browser.mjs"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
-	"main": "rolldown-binding.wasi.cjs",
-	"name": "@rolldown/binding-wasm32-wasi",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"scripts": {
-		"prepublishOnly": "Build 'Source/**/*.ts'"
-	},
-	"type": "module",
-	"version": "0.0.1"
+  "name": "@rolldown/binding-wasm32-wasi",
+  "version": "0.13.2",
+  "cpu": [
+    "wasm32"
+  ],
+  "main": "rolldown-binding.wasi.cjs",
+  "files": [
+    "rolldown-binding.wasm32-wasi.wasm",
+    "rolldown-binding.wasi.cjs",
+    "rolldown-binding.wasi-browser.js",
+    "wasi-worker.mjs",
+    "wasi-worker-browser.mjs"
+  ],
+  "description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+  "keywords": [
+    "webpack",
+    "parcel",
+    "esbuild",
+    "rollup",
+    "bundler",
+    "rolldown"
+  ],
+  "homepage": "https://rolldown.rs/",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.21.3"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rolldown/rolldown.git",
+    "directory": "packages/rolldown"
+  },
+  "browser": "rolldown-binding.wasi-browser.js",
+  "dependencies": {
+    "@napi-rs/wasm-runtime": "^0.2.4"
+  }
 }
