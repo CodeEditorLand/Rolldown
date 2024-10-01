@@ -1,4 +1,12 @@
 {
+	"author": {
+		"email": "Source/Open@Editor.Land",
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"url": "HTTPS://Editor.Land"
+	},
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
 	"cpu": [
 		"arm64"
 	],
@@ -9,15 +17,32 @@
 	"files": [
 		"rolldown-binding.linux-arm64-gnu.node"
 	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
 	"libc": [
 		"glibc"
 	],
+	"license": "SEE LICENSE IN LICENSE",
 	"main": "rolldown-binding.linux-arm64-gnu.node",
 	"name": "@rolldown/binding-linux-arm64-gnu",
 	"os": [
 		"linux"
 	],
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
 	"scripts": {
 		"prepublishOnly": "Build 'Source/**/*.ts'"
-	}
+	},
+	"type": "module",
+	"version": "0.0.1"
 }
