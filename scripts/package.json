@@ -36,7 +36,7 @@
 		"estree-toolkit": "1.7.8",
 		"lodash-es": "4.17.21",
 		"markdown-it": "14.1.0",
-		"web-tree-sitter": "0.23.1"
+		"web-tree-sitter": "0.23.2"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [
