@@ -1,0 +1,172 @@
+name: CI
+# Jobs in this workflow are all required run successfully before the PR can be merged. This is enforced by using github status checks.
+# What's github status check: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  merge_group:
+  push:
+    branches:
+      - main
+      - 'renovate/**' # For renovate bot "automerge": true
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.ref_name != 'main' }}
+
+jobs:
+  # JOB to run change detection
+  changes: # https://github.com/dorny/paths-filter
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      rust-changes: ${{ (steps.filter.outputs.rust-changes == 'true') || (github.ref_name == 'main') }}
+      node-changes: ${{ (steps.filter.outputs.node-changes == 'true') || (github.ref_name == 'main') }}
+    steps:
+      # For pull requests it's not necessary to checkout the code
+      - uses: actions/checkout@v4 #Fix https://github.com/dorny/paths-filter/issues/212
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust-changes: &rust-changes
+              - '.github/workflows/**'
+              - 'crates/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - 'deny.toml'
+              - '.gitattributes'
+            node-changes:
+              - *rust-changes
+              - 'packages/**'
+              - 'examples/**'
+              - 'scripts/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+      - name: Show outputs
+        run: |
+          echo "Rust changes: ${{ (steps.filter.outputs.rust-changes == 'true') || (github.ref_name == 'main') }}"
+          echo "Node changes: ${{ (steps.filter.outputs.node-changes == 'true') || (github.ref_name == 'main') }}"
+
+  cargo-deny:
+    name: Cargo Deny
+    needs: changes
+    if: ${{ needs.changes.outputs.rust-changes == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'Cargo.lock'
+
+      - name: Install cargo-deny
+        if: steps.filter.outputs.src == 'true'
+        uses: taiki-e/install-action@cargo-deny
+
+      - if: steps.filter.outputs.src == 'true'
+        run: cargo deny check
+
+  rust-validation:
+    name: Rust Validation
+    needs: changes
+    if: ${{ needs.changes.outputs.rust-changes == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+        with:
+          tools: just, taplo-cli, cargo-shear
+          cache-key: debug-build
+          components: clippy rustfmt
+
+      - name: Lint
+        run: just lint-rust
+
+  cargo-test:
+    needs: changes
+    strategy:
+      matrix:
+        target: [ubuntu-latest, macos-latest, windows-latest]
+    uses: ./.github/workflows/reusable-cargo-test.yml
+    with:
+      os: ${{ matrix.target }}
+      changed: ${{ needs.changes.outputs.rust-changes == 'true' }}
+
+  node-test:
+    needs: changes
+    strategy:
+      matrix:
+        target: [ubuntu-latest, macos-latest, windows-latest]
+    uses: ./.github/workflows/reusable-node-test.yml
+    with:
+      os: ${{ matrix.target }}
+      changed: ${{ needs.changes.outputs.node-changes == 'true' }}
+
+  wasi-test:
+    needs: changes
+    strategy:
+      matrix:
+        target: [ubuntu-latest, macos-latest, windows-latest]
+    uses: ./.github/workflows/reusable-wasi-test.yml
+    with:
+      os: ${{ matrix.target }}
+      changed: ${{ needs.changes.outputs.node-changes == 'true' }}
+
+  node-validation:
+    name: Node Validation
+    needs: changes
+    if: ${{ needs.changes.outputs.node-changes == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Lint Code
+        run: pnpm lint-code
+
+  repo-validation:
+    name: Repo Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Lint Filename
+        run: pnpm lint-filename
+
+      - name: Lint Spell
+        run: pnpm lint-spell
+
+      - name: Lint Prettier
+        run: pnpm lint-prettier
+
+      - name: Lint Toml
+        run: pnpm lint-toml
+
+  pkg-preview:
+    name: Pkg Preview
+    needs:
+      - cargo-deny
+      - rust-validation
+      - cargo-test
+      - node-test
+      - wasi-test
+      - node-validation
+      - repo-validation
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    uses: ./.github/workflows/preview-commit.yml
