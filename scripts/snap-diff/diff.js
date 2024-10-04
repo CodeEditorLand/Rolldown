@@ -1,5 +1,7 @@
-import * as diff from 'diff'
-import { rewriteEsbuild, rewriteRolldown } from './rewrite.js'
+import * as diff from "diff";
+
+import { rewriteEsbuild, rewriteRolldown } from "./rewrite.js";
+
 /**
  * our filename generate logic is not the same as esbuild
  * so hardcode some filename remapping
@@ -7,9 +9,9 @@ import { rewriteEsbuild, rewriteRolldown } from './rewrite.js'
  * @param {string} rolldownFilename
  */
 function defaultResolveFunction(esbuildFilename, rolldownFilename) {
-  if (esbuildFilename === '/out.js' && /entry_js\.*/.test(rolldownFilename)) {
-    return true
-  }
+	if (esbuildFilename === "/out.js" && /entry_js\.*/.test(rolldownFilename)) {
+		return true;
+	}
 }
 /**
  * TODO: custom resolve
@@ -18,40 +20,45 @@ function defaultResolveFunction(esbuildFilename, rolldownFilename) {
  * @returns {'missing' | Array<{esbuildName: string, rolldownName: string, esbuild: string, rolldown: string, diff: string}> | 'same'}
  */
 export function diffCase(esbuildSnap, rolldownSnap) {
-  if (!rolldownSnap) {
-    return 'missing'
-  }
-  let diffList = []
-  for (let esbuildSource of esbuildSnap.sourceList) {
-    let matchedSource = rolldownSnap.find((rolldownSource) => {
-      if (defaultResolveFunction(esbuildSource.name, rolldownSource.filename)) {
-        return true
-      }
-      return rolldownSnap.find((snap) => {
-        return snap.filename == esbuildSource.name
-      })
-    }) ?? { content: '', filename: '' }
-    let esbuildContent = rewriteEsbuild(esbuildSource.content)
-    let rolldownContent = rewriteRolldown(matchedSource.content)
-    if (matchedSource.content !== esbuildSource.content) {
-      diffList.push({
-        esbuildName: esbuildSource.name,
-        rolldownName: matchedSource.filename,
-        esbuild: esbuildSource.content,
-        rolldown: matchedSource.content,
-        diff: diff.createTwoFilesPatch(
-          'esbuild',
-          'rolldown',
-          esbuildContent,
-          rolldownContent,
-          esbuildSource.name,
-          matchedSource.filename,
-        ),
-      })
-    }
-  }
-  if (diffList.length === 0) {
-    return 'same'
-  }
-  return diffList
+	if (!rolldownSnap) {
+		return "missing";
+	}
+	let diffList = [];
+	for (let esbuildSource of esbuildSnap.sourceList) {
+		let matchedSource = rolldownSnap.find((rolldownSource) => {
+			if (
+				defaultResolveFunction(
+					esbuildSource.name,
+					rolldownSource.filename,
+				)
+			) {
+				return true;
+			}
+			return rolldownSnap.find((snap) => {
+				return snap.filename == esbuildSource.name;
+			});
+		}) ?? { content: "", filename: "" };
+		let esbuildContent = rewriteEsbuild(esbuildSource.content);
+		let rolldownContent = rewriteRolldown(matchedSource.content);
+		if (matchedSource.content !== esbuildSource.content) {
+			diffList.push({
+				esbuildName: esbuildSource.name,
+				rolldownName: matchedSource.filename,
+				esbuild: esbuildSource.content,
+				rolldown: matchedSource.content,
+				diff: diff.createTwoFilesPatch(
+					"esbuild",
+					"rolldown",
+					esbuildContent,
+					rolldownContent,
+					esbuildSource.name,
+					matchedSource.filename,
+				),
+			});
+		}
+	}
+	if (diffList.length === 0) {
+		return "same";
+	}
+	return diffList;
 }
