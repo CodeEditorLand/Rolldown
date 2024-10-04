@@ -1,45 +1,31 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"dependencies": {
-		"@types/lodash": "4.17.9",
-		"chalk": "5.3.0",
-		"esbuild": "0.24.0",
-		"lodash": "4.17.21",
-		"rolldown": "workspace:*",
-		"tinybench": "2.9.0"
-	},
-	"devDependencies": {
-		"@playform/build": ""
-	},
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
-	"name": "bench",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"scripts": {
-		"bench": "node ./benches/compare.js",
-		"bench-ci": "node ./benches/ci.js",
-		"prepublishOnly": "Build 'Source/**/*.ts'",
-		"type-check": "tsc"
-	},
-	"type": "module",
-	"version": "0.0.1"
+  "name": "bench",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "node ./benches/compare.js",
+    "bench-ci": "node ./benches/ci.js",
+    "type-check": "tsc"
+  },
+  "dependencies": {
+    "@babel/core": "^7.24.7",
+    "@babel/preset-env": "^7.24.7",
+    "@babel/preset-typescript": "^7.24.7",
+    "@rollup/plugin-commonjs": "^28.0.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@types/lodash": "^4.17.5",
+    "chalk": "^5.3.0",
+    "esbuild": "^0.23.0",
+    "lodash": "^4.17.21",
+    "rolldown": "workspace:*",
+    "rollup": "^4.18.0",
+    "tinybench": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/babel__core": "7.20.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vue": "^3.4.27",
+    "vue-router": "^4.3.2"
+  }
 }
