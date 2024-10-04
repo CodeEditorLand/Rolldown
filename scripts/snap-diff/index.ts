@@ -1,4 +1,4 @@
-import { run } from './runner'
+import { run } from "./runner";
 
-const includeList = ['snapshots_importstar.txt']
-run(includeList)
+const includeList = ["snapshots_importstar.txt"];
+run(includeList);
