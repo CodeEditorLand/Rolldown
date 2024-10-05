@@ -12,7 +12,7 @@
 		"wasm32"
 	],
 	"dependencies": {
-		"@napi-rs/wasm-runtime": "^0.2.5"
+		"@napi-rs/wasm-runtime": "0.2.5"
 	},
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
 	"devDependencies": {
