@@ -1,67 +1,76 @@
 use oxc::{
-  ast::{
-    ast::{
-      Atom, Expression, FormalParameterKind, PropertyKind, VariableDeclarationKind,
-      VariableDeclarator,
-    },
-    AstBuilder, NONE,
-  },
-  span::SPAN,
+	ast::{
+		ast::{
+			Atom, Expression, FormalParameterKind, PropertyKind,
+			VariableDeclarationKind, VariableDeclarator,
+		},
+		AstBuilder, NONE,
+	},
+	span::SPAN,
 };
 
 use crate::IS_MODERN_FLAG;
 
 pub fn construct_snippet_from_await_decl<'a>(
-  ast_builder: AstBuilder<'a>,
-  source: Atom<'a>,
-  decls: &[Atom<'a>],
-  decl_kind: VariableDeclarationKind,
-  append_import_meta_url: bool,
+	ast_builder: AstBuilder<'a>,
+	source: Atom<'a>,
+	decls: &[Atom<'a>],
+	decl_kind: VariableDeclarationKind,
+	append_import_meta_url: bool,
 ) -> VariableDeclarator<'a> {
-  ast_builder.variable_declarator(
-    SPAN,
-    decl_kind,
-    // `const {a, b}`
-    //         ^  ^
-    ast_builder.binding_pattern(
-      ast_builder.binding_pattern_kind_object_pattern(
-        SPAN,
-        ast_builder.vec_from_iter(decls.iter().map(|name| {
-          ast_builder.binding_property(
-            SPAN,
-            ast_builder.property_key_identifier_name(SPAN, name),
-            ast_builder.binding_pattern(
-              ast_builder.binding_pattern_kind_binding_identifier(SPAN, name),
-              NONE,
-              false,
-            ),
-            true,
-            false,
-          )
-        })),
-        NONE,
-      ),
-      NONE,
-      false,
-    ),
-    Some(ast_builder.expression_await(
-      SPAN,
-      construct_vite_preload_call(ast_builder, decl_kind, decls, source, append_import_meta_url),
-    )),
-    false,
-  )
+	ast_builder.variable_declarator(
+		SPAN,
+		decl_kind,
+		// `const {a, b}`
+		//         ^  ^
+		ast_builder.binding_pattern(
+			ast_builder.binding_pattern_kind_object_pattern(
+				SPAN,
+				ast_builder.vec_from_iter(decls.iter().map(|name| {
+					ast_builder.binding_property(
+						SPAN,
+						ast_builder.property_key_identifier_name(SPAN, name),
+						ast_builder.binding_pattern(
+							ast_builder
+								.binding_pattern_kind_binding_identifier(
+									SPAN, name,
+								),
+							NONE,
+							false,
+						),
+						true,
+						false,
+					)
+				})),
+				NONE,
+			),
+			NONE,
+			false,
+		),
+		Some(ast_builder.expression_await(
+			SPAN,
+			construct_vite_preload_call(
+				ast_builder,
+				decl_kind,
+				decls,
+				source,
+				append_import_meta_url,
+			),
+		)),
+		false,
+	)
 }
 
 #[allow(clippy::too_many_lines)]
 /// generate `__vitePreload(async () => { const {foo} = await import('foo');return { foo }},...)`
 fn construct_vite_preload_call<'a>(
-  ast_builder: AstBuilder<'a>,
-  decl_kind: VariableDeclarationKind,
-  decls: &[Atom<'a>],
-  source: Atom<'a>,
-  append_import_meta_url: bool,
+	ast_builder: AstBuilder<'a>,
+	decl_kind: VariableDeclarationKind,
+	decls: &[Atom<'a>],
+	source: Atom<'a>,
+	append_import_meta_url: bool,
 ) -> Expression<'a> {
-  ast_builder.expression_call(
+	ast_builder.expression_call(
     SPAN,
     ast_builder.expression_identifier_reference(SPAN, "__vitePreload"),
     NONE,
@@ -173,16 +182,16 @@ fn construct_vite_preload_call<'a>(
 /// 2.transform `(await import('foo')).foo`
 ///   to `__vitePreload(async () => { const {foo} = (await import('foo')); return { foo }},...)).foo`
 pub fn construct_snippet_for_expression<'a>(
-  ast_builder: AstBuilder<'a>,
-  source: Atom<'a>,
-  decls: &[Atom<'a>],
-  append_import_meta_url: bool,
+	ast_builder: AstBuilder<'a>,
+	source: Atom<'a>,
+	decls: &[Atom<'a>],
+	append_import_meta_url: bool,
 ) -> Expression<'a> {
-  construct_vite_preload_call(
-    ast_builder,
-    VariableDeclarationKind::Const,
-    decls,
-    source,
-    append_import_meta_url,
-  )
+	construct_vite_preload_call(
+		ast_builder,
+		VariableDeclarationKind::Const,
+		decls,
+		source,
+		append_import_meta_url,
+	)
 }

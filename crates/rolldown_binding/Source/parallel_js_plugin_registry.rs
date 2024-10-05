@@ -1,8 +1,8 @@
 use crate::options::plugin::{BindingPluginOptions, BindingPluginWithIndex};
 use dashmap::DashMap;
 use napi::{
-  bindgen_prelude::{FromNapiValue, Object, ObjectFinalize},
-  Env, JsUnknown,
+	bindgen_prelude::{FromNapiValue, Object, ObjectFinalize},
+	Env, JsUnknown,
 };
 use napi_derive::napi;
 use rolldown_utils::rustc_hash::FxHashMapExt;
@@ -14,73 +14,80 @@ type PluginsInSingleWorker = Vec<BindingPluginWithIndex>;
 type PluginsList = Vec<PluginsInSingleWorker>;
 pub(crate) type PluginValues = FxHashMap<usize, Vec<BindingPluginOptions>>;
 
-static PLUGINS_MAP: LazyLock<DashMap<u16, PluginsList>> = LazyLock::new(DashMap::default);
+static PLUGINS_MAP: LazyLock<DashMap<u16, PluginsList>> =
+	LazyLock::new(DashMap::default);
 static NEXT_ID: AtomicU16 = AtomicU16::new(1);
 
 #[napi(custom_finalize)]
 pub struct ParallelJsPluginRegistry {
-  #[napi(writable = false)]
-  pub id: u16,
-  #[napi(writable = false)]
-  pub worker_count: u16,
+	#[napi(writable = false)]
+	pub id: u16,
+	#[napi(writable = false)]
+	pub worker_count: u16,
 }
 
 #[napi]
 impl ParallelJsPluginRegistry {
-  #[napi(constructor)]
-  pub fn new(worker_count: u16) -> napi::Result<Self> {
-    if worker_count == 0 {
-      return Err(napi::Error::from_reason("worker count should be bigger than 0"));
-    }
+	#[napi(constructor)]
+	pub fn new(worker_count: u16) -> napi::Result<Self> {
+		if worker_count == 0 {
+			return Err(napi::Error::from_reason(
+				"worker count should be bigger than 0",
+			));
+		}
 
-    let id = NEXT_ID.fetch_add(1, atomic::Ordering::Relaxed);
-    PLUGINS_MAP.insert(id, vec![]);
+		let id = NEXT_ID.fetch_add(1, atomic::Ordering::Relaxed);
+		PLUGINS_MAP.insert(id, vec![]);
 
-    Ok(Self { id, worker_count })
-  }
+		Ok(Self { id, worker_count })
+	}
 
-  pub fn take_plugin_values(&self) -> PluginValues {
-    let plugins_list = PLUGINS_MAP.remove(&self.id).expect("plugin list already taken").1;
+	pub fn take_plugin_values(&self) -> PluginValues {
+		let plugins_list =
+			PLUGINS_MAP.remove(&self.id).expect("plugin list already taken").1;
 
-    let mut map: FxHashMap<usize, Vec<BindingPluginOptions>> =
-      FxHashMap::with_capacity(plugins_list[0].len());
-    for plugins in plugins_list {
-      for plugin in plugins {
-        map.entry(plugin.index as usize).or_default().push(plugin.plugin);
-      }
-    }
+		let mut map: FxHashMap<usize, Vec<BindingPluginOptions>> =
+			FxHashMap::with_capacity(plugins_list[0].len());
+		for plugins in plugins_list {
+			for plugin in plugins {
+				map.entry(plugin.index as usize)
+					.or_default()
+					.push(plugin.plugin);
+			}
+		}
 
-    map
-  }
+		map
+	}
 }
 
 impl ObjectFinalize for ParallelJsPluginRegistry {
-  fn finalize(self, mut _env: Env) -> napi::Result<()> {
-    PLUGINS_MAP.remove(&self.id);
-    Ok(())
-  }
+	fn finalize(self, mut _env: Env) -> napi::Result<()> {
+		PLUGINS_MAP.remove(&self.id);
+		Ok(())
+	}
 }
 
 impl FromNapiValue for ParallelJsPluginRegistry {
-  unsafe fn from_napi_value(
-    env: napi::sys::napi_env,
-    napi_val: napi::sys::napi_value,
-  ) -> napi::Result<Self> {
-    let unknown = JsUnknown::from_napi_value(env, napi_val)?;
-    if !ParallelJsPluginRegistry::instance_of(env.into(), &unknown)? {
-      return Err(napi::Error::from_status(napi::Status::GenericFailure));
-    }
+	unsafe fn from_napi_value(
+		env: napi::sys::napi_env,
+		napi_val: napi::sys::napi_value,
+	) -> napi::Result<Self> {
+		let unknown = JsUnknown::from_napi_value(env, napi_val)?;
+		if !ParallelJsPluginRegistry::instance_of(env.into(), &unknown)? {
+			return Err(napi::Error::from_status(napi::Status::GenericFailure));
+		}
 
-    let object: Object = unknown.cast();
-    let id: u16 = object.get_named_property_unchecked("id")?;
-    let worker_count: u16 = object.get_named_property_unchecked("workerCount")?;
-    Ok(Self { id, worker_count })
-  }
+		let object: Object = unknown.cast();
+		let id: u16 = object.get_named_property_unchecked("id")?;
+		let worker_count: u16 =
+			object.get_named_property_unchecked("workerCount")?;
+		Ok(Self { id, worker_count })
+	}
 }
 
 #[napi]
 pub fn register_plugins(id: u16, plugins: Vec<BindingPluginWithIndex>) {
-  if let Some(mut existing_plugins) = PLUGINS_MAP.get_mut(&id) {
-    existing_plugins.push(plugins);
-  }
+	if let Some(mut existing_plugins) = PLUGINS_MAP.get_mut(&id) {
+		existing_plugins.push(plugins);
+	}
 }
