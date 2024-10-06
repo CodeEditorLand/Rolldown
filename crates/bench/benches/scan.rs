@@ -1,10 +1,10 @@
 use bench::{derive_benchmark_items, DeriveOptions};
 use criterion::{criterion_group, criterion_main, Criterion};
 
-fn criterion_benchmark(c: &mut Criterion) {
+fn criterion_benchmark(c:&mut Criterion) {
 	let mut group = c.benchmark_group("scan");
 
-	let derive_options = DeriveOptions { sourcemap: false, minify: false };
+	let derive_options = DeriveOptions { sourcemap:false, minify:false };
 
 	let items = [
 		derive_benchmark_items(
@@ -32,13 +32,9 @@ fn criterion_benchmark(c: &mut Criterion) {
 		group.bench_function(format!("scan@{}", item.name), move |b| {
 			b.iter(|| {
 				tokio::runtime::Runtime::new().unwrap().block_on(async {
-					let mut rolldown_bundler =
-						rolldown::Bundler::new((item.options)());
-					let _output = rolldown_bundler
-						.scan()
-						.await
-						.unwrap()
-						.expect("should not failed in scan");
+					let mut rolldown_bundler = rolldown::Bundler::new((item.options)());
+					let _output =
+						rolldown_bundler.scan().await.unwrap().expect("should not failed in scan");
 				})
 			});
 		});

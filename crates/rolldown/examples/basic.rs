@@ -7,23 +7,16 @@ use sugar_path::SugarPath;
 #[tokio::main]
 async fn main() {
 	let mut bundler = Bundler::new(BundlerOptions {
-		input: Some(vec![
+		input:Some(vec![
 			"./entry.js".to_string().into(),
+			InputItem { import:"./other-entry.js".to_string(), ..Default::default() },
 			InputItem {
-				import: "./other-entry.js".to_string(),
-				..Default::default()
-			},
-			InputItem {
-				name: Some("third-entry".to_string()),
-				import: "./third-entry.js".to_string(),
+				name:Some("third-entry".to_string()),
+				import:"./third-entry.js".to_string(),
 			},
 		]),
-		cwd: Some(
-			workspace::crate_dir("rolldown")
-				.join("./examples/basic")
-				.normalize(),
-		),
-		sourcemap: Some(SourceMapType::File),
+		cwd:Some(workspace::crate_dir("rolldown").join("./examples/basic").normalize()),
+		sourcemap:Some(SourceMapType::File),
 		..Default::default()
 	});
 

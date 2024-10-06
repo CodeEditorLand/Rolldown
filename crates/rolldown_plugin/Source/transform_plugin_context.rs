@@ -1,21 +1,22 @@
-use crate::PluginContext;
 use rolldown_sourcemap::SourceMap;
+
+use crate::PluginContext;
 
 #[allow(unused)]
 #[derive(Debug)]
 pub struct TransformPluginContext<'a> {
-	pub inner: PluginContext,
-	sourcemap_chain: &'a Vec<SourceMap>,
-	original_code: &'a str,
-	id: &'a str,
+	pub inner:PluginContext,
+	sourcemap_chain:&'a Vec<SourceMap>,
+	original_code:&'a str,
+	id:&'a str,
 }
 
 impl<'a> TransformPluginContext<'a> {
 	pub fn new(
-		inner: PluginContext,
-		sourcemap_chain: &'a Vec<SourceMap>,
-		original_code: &'a str,
-		id: &'a str,
+		inner:PluginContext,
+		sourcemap_chain:&'a Vec<SourceMap>,
+		original_code:&'a str,
+		id:&'a str,
 	) -> Self {
 		Self { inner, sourcemap_chain, original_code, id }
 	}
@@ -28,9 +29,9 @@ impl<'a> TransformPluginContext<'a> {
 	//     self.sourcemap_chain.first().expect("should have one sourcemap").clone()
 	//   } else {
 	//     let sourcemap_chain = self.sourcemap_chain.iter().collect::<Vec<_>>();
-	//     // TODO Here could be cache result for pervious sourcemap_chain, only remapping new sourcemap chain
-	//     collapse_sourcemaps(sourcemap_chain).unwrap_or_else(|| self.create_sourcemap())
-	//   }
+	//     // TODO Here could be cache result for pervious sourcemap_chain, only
+	// remapping new sourcemap chain     collapse_sourcemaps(sourcemap_chain).
+	// unwrap_or_else(|| self.create_sourcemap())   }
 	// }
 
 	// fn create_sourcemap(&self) -> SourceMap {

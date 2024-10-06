@@ -3,8 +3,13 @@ use std::{borrow::Cow, ffi::OsStr, path::Path, process::Command};
 
 use anyhow::Context;
 use rolldown::{
-	plugin::__inner::SharedPluginable, BundleOutput, Bundler, BundlerOptions,
-	IsExternal, OutputFormat, SourceMapType,
+	plugin::__inner::SharedPluginable,
+	BundleOutput,
+	Bundler,
+	BundlerOptions,
+	IsExternal,
+	OutputFormat,
+	SourceMapType,
 };
 use rolldown_common::Output;
 use rolldown_error::DiagnosticOptions;
@@ -16,22 +21,17 @@ use crate::utils::RUNTIME_MODULE_OUTPUT_RE;
 
 #[derive(Default)]
 pub struct IntegrationTest {
-	test_meta: TestMeta,
+	test_meta:TestMeta,
 }
 
 fn default_test_input_item() -> rolldown::InputItem {
-	rolldown::InputItem {
-		name: Some("main".to_string()),
-		import: "./main.js".to_string(),
-	}
+	rolldown::InputItem { name:Some("main".to_string()), import:"./main.js".to_string() }
 }
 
 impl IntegrationTest {
-	pub fn new(test_meta: TestMeta) -> Self {
-		Self { test_meta }
-	}
+	pub fn new(test_meta:TestMeta) -> Self { Self { test_meta } }
 
-	pub async fn bundle(&self, mut options: BundlerOptions) -> BundleOutput {
+	pub async fn bundle(&self, mut options:BundlerOptions) -> BundleOutput {
 		self.apply_test_defaults(&mut options);
 
 		let mut bundler = Bundler::new(options);
@@ -48,14 +48,14 @@ impl IntegrationTest {
 		}
 	}
 
-	pub async fn run(&self, options: BundlerOptions) {
+	pub async fn run(&self, options:BundlerOptions) {
 		self.run_with_plugins(options, vec![]).await;
 	}
 
 	pub async fn run_with_plugins(
 		&self,
-		mut options: BundlerOptions,
-		plugins: Vec<SharedPluginable>,
+		mut options:BundlerOptions,
+		plugins:Vec<SharedPluginable>,
 	) {
 		self.apply_test_defaults(&mut options);
 
@@ -76,15 +76,15 @@ impl IntegrationTest {
 		};
 
 		assert!(
-      !(self.test_meta.expect_error && bundle_output.errors.is_empty()),
-      "Expected the bundling to be failed with diagnosable errors, but got success"
-    );
+			!(self.test_meta.expect_error && bundle_output.errors.is_empty()),
+			"Expected the bundling to be failed with diagnosable errors, but got success"
+		);
 
 		assert!(
-      !(!bundle_output.errors.is_empty() && !self.test_meta.expect_error),
-      "Expected the bundling to be success, but got diagnosable errors: {:?}",
-      bundle_output.errors
-    );
+			!(!bundle_output.errors.is_empty() && !self.test_meta.expect_error),
+			"Expected the bundling to be success, but got diagnosable errors: {:?}",
+			bundle_output.errors
+		);
 
 		self.snapshot_bundle_output(bundle_output, &cwd);
 
@@ -98,10 +98,9 @@ impl IntegrationTest {
 		}
 	}
 
-	fn apply_test_defaults(&self, options: &mut BundlerOptions) {
+	fn apply_test_defaults(&self, options:&mut BundlerOptions) {
 		if options.external.is_none() {
-			options.external =
-				Some(IsExternal::from_vec(vec!["node:assert".to_string()]));
+			options.external = Some(IsExternal::from_vec(vec!["node:assert".to_string()]));
 		}
 
 		if options.input.is_none() {
@@ -119,21 +118,17 @@ impl IntegrationTest {
 
 		if options.entry_filenames.is_none() {
 			if self.test_meta.hash_in_filename {
-				options.entry_filenames =
-					Some(format!("[name]-[hash].{output_ext}").into());
+				options.entry_filenames = Some(format!("[name]-[hash].{output_ext}").into());
 			} else {
-				options.entry_filenames =
-					Some(format!("[name].{output_ext}").into());
+				options.entry_filenames = Some(format!("[name].{output_ext}").into());
 			}
 		}
 
 		if options.chunk_filenames.is_none() {
 			if self.test_meta.hash_in_filename {
-				options.chunk_filenames =
-					Some(format!("[name]-[hash].{output_ext}").into());
+				options.chunk_filenames = Some(format!("[name]-[hash].{output_ext}").into());
 			} else {
-				options.chunk_filenames =
-					Some(format!("[name].{output_ext}").into());
+				options.chunk_filenames = Some(format!("[name].{output_ext}").into());
 			}
 		}
 
@@ -150,19 +145,14 @@ impl IntegrationTest {
 	}
 
 	#[allow(clippy::too_many_lines)]
-	fn snapshot_bundle_output(&self, bundle_output: BundleOutput, cwd: &Path) {
+	fn snapshot_bundle_output(&self, bundle_output:BundleOutput, cwd:&Path) {
 		let mut snapshot = String::new();
 		let mut errors = bundle_output.errors;
 		if !errors.is_empty() {
 			snapshot.push_str("# Errors\n\n");
 			errors.sort_by_key(|e| e.kind().to_string());
 			let diagnostics = errors.into_iter().map(|e| {
-				(
-					e.kind(),
-					e.into_diagnostic_with(&DiagnosticOptions {
-						cwd: cwd.to_path_buf(),
-					}),
-				)
+				(e.kind(), e.into_diagnostic_with(&DiagnosticOptions { cwd:cwd.to_path_buf() }))
 			});
 
 			let rendered = diagnostics
@@ -183,12 +173,7 @@ impl IntegrationTest {
 		if !warnings.is_empty() {
 			snapshot.push_str("# warnings\n\n");
 			let diagnostics = warnings.into_iter().map(|e| {
-				(
-					e.kind(),
-					e.into_diagnostic_with(&DiagnosticOptions {
-						cwd: cwd.to_path_buf(),
-					}),
-				)
+				(e.kind(), e.into_diagnostic_with(&DiagnosticOptions { cwd:cwd.to_path_buf() }))
 			});
 			let mut rendered_diagnostics = diagnostics
 				.map(|(code, diagnostic)| {
@@ -218,14 +203,12 @@ impl IntegrationTest {
 				.filter_map(|asset| {
 					let content = match asset {
 						Output::Chunk(inner) => &inner.code,
-						Output::Asset(inner) => match &inner.source {
-							rolldown_common::AssetSource::String(inner) => {
-								inner
-							},
-							// Snapshot buffer is meaningless
-							rolldown_common::AssetSource::Buffer(_) => {
-								return None
-							},
+						Output::Asset(inner) => {
+							match &inner.source {
+								rolldown_common::AssetSource::String(inner) => inner,
+								// Snapshot buffer is meaningless
+								rolldown_common::AssetSource::Buffer(_) => return None,
+							}
 						},
 					};
 					let content = if self.test_meta.hidden_runtime_module {
@@ -236,14 +219,15 @@ impl IntegrationTest {
 
 					let filename = asset.filename();
 
-					let file_ext = filename
-						.as_path()
-						.extension()
-						.and_then(OsStr::to_str)
-						.map_or("unknown", |ext| match ext {
-							"mjs" | "cjs" => "js",
-							_ => ext,
-						});
+					let file_ext = filename.as_path().extension().and_then(OsStr::to_str).map_or(
+						"unknown",
+						|ext| {
+							match ext {
+								"mjs" | "cjs" => "js",
+								_ => ext,
+							}
+						},
+					);
 
 					if file_ext == "map" {
 						// Skip sourcemap for now
@@ -267,17 +251,19 @@ impl IntegrationTest {
 			snapshot.push_str("\n\n## Output Stats\n\n");
 			let stats = assets
 				.iter()
-				.flat_map(|asset| match asset {
-					Output::Chunk(chunk) => {
-						vec![Cow::Owned(format!(
-              "- {}, is_entry {}, is_dynamic_entry {}, exports {:?}",
-              chunk.filename.as_str(),
-              chunk.is_entry,
-              chunk.is_dynamic_entry,
-              chunk.exports
-            ))]
-					},
-					Output::Asset(_) => vec![],
+				.flat_map(|asset| {
+					match asset {
+						Output::Chunk(chunk) => {
+							vec![Cow::Owned(format!(
+								"- {}, is_entry {}, is_dynamic_entry {}, exports {:?}",
+								chunk.filename.as_str(),
+								chunk.is_entry,
+								chunk.is_dynamic_entry,
+								chunk.exports
+							))]
+						},
+						Output::Asset(_) => vec![],
+					}
 				})
 				.collect::<Vec<_>>()
 				.join("\n");
@@ -289,14 +275,16 @@ impl IntegrationTest {
 			snapshot.push_str("```\n");
 			let visualizer_result = assets
 				.iter()
-				.filter_map(|asset| match asset {
-					Output::Chunk(chunk) => {
-						chunk.map.as_ref().map(|sourcemap| {
-							SourcemapVisualizer::new(&chunk.code, sourcemap)
-								.into_visualizer_text()
-						})
-					},
-					Output::Asset(_) => None,
+				.filter_map(|asset| {
+					match asset {
+						Output::Chunk(chunk) => {
+							chunk.map.as_ref().map(|sourcemap| {
+								SourcemapVisualizer::new(&chunk.code, sourcemap)
+									.into_visualizer_text()
+							})
+						},
+						Output::Asset(_) => None,
+					}
 				})
 				.collect::<Vec<_>>()
 				.join("\n");
@@ -315,17 +303,12 @@ impl IntegrationTest {
 		});
 	}
 
-	fn execute_output_assets(bundler: &Bundler) {
+	fn execute_output_assets(bundler:&Bundler) {
 		let cwd = bundler.options().cwd.clone();
 		let dist_folder = cwd.join(&bundler.options().dir);
-		let is_output_cjs =
-			matches!(bundler.options().format, OutputFormat::Cjs);
+		let is_output_cjs = matches!(bundler.options().format, OutputFormat::Cjs);
 
-		let test_script = if is_output_cjs {
-			cwd.join("_test.cjs")
-		} else {
-			cwd.join("_test.mjs")
-		};
+		let test_script = if is_output_cjs { cwd.join("_test.cjs") } else { cwd.join("_test.mjs") };
 
 		let mut node_command = Command::new("node");
 
@@ -337,10 +320,8 @@ impl IntegrationTest {
 				.input
 				.iter()
 				.map(|item| {
-					let name = item
-						.name
-						.clone()
-						.expect("inputs must have `name` in `_config.json`");
+					let name =
+						item.name.clone().expect("inputs must have `name` in `_config.json`");
 					let ext = if is_output_cjs { "cjs" } else { "mjs" };
 					format!("{name}.{ext}",)
 				})
@@ -355,10 +336,8 @@ impl IntegrationTest {
 				}
 				if cfg!(target_os = "windows") && !is_output_cjs {
 					// Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs.
-					node_command.arg(format!(
-						"file://{}",
-						entry.to_str().expect("should be valid utf8")
-					));
+					node_command
+						.arg(format!("file://{}", entry.to_str().expect("should be valid utf8")));
 				} else {
 					node_command.arg(entry);
 				}
@@ -375,7 +354,9 @@ impl IntegrationTest {
 			let stderr_utf8 = std::str::from_utf8(&output.stderr).unwrap();
 
 			println!("⬇️⬇️ Failed to execute command ⬇️⬇️\n{node_command:?}\n⬆️⬆️ end  ⬆️⬆️");
-			panic!("⬇️⬇️ stderr ⬇️⬇️\n{stderr_utf8}\n⬇️⬇️ stdout ⬇️⬇️\n{stdout_utf8}\n⬆️⬆️ end  ⬆️⬆️",);
+			panic!(
+				"⬇️⬇️ stderr ⬇️⬇️\n{stderr_utf8}\n⬇️⬇️ stdout ⬇️⬇️\n{stdout_utf8}\n⬆️⬆️ end  ⬆️⬆️",
+			);
 		}
 	}
 }

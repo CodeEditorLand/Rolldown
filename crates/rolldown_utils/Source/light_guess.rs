@@ -1,9 +1,10 @@
 // Port from https://github.com/7086cmd/mime_more/blob/main/src/light_guess.rs
-use mime::Mime;
-use phf::{phf_map, Map};
 use std::str::FromStr;
 
-pub static MIME_TYPES: Map<&'static str, &'static str> = phf_map! {
+use mime::Mime;
+use phf::{phf_map, Map};
+
+pub static MIME_TYPES:Map<&'static str, &'static str> = phf_map! {
 	// Text
 	"txt" => "text/plain",
 	"css" => "text/css",
@@ -74,21 +75,15 @@ pub static MIME_TYPES: Map<&'static str, &'static str> = phf_map! {
 /// - https://github.com/evanw/esbuild/blob/fc37c2fa9de2ad77476a6d4a8f1516196b90187e/internal/helpers/mime.go#L5
 ///
 /// Thanks to @ikkz and @evanw for the inspiration.
-pub fn mime_type_by_extension(ext: &str) -> Option<&'static str> {
-	MIME_TYPES.get(ext).copied()
-}
+pub fn mime_type_by_extension(ext:&str) -> Option<&'static str> { MIME_TYPES.get(ext).copied() }
 
-pub fn try_from_ext(ext: &str) -> anyhow::Result<Mime> {
+pub fn try_from_ext(ext:&str) -> anyhow::Result<Mime> {
 	mime_type_by_extension(ext)
-		.ok_or_else(|| {
-			anyhow::Error::msg(format!(
-				"No mime type found for extension: {ext}"
-			))
-		})
+		.ok_or_else(|| anyhow::Error::msg(format!("No mime type found for extension: {ext}")))
 		.and_then(|mime| Ok(Mime::from_str(mime)?))
 }
 
-pub fn try_from_path(path: &std::path::Path) -> anyhow::Result<Mime> {
+pub fn try_from_path(path:&std::path::Path) -> anyhow::Result<Mime> {
 	if let Some(ext) = path.extension().and_then(|ext| ext.to_str()) {
 		try_from_ext(ext)
 	} else {
@@ -113,10 +108,7 @@ mod tests {
 		assert_eq!(mime_type_by_extension("avi").unwrap(), "video/x-msvideo");
 		assert_eq!(mime_type_by_extension("pdf").unwrap(), "application/pdf");
 		assert_eq!(mime_type_by_extension("wasm").unwrap(), "application/wasm");
-		assert_eq!(
-			mime_type_by_extension("webmanifest").unwrap(),
-			"application/manifest+json"
-		);
+		assert_eq!(mime_type_by_extension("webmanifest").unwrap(), "application/manifest+json");
 	}
 
 	#[test]

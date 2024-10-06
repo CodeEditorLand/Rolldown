@@ -5,7 +5,13 @@ use oxc::{
 };
 use rolldown_common::{
 	side_effects::{DeterminedSideEffects, HookSideEffects},
-	AstScopes, EcmaModule, ModuleDefFormat, ModuleId, ModuleIdx, ModuleType, SymbolRef,
+	AstScopes,
+	EcmaModule,
+	ModuleDefFormat,
+	ModuleId,
+	ModuleIdx,
+	ModuleType,
+	SymbolRef,
 	TreeshakeOptions,
 };
 use rolldown_ecmascript::EcmaAst;
@@ -19,7 +25,10 @@ use crate::{
 	types::{
 		ast_symbols::AstSymbols,
 		module_factory::{
-			CreateModuleArgs, CreateModuleContext, CreateModuleReturn, ModuleFactory,
+			CreateModuleArgs,
+			CreateModuleContext,
+			CreateModuleReturn,
+			ModuleFactory,
 		},
 	},
 	utils::{
@@ -32,12 +41,12 @@ pub struct EcmaModuleFactory;
 
 impl EcmaModuleFactory {
 	fn scan_ast(
-		module_idx: ModuleIdx,
-		id: &ArcStr,
-		ast: &mut EcmaAst,
-		symbols: SymbolTable,
-		scopes: ScopeTree,
-		module_def_format: ModuleDefFormat,
+		module_idx:ModuleIdx,
+		id:&ArcStr,
+		ast:&mut EcmaAst,
+		symbols:SymbolTable,
+		scopes:ScopeTree,
+		module_def_format:ModuleDefFormat,
 	) -> UnhandleableResult<(AstScopes, ScanResult, AstSymbols, SymbolRef)> {
 		let (mut ast_symbols, ast_scopes) = make_ast_scopes_and_symbols(symbols, scopes);
 
@@ -69,8 +78,8 @@ impl EcmaModuleFactory {
 impl ModuleFactory for EcmaModuleFactory {
 	#[allow(clippy::too_many_lines)]
 	async fn create_module<'any>(
-		ctx: &mut CreateModuleContext<'any>,
-		args: CreateModuleArgs,
+		ctx:&mut CreateModuleContext<'any>,
+		args:CreateModuleArgs,
 	) -> anyhow::Result<DiagnosableResult<CreateModuleReturn>> {
 		let id = ModuleId::new(ArcStr::clone(&ctx.resolved_id.id));
 
@@ -91,7 +100,7 @@ impl ModuleFactory for EcmaModuleFactory {
 			Ok(parse_result) => parse_result,
 			Err(errs) => {
 				return Ok(Err(errs));
-			}
+			},
 		};
 
 		let (scope, scan_result, ast_symbol, namespace_object_ref) = Self::scan_ast(
@@ -108,7 +117,7 @@ impl ModuleFactory for EcmaModuleFactory {
 				Ok(deps) => deps,
 				Err(errs) => {
 					return Ok(Err(errs));
-				}
+				},
 			};
 
 		let ScanResult {
@@ -146,7 +155,8 @@ impl ModuleFactory for EcmaModuleFactory {
 		// 1. Hook side effects
 		// 2. Package.json side effects
 		// 3. Analyzed side effects
-		// We should skip the `check_side_effects_for` if the hook side effects is not `None`.
+		// We should skip the `check_side_effects_for` if the hook side effects
+		// is not `None`.
 		let lazy_check_side_effects = || {
 			if matches!(ctx.module_type, ModuleType::Css) {
 				// CSS modules are considered to have side effects by default
@@ -166,22 +176,28 @@ impl ModuleFactory for EcmaModuleFactory {
 		};
 
 		let side_effects = match args.hook_side_effects {
-			Some(side_effects) => match side_effects {
-				HookSideEffects::True => lazy_check_side_effects(),
-				HookSideEffects::False => DeterminedSideEffects::UserDefined(false),
-				HookSideEffects::NoTreeshake => DeterminedSideEffects::NoTreeshake,
+			Some(side_effects) => {
+				match side_effects {
+					HookSideEffects::True => lazy_check_side_effects(),
+					HookSideEffects::False => DeterminedSideEffects::UserDefined(false),
+					HookSideEffects::NoTreeshake => DeterminedSideEffects::NoTreeshake,
+				}
 			},
-			// If user don't specify the side effects, we use fallback value from `option.treeshake.moduleSideEffects`;
-			None => match ctx.options.treeshake {
-				// Actually this convert is not necessary, just for passing type checking
-				TreeshakeOptions::Boolean(false) => DeterminedSideEffects::NoTreeshake,
-				TreeshakeOptions::Boolean(true) => unreachable!(),
-				TreeshakeOptions::Option(ref opt) => {
-					if opt.module_side_effects.resolve(&stable_id) {
-						lazy_check_side_effects()
-					} else {
-						DeterminedSideEffects::UserDefined(false)
-					}
+			// If user don't specify the side effects, we use fallback value
+			// from `option.treeshake.moduleSideEffects`;
+			None => {
+				match ctx.options.treeshake {
+					// Actually this convert is not necessary, just for passing
+					// type checking
+					TreeshakeOptions::Boolean(false) => DeterminedSideEffects::NoTreeshake,
+					TreeshakeOptions::Boolean(true) => unreachable!(),
+					TreeshakeOptions::Option(ref opt) => {
+						if opt.module_side_effects.resolve(&stable_id) {
+							lazy_check_side_effects()
+						} else {
+							DeterminedSideEffects::UserDefined(false)
+						}
+					},
 				}
 			},
 		};
@@ -192,11 +208,12 @@ impl ModuleFactory for EcmaModuleFactory {
 			None
 		};
 
-		// TODO: Should we check if there are `check_side_effects_for` returns false but there are side effects in the module?
+		// TODO: Should we check if there are `check_side_effects_for` returns
+		// false but there are side effects in the module?
 		let module = EcmaModule {
-			source: ast.source().clone(),
-			ecma_ast_idx: None,
-			idx: ctx.module_index,
+			source:ast.source().clone(),
+			ecma_ast_idx:None,
+			idx:ctx.module_index,
 			repr_name,
 			stable_id,
 			id,
@@ -209,28 +226,28 @@ impl ModuleFactory for EcmaModuleFactory {
 			scope,
 			exports_kind,
 			namespace_object_ref,
-			def_format: ctx.resolved_id.module_def_format,
-			debug_id: ctx.resolved_id.debug_id(&ctx.options.cwd),
-			sourcemap_chain: args.sourcemap_chain,
-			exec_order: u32::MAX,
-			is_user_defined_entry: ctx.is_user_defined_entry,
-			import_records: IndexVec::default(),
-			is_included: false,
-			importers: vec![],
-			dynamic_importers: vec![],
+			def_format:ctx.resolved_id.module_def_format,
+			debug_id:ctx.resolved_id.debug_id(&ctx.options.cwd),
+			sourcemap_chain:args.sourcemap_chain,
+			exec_order:u32::MAX,
+			is_user_defined_entry:ctx.is_user_defined_entry,
+			import_records:IndexVec::default(),
+			is_included:false,
+			importers:vec![],
+			dynamic_importers:vec![],
 			imported_ids,
 			dynamically_imported_ids,
 			side_effects,
-			module_type: ctx.module_type.clone(),
+			module_type:ctx.module_type.clone(),
 			has_eval,
 			css_view,
 		};
 
 		Ok(Ok(CreateModuleReturn {
-			module: module.into(),
+			module:module.into(),
 			resolved_deps,
-			raw_import_records: import_records,
-			ecma_related: Some((ast, ast_symbol)),
+			raw_import_records:import_records,
+			ecma_related:Some((ast, ast_symbol)),
 		}))
 	}
 }

@@ -4,19 +4,17 @@ use crate::ModuleIdx;
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub struct EntryPoint {
-  pub name: Option<ArcStr>,
-  pub id: ModuleIdx,
-  pub kind: EntryPointKind,
+	pub name:Option<ArcStr>,
+	pub id:ModuleIdx,
+	pub kind:EntryPointKind,
 }
 
 #[derive(Debug, Hash, PartialEq, Eq, Clone)]
 pub enum EntryPointKind {
-  UserDefined,
-  DynamicImport,
+	UserDefined,
+	DynamicImport,
 }
 
 impl EntryPointKind {
-  pub fn is_user_defined(&self) -> bool {
-    matches!(self, EntryPointKind::UserDefined)
-  }
+	pub fn is_user_defined(&self) -> bool { matches!(self, EntryPointKind::UserDefined) }
 }

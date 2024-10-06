@@ -2,27 +2,23 @@ use std::fmt::{Debug, Display};
 
 #[derive(Clone, PartialEq, Eq, Default, Hash, PartialOrd, Ord)]
 pub struct BitSet {
-	entries: Vec<u8>,
+	entries:Vec<u8>,
 }
 
 impl BitSet {
-	pub fn new(max_bit_count: u32) -> Self {
-		Self { entries: vec![0; ((max_bit_count + 7) / 8) as usize] }
+	pub fn new(max_bit_count:u32) -> Self {
+		Self { entries:vec![0; ((max_bit_count + 7) / 8) as usize] }
 	}
 
-	pub fn has_bit(&self, bit: u32) -> bool {
+	pub fn has_bit(&self, bit:u32) -> bool {
 		(self.entries[bit as usize / 8] & (1 << (bit & 7))) != 0
 	}
 
-	pub fn set_bit(&mut self, bit: u32) {
-		self.entries[bit as usize / 8] |= 1 << (bit & 7);
-	}
+	pub fn set_bit(&mut self, bit:u32) { self.entries[bit as usize / 8] |= 1 << (bit & 7); }
 
-	pub fn is_empty(&self) -> bool {
-		self.entries.iter().all(|&e| e == 0)
-	}
+	pub fn is_empty(&self) -> bool { self.entries.iter().all(|&e| e == 0) }
 
-	pub fn union(&mut self, other: &Self) {
+	pub fn union(&mut self, other:&Self) {
 		for (i, &e) in other.entries.iter().enumerate() {
 			self.entries[i] |= e;
 		}
@@ -30,7 +26,7 @@ impl BitSet {
 }
 
 impl Display for BitSet {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let bit_string = self
 			.entries
 			.iter()
@@ -42,7 +38,7 @@ impl Display for BitSet {
 }
 
 impl Debug for BitSet {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		let bit_string = self
 			.entries
 			.iter()

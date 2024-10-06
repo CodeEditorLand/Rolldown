@@ -1,12 +1,12 @@
-use crate::light_guess;
-use mime::Mime;
 use std::{path::Path, str::FromStr};
 
-fn is_texture(data: &[u8]) -> bool {
-	std::str::from_utf8(data).is_ok()
-}
+use mime::Mime;
 
-pub fn guess_mime(path: &Path, data: &[u8]) -> anyhow::Result<Mime> {
+use crate::light_guess;
+
+fn is_texture(data:&[u8]) -> bool { std::str::from_utf8(data).is_ok() }
+
+pub fn guess_mime(path:&Path, data:&[u8]) -> anyhow::Result<Mime> {
 	if let Ok(guessed) = light_guess::try_from_path(path) {
 		return Ok(guessed);
 	}

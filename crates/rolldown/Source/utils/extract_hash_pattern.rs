@@ -1,11 +1,11 @@
 #[derive(Debug, PartialEq, Eq)]
 pub struct ExtractedHashPattern<'a> {
-	pub pattern: &'a str,
-	pub len: Option<usize>,
+	pub pattern:&'a str,
+	pub len:Option<usize>,
 }
 
 /// Extract `[hash]` or `[hash:8]` in the template
-pub fn extract_hash_pattern(pattern: &str) -> Option<ExtractedHashPattern<'_>> {
+pub fn extract_hash_pattern(pattern:&str) -> Option<ExtractedHashPattern<'_>> {
 	let start = pattern.find("[hash")?;
 	let end = pattern[start + 5..].find(']')?;
 	let len = if let Some(n) = pattern[start + 5..start + 5 + end].strip_prefix(':') {
@@ -31,11 +31,11 @@ fn test_extract_hash_placeholder() {
 
 	assert_eq!(
 		extract_hash_pattern("[name]-[hash].mjs"),
-		Some(ExtractedHashPattern { pattern: "[hash]", len: None })
+		Some(ExtractedHashPattern { pattern:"[hash]", len:None })
 	);
 
 	assert_eq!(
 		extract_hash_pattern("[name]-[hash:16].mjs"),
-		Some(ExtractedHashPattern { pattern: "[hash:16]", len: Some(16) })
+		Some(ExtractedHashPattern { pattern:"[hash:16]", len:Some(16) })
 	);
 }

@@ -6,5 +6,5 @@ pub enum PluginOrder {
 
 #[derive(Debug)]
 pub struct PluginHookMeta {
-	pub order: Option<PluginOrder>,
+	pub order:Option<PluginOrder>,
 }

@@ -2,10 +2,9 @@
 
 use std::sync::LazyLock;
 
-static IGNORED_PROTOCOLS: LazyLock<Vec<&str>> =
-	LazyLock::new(|| vec!["data:", "http:", "https:"]);
+static IGNORED_PROTOCOLS:LazyLock<Vec<&str>> = LazyLock::new(|| vec!["data:", "http:", "https:"]);
 
-pub(crate) fn should_ignore(glob: &str) -> bool {
+pub(crate) fn should_ignore(glob:&str) -> bool {
 	if !glob.contains('*') {
 		return true;
 	}

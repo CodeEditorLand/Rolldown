@@ -3,16 +3,14 @@ use rolldown_utils::ecma_script::is_validate_assignee_identifier_name;
 use serde_json::Value;
 // TODO: handling https://github.com/tc39/proposal-json-superset
 
-pub fn json_to_esm(json: &str) -> anyhow::Result<String> {
+pub fn json_to_esm(json:&str) -> anyhow::Result<String> {
 	// TODO: use zero-copy deserialization
-	let json_value: Value =
-		serde_json::from_str(json.trim_start_matches("\u{FEFF}"))?;
+	let json_value:Value = serde_json::from_str(json.trim_start_matches("\u{FEFF}"))?;
 
 	match json_value {
 		Value::Object(map) => {
 			let mut source = String::new();
-			let mut exported_items_for_default_export =
-				Vec::with_capacity(map.len());
+			let mut exported_items_for_default_export = Vec::with_capacity(map.len());
 			for (idx, (key, value)) in map.iter().enumerate() {
 				if is_validate_assignee_identifier_name(key) {
 					source.push_str(&format!(
@@ -21,18 +19,14 @@ pub fn json_to_esm(json: &str) -> anyhow::Result<String> {
 					));
 					exported_items_for_default_export.push(key.to_string());
 				} else {
-					let valid_id =
-						format!("key_{}", itoa::Buffer::new().format(idx));
+					let valid_id = format!("key_{}", itoa::Buffer::new().format(idx));
 					source.push_str(&format!(
 						"const {} = {};\n",
 						valid_id,
 						serde_json::to_string_pretty(value)?
 					));
-					source.push_str(&format!(
-						"export {{ {valid_id} as '{key}' }};\n"
-					));
-					exported_items_for_default_export
-						.push(format!("'{key}': {valid_id}"));
+					source.push_str(&format!("export {{ {valid_id} as '{key}' }};\n"));
+					exported_items_for_default_export.push(format!("'{key}': {valid_id}"));
 				};
 			}
 			source.push_str(&format!(

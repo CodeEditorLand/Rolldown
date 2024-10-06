@@ -1,6 +1,6 @@
-use memchr::memchr2;
 use std::{borrow::Cow, ffi::OsStr, path::Path};
 
+use memchr::memchr2;
 use sugar_path::SugarPath;
 
 pub trait PathExt {
@@ -20,27 +20,22 @@ impl PathExt for std::path::Path {
 
 	fn expect_to_slash(&self) -> String {
 		self.to_slash()
-			.unwrap_or_else(|| {
-				panic!("Failed to convert {:?} to slash str", self.display())
-			})
+			.unwrap_or_else(|| panic!("Failed to convert {:?} to slash str", self.display()))
 			.into_owned()
 	}
 
 	/// It doesn't ensure the file name is a valid identifier in JS.
 	fn representative_file_name(&self) -> Cow<str> {
-		let file_name = self.file_stem().map_or_else(
-			|| self.to_string_lossy(),
-			|stem| stem.to_string_lossy(),
-		);
+		let file_name = self
+			.file_stem()
+			.map_or_else(|| self.to_string_lossy(), |stem| stem.to_string_lossy());
 
 		let file_name = match &*file_name {
 			// "index": Node.js use `index` as a special name for directory import.
 			// "mod": https://docs.deno.com/runtime/manual/references/contributing/style_guide#do-not-use-the-filename-indextsindexjs.
 			"index" | "mod" => {
-				if let Some(parent_dir_name) = self
-					.parent()
-					.and_then(Path::file_stem)
-					.map(OsStr::to_string_lossy)
+				if let Some(parent_dir_name) =
+					self.parent().and_then(Path::file_stem).map(OsStr::to_string_lossy)
 				{
 					Cow::Owned([&*parent_dir_name, "_", &*file_name].concat())
 				} else {
@@ -70,7 +65,7 @@ fn test_representative_file_name() {
 #[inline]
 /// ref https://github.com/rolldown/vite/blob/454c8fff9f7115ed29281c2d927366280508a0ab/packages/vite/src/shared/utils.ts#L31-L34
 /// https://regex101.com/delete/E5Xk8cGCIde8tiY8I4TOe9eWqgTxyQj006TK
-pub fn clean_url(v: &str) -> &str {
+pub fn clean_url(v:&str) -> &str {
 	if let Some(index) = memchr2(b'?', b'#', v.as_bytes()) {
 		&v[0..index]
 	} else {

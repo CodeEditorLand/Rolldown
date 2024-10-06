@@ -3,7 +3,7 @@ use std::borrow::Cow;
 // TODO support `output.sanitizeFileName`
 // Follow from https://github.com/rollup/rollup/blob/master/src/utils/sanitizeFileName.ts
 #[allow(clippy::needless_pass_by_value)]
-pub fn sanitize_file_name(str: Cow<str>) -> String {
+pub fn sanitize_file_name(str:Cow<str>) -> String {
 	let mut sanitized = String::with_capacity(str.len());
 	for char in str.chars() {
 		if char.is_ascii_alphanumeric() || matches!(char, '-' | '_') {

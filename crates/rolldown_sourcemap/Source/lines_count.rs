@@ -2,9 +2,7 @@ use memchr::memmem;
 
 #[allow(clippy::cast_possible_truncation)]
 #[inline]
-pub fn lines_count(str: &str) -> u32 {
-	memmem::find_iter(str.as_bytes(), "\n").count() as u32
-}
+pub fn lines_count(str:&str) -> u32 { memmem::find_iter(str.as_bytes(), "\n").count() as u32 }
 
 #[test]
 fn test() {

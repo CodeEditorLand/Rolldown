@@ -1,6 +1,6 @@
 use rolldown_common::{ExportsKind, Module};
 
-pub fn calculate_interop_from_module(module: &Module) -> Option<Interop> {
+pub fn calculate_interop_from_module(module:&Module) -> Option<Interop> {
 	match module {
 		Module::External(_) => None,
 		Module::Ecma(module) => {
@@ -13,7 +13,7 @@ pub fn calculate_interop_from_module(module: &Module) -> Option<Interop> {
 			} else {
 				None
 			}
-		}
+		},
 	}
 }
 

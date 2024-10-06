@@ -1,9 +1,9 @@
-use oxc_resolver::{FileMetadata, FileSystem as OxcResolverFileSystem};
-
 use std::{
 	io,
 	path::{Path, PathBuf},
 };
+
+use oxc_resolver::{FileMetadata, FileSystem as OxcResolverFileSystem};
 
 use crate::file_system::FileSystem;
 
@@ -12,30 +12,21 @@ use crate::file_system::FileSystem;
 pub struct OsFileSystem;
 
 impl FileSystem for OsFileSystem {
-	fn remove_dir_all(&self, path: &Path) -> io::Result<()> {
-		std::fs::remove_dir_all(path)
-	}
+	fn remove_dir_all(&self, path:&Path) -> io::Result<()> { std::fs::remove_dir_all(path) }
 
-	fn create_dir_all(&self, path: &Path) -> io::Result<()> {
-		std::fs::create_dir_all(path)
-	}
+	fn create_dir_all(&self, path:&Path) -> io::Result<()> { std::fs::create_dir_all(path) }
 
-	fn write(&self, path: &Path, content: &[u8]) -> io::Result<()> {
-		std::fs::write(path, content)
-	}
+	fn write(&self, path:&Path, content:&[u8]) -> io::Result<()> { std::fs::write(path, content) }
 
-	fn exists(&self, path: &Path) -> bool {
-		path.exists()
-	}
+	fn exists(&self, path:&Path) -> bool { path.exists() }
 
-	fn read(&self, path: &Path) -> io::Result<Vec<u8>> {
-		std::fs::read(path)
-	}
+	fn read(&self, path:&Path) -> io::Result<Vec<u8>> { std::fs::read(path) }
 }
 
 impl OxcResolverFileSystem for OsFileSystem {
-	fn read_to_string(&self, path: &Path) -> io::Result<String> {
-		// `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string` uses internally
+	fn read_to_string(&self, path:&Path) -> io::Result<String> {
+		// `simdutf8` is faster than `std::str::from_utf8` which `fs::read_to_string`
+		// uses internally
 		let bytes = std::fs::read(path)?;
 		if simdutf8::basic::from_utf8(&bytes).is_err() {
 			// Same error as `fs::read_to_string` produces (`io::Error::INVALID_UTF8`)
@@ -48,15 +39,15 @@ impl OxcResolverFileSystem for OsFileSystem {
 		Ok(unsafe { String::from_utf8_unchecked(bytes) })
 	}
 
-	fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
+	fn metadata(&self, path:&Path) -> io::Result<FileMetadata> {
 		std::fs::metadata(path).map(FileMetadata::from)
 	}
 
-	fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata> {
+	fn symlink_metadata(&self, path:&Path) -> io::Result<FileMetadata> {
 		std::fs::symlink_metadata(path).map(FileMetadata::from)
 	}
 
-	fn canonicalize(&self, path: &Path) -> io::Result<PathBuf> {
+	fn canonicalize(&self, path:&Path) -> io::Result<PathBuf> {
 		#[cfg(not(target_os = "wasi"))]
 		{
 			dunce::canonicalize(path)
@@ -75,7 +66,8 @@ impl OxcResolverFileSystem for OsFileSystem {
 						},
 						Some(".") | None => {},
 						Some(seg) => {
-							// Need to trim the extra \0 introduces by rust std rust-lang/rust#123727
+							// Need to trim the extra \0 introduces by rust std
+							// rust-lang/rust#123727
 							path_buf.push(seg.trim_end_matches('\0'));
 						},
 					}

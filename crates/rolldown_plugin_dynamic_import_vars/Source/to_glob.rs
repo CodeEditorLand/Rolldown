@@ -1,34 +1,31 @@
 // Ported from https://github.com/rollup/plugins/blob/944e7d3ec4375371a2e70a55ac07cab4c61dc8b6/packages/dynamic-import-vars/src/dynamic-import-to-glob.js
 
-use crate::should_ignore::should_ignore;
+use std::{path::Path, sync::LazyLock};
+
 use oxc::{
-	ast::ast::{
-		Argument, BinaryExpression, CallExpression, Expression, TemplateLiteral,
-	},
+	ast::ast::{Argument, BinaryExpression, CallExpression, Expression, TemplateLiteral},
 	codegen::CodeGenerator,
 	syntax::operator::BinaryOperator,
 };
 use regex::Regex;
-use std::path::Path;
-use std::sync::LazyLock;
+
+use crate::should_ignore::should_ignore;
 
 // Disallow ./*.ext
-static OWN_DIRECTORY_STAR_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+static OWN_DIRECTORY_STAR_REGEX:LazyLock<Regex> = LazyLock::new(|| {
 	let pattern = r"^\./\*\.\w+$";
 	Regex::new(pattern).expect("failed to compile regex")
 });
 
-static EXAMPLE_CODE: &str = "For example: import(`./foo/${bar}.js`).";
+static EXAMPLE_CODE:&str = "For example: import(`./foo/${bar}.js`).";
 
-fn expr_to_str(expr: &Expression) -> String {
+fn expr_to_str(expr:&Expression) -> String {
 	let mut codegen = CodeGenerator::default();
 	codegen.print_expression(expr);
 	codegen.into_source_text()
 }
 
-pub(crate) fn to_glob_pattern(
-	expr: &Expression,
-) -> anyhow::Result<Option<String>> {
+pub(crate) fn to_glob_pattern(expr:&Expression) -> anyhow::Result<Option<String>> {
 	let glob = expr_to_glob(expr)?;
 
 	if should_ignore(&glob) {
@@ -39,39 +36,49 @@ pub(crate) fn to_glob_pattern(
 
 	if glob.starts_with('*') {
 		let expr = expr_to_str(expr);
-		return Err(
-      anyhow::format_err!("invalid import \"{expr}\". It cannot be statically analyzed. Variable dynamic imports must start with ./ and be limited to a specific directory. {EXAMPLE_CODE}"));
+		return Err(anyhow::format_err!(
+			"invalid import \"{expr}\". It cannot be statically analyzed. Variable dynamic \
+			 imports must start with ./ and be limited to a specific directory. {EXAMPLE_CODE}"
+		));
 	}
 
 	if glob.starts_with('/') {
 		let expr = expr_to_str(expr);
-		return Err(
-      anyhow::format_err!("invalid import \"{expr}\". Variable absolute imports are not supported, imports must start with ./ in the static part of the import. {EXAMPLE_CODE}"));
+		return Err(anyhow::format_err!(
+			"invalid import \"{expr}\". Variable absolute imports are not supported, imports must \
+			 start with ./ in the static part of the import. {EXAMPLE_CODE}"
+		));
 	}
 
 	if !glob.starts_with("./") && !glob.starts_with("../") {
 		let expr = expr_to_str(expr);
-		return Err(
-      anyhow::format_err!("invalid import \"{expr}\". Variable bare imports are not supported, imports must start with ./ in the static part of the import. {EXAMPLE_CODE}"));
+		return Err(anyhow::format_err!(
+			"invalid import \"{expr}\". Variable bare imports are not supported, imports must \
+			 start with ./ in the static part of the import. {EXAMPLE_CODE}"
+		));
 	}
 
 	if OWN_DIRECTORY_STAR_REGEX.is_match(&glob) {
 		let expr = expr_to_str(expr);
-		return Err(
-      anyhow::format_err!("invalid import \"{expr}\". Variable imports cannot import their own directory, place imports in a separate directory or make the import filename more specific. {EXAMPLE_CODE}"));
+		return Err(anyhow::format_err!(
+			"invalid import \"{expr}\". Variable imports cannot import their own directory, place \
+			 imports in a separate directory or make the import filename more specific. \
+			 {EXAMPLE_CODE}"
+		));
 	}
 
 	if Path::new(&glob).extension().is_none() {
 		let expr = expr_to_str(expr);
-		return Err(
-      anyhow::format_err!("invalid import \"{expr}\". A file extension must be included in the static part of the import. {EXAMPLE_CODE}"),
-    );
+		return Err(anyhow::format_err!(
+			"invalid import \"{expr}\". A file extension must be included in the static part of \
+			 the import. {EXAMPLE_CODE}"
+		));
 	}
 
 	Ok(Some(glob))
 }
 
-fn expr_to_glob(expr: &Expression) -> anyhow::Result<String> {
+fn expr_to_glob(expr:&Expression) -> anyhow::Result<String> {
 	Ok(match expr {
 		Expression::TemplateLiteral(node) => template_literal_to_glob(node)?,
 		Expression::CallExpression(node) => call_expr_to_glob(node)?,
@@ -81,14 +88,14 @@ fn expr_to_glob(expr: &Expression) -> anyhow::Result<String> {
 	})
 }
 
-fn arg_to_glob(arg: &Argument) -> anyhow::Result<String> {
+fn arg_to_glob(arg:&Argument) -> anyhow::Result<String> {
 	Ok(match arg {
 		Argument::SpreadElement(_) => String::from("*"),
 		node => expr_to_glob(node.to_expression())?,
 	})
 }
 
-fn template_literal_to_glob(node: &TemplateLiteral) -> anyhow::Result<String> {
+fn template_literal_to_glob(node:&TemplateLiteral) -> anyhow::Result<String> {
 	let mut glob = String::new();
 
 	for (index, quasi) in node.quasis.iter().enumerate() {
@@ -101,7 +108,7 @@ fn template_literal_to_glob(node: &TemplateLiteral) -> anyhow::Result<String> {
 	Ok(glob)
 }
 
-fn call_expr_to_glob(node: &CallExpression) -> anyhow::Result<String> {
+fn call_expr_to_glob(node:&CallExpression) -> anyhow::Result<String> {
 	if let Expression::StaticMemberExpression(member_expr) = &node.callee {
 		if member_expr.property.name == "concat" {
 			let mut arg_glob = String::new();
@@ -115,25 +122,20 @@ fn call_expr_to_glob(node: &CallExpression) -> anyhow::Result<String> {
 	Ok(String::from("*"))
 }
 
-fn binary_expr_to_glob(node: &BinaryExpression) -> anyhow::Result<String> {
+fn binary_expr_to_glob(node:&BinaryExpression) -> anyhow::Result<String> {
 	if !matches!(node.operator, BinaryOperator::Addition) {
-		return Err(anyhow::format_err!(
-			"{:?} operator is not supported.",
-			node.operator.as_str()
-		));
+		return Err(anyhow::format_err!("{:?} operator is not supported.", node.operator.as_str()));
 	}
 
 	Ok(expr_to_glob(&node.left)? + &expr_to_glob(&node.right)?)
 }
 
-fn sanitize_string(s: &str) -> anyhow::Result<String> {
+fn sanitize_string(s:&str) -> anyhow::Result<String> {
 	if s.is_empty() {
 		return Ok(s.to_string());
 	}
 	if s.contains('*') {
-		return Err(anyhow::format_err!(
-			"A dynamic import cannot contain * characters."
-		));
+		return Err(anyhow::format_err!("A dynamic import cannot contain * characters."));
 	}
 	Ok(glob::Pattern::escape(s))
 }
@@ -145,7 +147,7 @@ mod tests {
 	use super::*;
 
 	struct ExprParser {
-		allocator: Allocator,
+		allocator:Allocator,
 	}
 
 	impl<'a> ExprParser {
@@ -154,12 +156,8 @@ mod tests {
 			ExprParser { allocator }
 		}
 
-		fn parse(&'a self, source_text: &'a str) -> Expression<'a> {
-			let parser = Parser::new(
-				&self.allocator,
-				source_text,
-				SourceType::default(),
-			);
+		fn parse(&'a self, source_text:&'a str) -> Expression<'a> {
+			let parser = Parser::new(&self.allocator, source_text, SourceType::default());
 			parser.parse_expression().unwrap()
 		}
 	}
@@ -175,8 +173,7 @@ mod tests {
 	#[test]
 	fn external() {
 		let parser = ExprParser::new();
-		let ast =
-			parser.parse("`https://some.cdn.com/package/${version}/index.js`");
+		let ast = parser.parse("`https://some.cdn.com/package/${version}/index.js`");
 		let glob = to_glob_pattern(&ast).unwrap();
 		assert!(glob.is_none());
 	}
@@ -282,10 +279,7 @@ mod tests {
 		let parser = ExprParser::new();
 		let ast = parser.parse("`./*${foo}.js`");
 		let err = to_glob_pattern(&ast).unwrap_err();
-		assert_eq!(
-			err.to_string(),
-			"A dynamic import cannot contain * characters."
-		);
+		assert_eq!(err.to_string(), "A dynamic import cannot contain * characters.");
 	}
 
 	#[test]
@@ -301,7 +295,12 @@ mod tests {
 		let parser = ExprParser::new();
 		let ast = parser.parse("foo");
 		let err = to_glob_pattern(&ast).unwrap_err().to_string();
-		assert_eq!(err, "invalid import \"foo\". It cannot be statically analyzed. Variable dynamic imports must start with ./ and be limited to a specific directory. For example: import(`./foo/${bar}.js`).");
+		assert_eq!(
+			err,
+			"invalid import \"foo\". It cannot be statically analyzed. Variable dynamic imports \
+			 must start with ./ and be limited to a specific directory. For example: \
+			 import(`./foo/${bar}.js`)."
+		);
 	}
 
 	#[test]
@@ -309,9 +308,12 @@ mod tests {
 		let parser = ExprParser::new();
 		let ast = parser.parse("`${folder}/foo.js`");
 		let err = to_glob_pattern(&ast).unwrap_err().to_string();
-		assert_eq!(err,
-      "invalid import \"`${folder}/foo.js`\". It cannot be statically analyzed. Variable dynamic imports must start with ./ and be limited to a specific directory. For example: import(`./foo/${bar}.js`)."
-    );
+		assert_eq!(
+			err,
+			"invalid import \"`${folder}/foo.js`\". It cannot be statically analyzed. Variable \
+			 dynamic imports must start with ./ and be limited to a specific directory. For \
+			 example: import(`./foo/${bar}.js`)."
+		);
 	}
 
 	#[test]
@@ -319,9 +321,12 @@ mod tests {
 		let parser = ExprParser::new();
 		let ast = parser.parse("`/foo/${bar}.js`");
 		let err = to_glob_pattern(&ast).unwrap_err().to_string();
-		assert_eq!(err,
-      "invalid import \"`/foo/${bar}.js`\". Variable absolute imports are not supported, imports must start with ./ in the static part of the import. For example: import(`./foo/${bar}.js`)."
-    );
+		assert_eq!(
+			err,
+			"invalid import \"`/foo/${bar}.js`\". Variable absolute imports are not supported, \
+			 imports must start with ./ in the static part of the import. For example: \
+			 import(`./foo/${bar}.js`)."
+		);
 	}
 
 	#[test]
@@ -329,9 +334,12 @@ mod tests {
 		let parser = ExprParser::new();
 		let ast = parser.parse("`foo/${bar}.js`");
 		let err = to_glob_pattern(&ast).unwrap_err().to_string();
-		assert_eq!(err,
-      "invalid import \"`foo/${bar}.js`\". Variable bare imports are not supported, imports must start with ./ in the static part of the import. For example: import(`./foo/${bar}.js`)."
-    );
+		assert_eq!(
+			err,
+			"invalid import \"`foo/${bar}.js`\". Variable bare imports are not supported, imports \
+			 must start with ./ in the static part of the import. For example: \
+			 import(`./foo/${bar}.js`)."
+		);
 	}
 
 	#[test]
@@ -339,9 +347,12 @@ mod tests {
 		let parser = ExprParser::new();
 		let ast = parser.parse("`./${foo}.js`");
 		let err = to_glob_pattern(&ast).unwrap_err().to_string();
-		assert_eq!(err,
-      "invalid import \"`./${foo}.js`\". Variable imports cannot import their own directory, place imports in a separate directory or make the import filename more specific. For example: import(`./foo/${bar}.js`)."
-    );
+		assert_eq!(
+			err,
+			"invalid import \"`./${foo}.js`\". Variable imports cannot import their own \
+			 directory, place imports in a separate directory or make the import filename more \
+			 specific. For example: import(`./foo/${bar}.js`)."
+		);
 	}
 
 	#[test]
@@ -349,9 +360,11 @@ mod tests {
 		let parser = ExprParser::new();
 		let ast = parser.parse("`./foo/${bar}`");
 		let err = to_glob_pattern(&ast).unwrap_err().to_string();
-		assert_eq!(err,
-      "invalid import \"`./foo/${bar}`\". A file extension must be included in the static part of the import. For example: import(`./foo/${bar}.js`)."
-    );
+		assert_eq!(
+			err,
+			"invalid import \"`./foo/${bar}`\". A file extension must be included in the static \
+			 part of the import. For example: import(`./foo/${bar}.js`)."
+		);
 	}
 
 	#[test]

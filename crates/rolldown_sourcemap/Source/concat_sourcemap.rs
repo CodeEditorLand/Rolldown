@@ -9,79 +9,61 @@ pub trait Source {
 	#[allow(clippy::wrong_self_convention)]
 	fn into_concat_source(
 		&self,
-		final_source: &mut String,
-		sourcemap_builder: &mut Option<ConcatSourceMapBuilder>,
-		line_offset: u32,
+		final_source:&mut String,
+		sourcemap_builder:&mut Option<ConcatSourceMapBuilder>,
+		line_offset:u32,
 	);
 }
 
 pub struct RawSource {
-	content: String,
+	content:String,
 }
 
 impl RawSource {
-	pub fn new(content: String) -> Self {
-		Self { content }
-	}
+	pub fn new(content:String) -> Self { Self { content } }
 }
 
 impl Source for RawSource {
-	fn sourcemap(&self) -> Option<&SourceMap> {
-		None
-	}
+	fn sourcemap(&self) -> Option<&SourceMap> { None }
 
-	fn content(&self) -> &String {
-		&self.content
-	}
+	fn content(&self) -> &String { &self.content }
 
-	fn lines_count(&self) -> u32 {
-		lines_count(&self.content)
-	}
+	fn lines_count(&self) -> u32 { lines_count(&self.content) }
 
 	fn into_concat_source(
 		&self,
-		final_source: &mut String,
-		_sourcemap_builder: &mut Option<ConcatSourceMapBuilder>,
-		_line_offset: u32,
+		final_source:&mut String,
+		_sourcemap_builder:&mut Option<ConcatSourceMapBuilder>,
+		_line_offset:u32,
 	) {
 		final_source.push_str(&self.content);
 	}
 }
 
 pub struct SourceMapSource {
-	content: String,
-	sourcemap: SourceMap,
-	lines_count: u32,
+	content:String,
+	sourcemap:SourceMap,
+	lines_count:u32,
 }
 
 impl SourceMapSource {
-	pub fn new(
-		content: String,
-		sourcemap: SourceMap,
-		lines_count: u32,
-	) -> Self {
+	pub fn new(content:String, sourcemap:SourceMap, lines_count:u32) -> Self {
 		Self { content, sourcemap, lines_count }
 	}
 }
 
 impl Source for SourceMapSource {
-	fn sourcemap(&self) -> Option<&SourceMap> {
-		Some(&self.sourcemap)
-	}
+	fn sourcemap(&self) -> Option<&SourceMap> { Some(&self.sourcemap) }
 
-	fn content(&self) -> &String {
-		&self.content
-	}
+	fn content(&self) -> &String { &self.content }
 
-	fn lines_count(&self) -> u32 {
-		self.lines_count
-	}
+	fn lines_count(&self) -> u32 { self.lines_count }
 
 	fn into_concat_source(
 		&self,
-		final_source: &mut String,
-		sourcemap_builder: &mut Option<ConcatSourceMapBuilder>,
-		line_offset: u32,
+		final_source:&mut String,
+		sourcemap_builder:&mut Option<ConcatSourceMapBuilder>,
+		line_offset:u32,
 	) {
 		if let Some(sourcemap_builder) = sourcemap_builder {
 			sourcemap_builder.add_sourcemap(&self.sourcemap, line_offset);
@@ -93,17 +75,17 @@ impl Source for SourceMapSource {
 
 #[derive(Default)]
 pub struct ConcatSource {
-	inner: Vec<Box<dyn Source + Send>>,
-	prepend_source: Vec<Box<dyn Source + Send>>,
-	enable_sourcemap: bool,
-	names_len: usize,
-	sources_len: usize,
-	tokens_len: usize,
-	token_chunks_len: usize,
+	inner:Vec<Box<dyn Source + Send>>,
+	prepend_source:Vec<Box<dyn Source + Send>>,
+	enable_sourcemap:bool,
+	names_len:usize,
+	sources_len:usize,
+	tokens_len:usize,
+	token_chunks_len:usize,
 }
 
 impl ConcatSource {
-	fn add_sourcemap(&mut self, sourcemap: &SourceMap) {
+	fn add_sourcemap(&mut self, sourcemap:&SourceMap) {
 		self.enable_sourcemap = true;
 		self.names_len += sourcemap.get_names().count();
 		self.sources_len += sourcemap.get_sources().count();
@@ -111,14 +93,14 @@ impl ConcatSource {
 		self.token_chunks_len += 1;
 	}
 
-	pub fn add_source(&mut self, source: Box<dyn Source + Send>) {
+	pub fn add_source(&mut self, source:Box<dyn Source + Send>) {
 		if let Some(sourcemap) = source.sourcemap() {
 			self.add_sourcemap(sourcemap);
 		}
 		self.inner.push(source);
 	}
 
-	pub fn add_prepend_source(&mut self, source: Box<dyn Source + Send>) {
+	pub fn add_prepend_source(&mut self, source:Box<dyn Source + Send>) {
 		if let Some(sourcemap) = source.sourcemap() {
 			self.add_sourcemap(sourcemap);
 		}
@@ -138,30 +120,20 @@ impl ConcatSource {
 		let mut line_offset = 0;
 		let source_len = self.prepend_source.len() + self.inner.len();
 
-		for (index, source) in
-			self.prepend_source.iter().chain(self.inner.iter()).enumerate()
-		{
-			source.into_concat_source(
-				&mut final_source,
-				&mut sourcemap_builder,
-				line_offset,
-			);
+		for (index, source) in self.prepend_source.iter().chain(self.inner.iter()).enumerate() {
+			source.into_concat_source(&mut final_source, &mut sourcemap_builder, line_offset);
 			if index < source_len - 1 {
 				final_source.push('\n');
 				line_offset += source.lines_count() + 1; // +1 for the newline
 			}
 		}
 
-		(
-			final_source,
-			sourcemap_builder.map(ConcatSourceMapBuilder::into_sourcemap),
-		)
+		(final_source, sourcemap_builder.map(ConcatSourceMapBuilder::into_sourcemap))
 	}
 }
 
 #[test]
 fn test_concat_sourcemaps() {
-	use crate::{ConcatSource, RawSource, SourceMapSource};
 	use oxc::{
 		allocator::Allocator,
 		codegen::{CodeGenerator, CodegenReturn},
@@ -170,11 +142,11 @@ fn test_concat_sourcemaps() {
 		span::SourceType,
 	};
 
+	use crate::{ConcatSource, RawSource, SourceMapSource};
+
 	let mut concat_source = ConcatSource::default();
-	concat_source
-		.add_source(Box::new(RawSource::new("\nconsole.log()".to_string())));
-	concat_source
-		.add_prepend_source(Box::new(RawSource::new("// banner".to_string())));
+	concat_source.add_source(Box::new(RawSource::new("\nconsole.log()".to_string())));
+	concat_source.add_prepend_source(Box::new(RawSource::new("// banner".to_string())));
 
 	let filename = "foo.js".to_string();
 	let allocator = Allocator::default();
@@ -192,14 +164,10 @@ fn test_concat_sourcemaps() {
 
 	let (content, map) = concat_source.content_and_sourcemap();
 
-	assert_eq!(
-		content,
-		"// banner\n\nconsole.log()\nconst foo = 1;\nconsole.log(foo);\n"
-	);
+	assert_eq!(content, "// banner\n\nconsole.log()\nconst foo = 1;\nconsole.log(foo);\n");
 
 	assert_eq!(
-		SourcemapVisualizer::new(&content, &map.unwrap())
-			.into_visualizer_text(),
+		SourcemapVisualizer::new(&content, &map.unwrap()).into_visualizer_text(),
 		r#"- foo.js
 (0:0-0:6) "const " --> (3:0-3:6) "\nconst"
 (0:6-0:12) "foo = " --> (3:6-3:12) " foo ="

@@ -1,12 +1,18 @@
 use std::path::PathBuf;
 
+use napi::{tokio::sync::Mutex, Env};
+use napi_derive::napi;
+use rolldown::Bundler as NativeBundler;
+use rolldown_error::{BuildDiagnostic, DiagnosticOptions};
+
 #[cfg(not(target_family = "wasm"))]
 use crate::worker_manager::WorkerManager;
 use crate::{
 	options::{BindingInputOptions, BindingOnLog, BindingOutputOptions},
 	parallel_js_plugin_registry::ParallelJsPluginRegistry,
 	types::{
-		binding_log::BindingLog, binding_log_level::BindingLogLevel,
+		binding_log::BindingLog,
+		binding_log_level::BindingLogLevel,
 		binding_outputs::FinalBindingOutputs,
 	},
 	utils::{
@@ -14,17 +20,13 @@ use crate::{
 		try_init_custom_trace_subscriber,
 	},
 };
-use napi::{tokio::sync::Mutex, Env};
-use napi_derive::napi;
-use rolldown::Bundler as NativeBundler;
-use rolldown_error::{BuildDiagnostic, DiagnosticOptions};
 
 #[napi]
 pub struct Bundler {
-	inner: Mutex<NativeBundler>,
-	on_log: BindingOnLog,
-	log_level: Option<BindingLogLevel>,
-	cwd: PathBuf,
+	inner:Mutex<NativeBundler>,
+	on_log:BindingOnLog,
+	log_level:Option<BindingLogLevel>,
+	cwd:PathBuf,
 }
 
 #[napi]
@@ -32,10 +34,10 @@ impl Bundler {
 	#[napi(constructor)]
 	#[cfg_attr(target_family = "wasm", allow(unused))]
 	pub fn new(
-		env: Env,
-		mut input_options: BindingInputOptions,
-		output_options: BindingOutputOptions,
-		parallel_plugins_registry: Option<ParallelJsPluginRegistry>,
+		env:Env,
+		mut input_options:BindingInputOptions,
+		output_options:BindingOutputOptions,
+		parallel_plugins_registry:Option<ParallelJsPluginRegistry>,
 	) -> napi::Result<Self> {
 		try_init_custom_trace_subscriber(env);
 
@@ -43,7 +45,8 @@ impl Bundler {
 		let on_log = input_options.on_log.take();
 
 		#[cfg(target_family = "wasm")]
-		// if we don't perform this warmup, the following call to `std::fs` will stuck
+		// if we don't perform this warmup, the following call to `std::fs`
+		// will stuck
 		if let Ok(_) = std::fs::metadata(std::env::current_dir()?) {};
 
 		#[cfg(not(target_family = "wasm"))]
@@ -52,15 +55,11 @@ impl Bundler {
 			.map(|registry| registry.worker_count)
 			.unwrap_or_default();
 		#[cfg(not(target_family = "wasm"))]
-		let parallel_plugins_map = parallel_plugins_registry
-			.map(|registry| registry.take_plugin_values());
+		let parallel_plugins_map =
+			parallel_plugins_registry.map(|registry| registry.take_plugin_values());
 
 		#[cfg(not(target_family = "wasm"))]
-		let worker_manager = if worker_count > 0 {
-			Some(WorkerManager::new(worker_count))
-		} else {
-			None
-		};
+		let worker_manager = if worker_count > 0 { Some(WorkerManager::new(worker_count)) } else { None };
 
 		let ret = normalize_binding_options(
 			input_options,
@@ -72,15 +71,12 @@ impl Bundler {
 		)?;
 
 		Ok(Self {
-			cwd: ret
+			cwd:ret
 				.bundler_options
 				.cwd
 				.clone()
 				.unwrap_or_else(|| std::env::current_dir().unwrap()),
-			inner: Mutex::new(NativeBundler::with_plugins(
-				ret.bundler_options,
-				ret.plugins,
-			)),
+			inner:Mutex::new(NativeBundler::with_plugins(ret.bundler_options, ret.plugins)),
 			log_level,
 			on_log,
 		})
@@ -88,27 +84,19 @@ impl Bundler {
 
 	#[napi]
 	#[tracing::instrument(level = "debug", skip_all)]
-	pub async fn write(&self) -> napi::Result<FinalBindingOutputs> {
-		self.write_impl().await
-	}
+	pub async fn write(&self) -> napi::Result<FinalBindingOutputs> { self.write_impl().await }
 
 	#[napi]
 	#[tracing::instrument(level = "debug", skip_all)]
-	pub async fn generate(&self) -> napi::Result<FinalBindingOutputs> {
-		self.generate_impl().await
-	}
+	pub async fn generate(&self) -> napi::Result<FinalBindingOutputs> { self.generate_impl().await }
 
 	#[napi]
 	#[tracing::instrument(level = "debug", skip_all)]
-	pub async fn scan(&self) -> napi::Result<()> {
-		self.scan_impl().await
-	}
+	pub async fn scan(&self) -> napi::Result<()> { self.scan_impl().await }
 
 	#[napi]
 	#[tracing::instrument(level = "debug", skip_all)]
-	pub async fn close(&self) -> napi::Result<()> {
-		self.close_impl().await
-	}
+	pub async fn close(&self) -> napi::Result<()> { self.close_impl().await }
 }
 
 impl Bundler {
@@ -185,27 +173,23 @@ impl Bundler {
 		Ok(())
 	}
 
-	fn handle_result<T>(result: anyhow::Result<T>) -> napi::Result<T> {
-		result.map_err(|e| {
-			napi::Error::from_reason(format!("Rolldown internal error: {e}"))
-		})
+	fn handle_result<T>(result:anyhow::Result<T>) -> napi::Result<T> {
+		result.map_err(|e| napi::Error::from_reason(format!("Rolldown internal error: {e}")))
 	}
 
-	fn handle_errors(&self, errs: Vec<BuildDiagnostic>) -> napi::Error {
+	fn handle_errors(&self, errs:Vec<BuildDiagnostic>) -> napi::Error {
 		errs.into_iter().for_each(|err| {
 			eprintln!(
 				"{}",
-				err.into_diagnostic_with(&DiagnosticOptions {
-					cwd: self.cwd.clone()
-				})
-				.to_color_string()
+				err.into_diagnostic_with(&DiagnosticOptions { cwd:self.cwd.clone() })
+					.to_color_string()
 			);
 		});
 		napi::Error::from_reason("Build failed")
 	}
 
 	#[allow(clippy::print_stdout, unused_must_use)]
-	async fn handle_warnings(&self, warnings: Vec<BuildDiagnostic>) {
+	async fn handle_warnings(&self, warnings:Vec<BuildDiagnostic>) {
 		if let Some(log_level) = self.log_level {
 			if log_level == BindingLogLevel::Silent {
 				return;
@@ -218,11 +202,9 @@ impl Bundler {
 					.call_async((
 						BindingLogLevel::Warn.to_string(),
 						BindingLog {
-							code: warning.kind().to_string(),
-							message: warning
-								.into_diagnostic_with(&DiagnosticOptions {
-									cwd: self.cwd.clone(),
-								})
+							code:warning.kind().to_string(),
+							message:warning
+								.into_diagnostic_with(&DiagnosticOptions { cwd:self.cwd.clone() })
 								.to_color_string(),
 						},
 					))

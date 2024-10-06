@@ -1,7 +1,7 @@
 // cSpell:disable
 use oxc::span::Atom;
 
-static GLOBAL_IDENT: phf::Set<&str> = phf::phf_set![
+static GLOBAL_IDENT:phf::Set<&str> = phf::phf_set![
 	// Rolldown specific, because oxc treated them as identifiers, esbuild did not
 	"Infinity",
 	"undefined",
@@ -210,7 +210,6 @@ static GLOBAL_IDENT: phf::Set<&str> = phf::phf_set![
 	//
 	//   - localStorage
 	//   - sessionStorage
-	//
 	"AnalyserNode",
 	"Animation",
 	"AnimationEffect",
@@ -675,7 +674,7 @@ static GLOBAL_IDENT: phf::Set<&str> = phf::phf_set![
 /// Console method references are assumed to have no side effects
 /// https://developer.mozilla.org/en-US/docs/Web/API/console
 /// `console`
-static CONSOLE_SECOND_PROP: phf::Set<&str> = phf::phf_set![
+static CONSOLE_SECOND_PROP:phf::Set<&str> = phf::phf_set![
 	"assert",
 	"clear",
 	"count",
@@ -700,7 +699,7 @@ static CONSOLE_SECOND_PROP: phf::Set<&str> = phf::phf_set![
 /// Reflect: Static methods
 /// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect#static_methods
 /// `Reflect`
-static REFLECT_SECOND_PROP: phf::Set<&str> = phf::phf_set![
+static REFLECT_SECOND_PROP:phf::Set<&str> = phf::phf_set![
 	"apply",
 	"construct",
 	"defineProperty",
@@ -717,20 +716,20 @@ static REFLECT_SECOND_PROP: phf::Set<&str> = phf::phf_set![
 ];
 
 /// `Math`
-static MATH_SECOND_PROP: phf::Set<&str> = phf::phf_set![
+static MATH_SECOND_PROP:phf::Set<&str> = phf::phf_set![
 	// Math: Static properties
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math#Static_properties
 	"E", "LN10", "LN2", "LOG10E", "LOG2E", "PI", "SQRT1_2", "SQRT2",
 	// Math: Static methods
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math#Static_methods
-	"abs", "acos", "acosh", "asin", "asinh", "atan", "atan2", "atanh", "cbrt",
-	"ceil", "clz32", "cos", "cosh", "exp", "expm1", "floor", "fround", "hypot",
-	"imul", "log", "log10", "log1p", "log2", "max", "min", "pow", "random",
-	"round", "sign", "sin", "sinh", "sqrt", "tan", "tanh", "trunc",
+	"abs", "acos", "acosh", "asin", "asinh", "atan", "atan2", "atanh", "cbrt", "ceil", "clz32",
+	"cos", "cosh", "exp", "expm1", "floor", "fround", "hypot", "imul", "log", "log10", "log1p",
+	"log2", "max", "min", "pow", "random", "round", "sign", "sin", "sinh", "sqrt", "tan", "tanh",
+	"trunc",
 ];
 
 /// `Object`
-static OBJECT_SECOND_PROP: phf::Set<&str> = phf::phf_set![
+static OBJECT_SECOND_PROP:phf::Set<&str> = phf::phf_set![
 	// Object: Static methods
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object#Static_methods
 	"assign",
@@ -757,7 +756,7 @@ static OBJECT_SECOND_PROP: phf::Set<&str> = phf::phf_set![
 ];
 
 /// `Symbol`
-static SYMBOL_SECOND_PROP: phf::Set<&str> = phf::phf_set![
+static SYMBOL_SECOND_PROP:phf::Set<&str> = phf::phf_set![
 	// Symbol: Static properties
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol#static_properties
 	"asyncDispose",
@@ -778,7 +777,7 @@ static SYMBOL_SECOND_PROP: phf::Set<&str> = phf::phf_set![
 ];
 
 /// `Object.prototype`
-static OBJECT_PROTOTYPE_THIRD_PROP: phf::Set<&str> = phf::phf_set![
+static OBJECT_PROTOTYPE_THIRD_PROP:phf::Set<&str> = phf::phf_set![
 	// Object: Instance methods
 	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object#Instance_methods
 	"__defineGetter__",
@@ -795,13 +794,9 @@ static OBJECT_PROTOTYPE_THIRD_PROP: phf::Set<&str> = phf::phf_set![
 	"watch",
 ];
 
-pub fn is_global_ident_ref(ident: &str) -> bool {
-	GLOBAL_IDENT.contains(ident)
-}
+pub fn is_global_ident_ref(ident:&str) -> bool { GLOBAL_IDENT.contains(ident) }
 
-pub fn is_side_effect_free_member_expr_of_len_two(
-	member_expr: &[Atom],
-) -> bool {
+pub fn is_side_effect_free_member_expr_of_len_two(member_expr:&[Atom]) -> bool {
 	if member_expr.len() != 2 {
 		return false;
 	}
@@ -816,9 +811,7 @@ pub fn is_side_effect_free_member_expr_of_len_two(
 	}
 }
 
-pub fn is_side_effect_free_member_expr_of_len_three(
-	member_expr: &[Atom],
-) -> bool {
+pub fn is_side_effect_free_member_expr_of_len_three(member_expr:&[Atom]) -> bool {
 	if member_expr.len() != 3 {
 		return false;
 	}

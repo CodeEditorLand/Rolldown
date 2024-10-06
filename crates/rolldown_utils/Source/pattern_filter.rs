@@ -1,5 +1,6 @@
-use crate::js_regex::HybridRegex;
 use glob_match::glob_match;
+
+use crate::js_regex::HybridRegex;
 
 #[derive(Debug)]
 pub enum StringOrRegex {
@@ -8,7 +9,7 @@ pub enum StringOrRegex {
 }
 
 impl StringOrRegex {
-	pub fn new(value: String, flag: &Option<String>) -> anyhow::Result<Self> {
+	pub fn new(value:String, flag:&Option<String>) -> anyhow::Result<Self> {
 		if let Some(flag) = flag {
 			let regex = HybridRegex::with_flags(&value, flag)?;
 			Ok(Self::Regex(regex))
@@ -21,21 +22,19 @@ impl StringOrRegex {
 /// `id` is the raw path of file used for `regex` testing
 /// `stable_id` is the relative path for cwd , used for `glob` testing
 /// Using `FilterResult` rather than `bool` for complicated scenario, e.g.
-/// If you have only one filter, just use `FilterResult#inner` to determine if the `id` is matched,
-/// for multiple filters, you should use `FilterResult` to determine if the `id` is matched.
-/// See doc of [FilterResult]
+/// If you have only one filter, just use `FilterResult#inner` to determine if
+/// the `id` is matched, for multiple filters, you should use `FilterResult` to
+/// determine if the `id` is matched. See doc of [FilterResult]
 pub fn filter(
-	exclude: Option<&[StringOrRegex]>,
-	include: Option<&[StringOrRegex]>,
-	id: &str,
-	stable_id: &str,
+	exclude:Option<&[StringOrRegex]>,
+	include:Option<&[StringOrRegex]>,
+	id:&str,
+	stable_id:&str,
 ) -> FilterResult {
 	if let Some(exclude) = exclude {
 		for pattern in exclude {
 			let v = match pattern {
-				StringOrRegex::String(glob) => {
-					glob_match(glob.as_str(), stable_id)
-				},
+				StringOrRegex::String(glob) => glob_match(glob.as_str(), stable_id),
 				StringOrRegex::Regex(re) => re.matches(id),
 			};
 			if v {
@@ -46,9 +45,7 @@ pub fn filter(
 	if let Some(include) = include {
 		for pattern in include {
 			let v = match pattern {
-				StringOrRegex::String(glob) => {
-					glob_match(glob.as_str(), stable_id)
-				},
+				StringOrRegex::String(glob) => glob_match(glob.as_str(), stable_id),
 				StringOrRegex::Regex(re) => re.matches(id),
 			};
 			if v {
@@ -68,9 +65,10 @@ pub enum FilterResult {
 	/// `Match(true)` means it is matched by `included`,
 	/// `Match(false)` means it is matched by `excluded`
 	Match(bool),
-	/// `NoneMatch(true)` means it is neither matched by `excluded` nor `included`, and the `include` is empty
-	/// `NoneMatch(false)` means it is neither matched by `excluded` nor `included`, and the `include` is not empty
-	/// You should determine according to the context.
+	/// `NoneMatch(true)` means it is neither matched by `excluded` nor
+	/// `included`, and the `include` is empty `NoneMatch(false)` means it is
+	/// neither matched by `excluded` nor `included`, and the `include` is not
+	/// empty You should determine according to the context.
 	NoneMatch(bool),
 }
 
@@ -84,9 +82,9 @@ impl FilterResult {
 
 /// Same as above but for `code`
 pub fn filter_code(
-	exclude: Option<&[StringOrRegex]>,
-	include: Option<&[StringOrRegex]>,
-	code: &str,
+	exclude:Option<&[StringOrRegex]>,
+	include:Option<&[StringOrRegex]>,
+	code:&str,
 ) -> FilterResult {
 	if let Some(exclude) = exclude {
 		for pattern in exclude {

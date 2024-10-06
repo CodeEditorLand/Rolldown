@@ -1,7 +1,7 @@
 use oxc::{
-  allocator::Allocator,
-  ast::ast::{ObjectPropertyKind, Statement},
-  span::CompactStr,
+	allocator::Allocator,
+	ast::ast::{ObjectPropertyKind, Statement},
+	span::CompactStr,
 };
 use rolldown_common::{AstScopes, IndexModules, NormalModule};
 use rolldown_ecmascript::AstSnippet;
@@ -12,17 +12,17 @@ use crate::types::symbols::Symbols;
 mod impl_visit_mut;
 
 pub struct IsolatingModuleFinalizerContext<'me> {
-  pub module: &'me NormalModule,
-  pub modules: &'me IndexModules,
-  pub symbols: &'me Symbols,
+	pub module:&'me NormalModule,
+	pub modules:&'me IndexModules,
+	pub symbols:&'me Symbols,
 }
 
 pub struct IsolatingModuleFinalizer<'me, 'ast> {
-  pub ctx: &'me IsolatingModuleFinalizerContext<'me>,
-  pub scope: &'me AstScopes,
-  pub alloc: &'ast Allocator,
-  pub snippet: AstSnippet<'ast>,
-  pub generated_imports_set: FxHashSet<CompactStr>,
-  pub generated_imports: oxc::allocator::Vec<'ast, Statement<'ast>>,
-  pub generated_exports: oxc::allocator::Vec<'ast, ObjectPropertyKind<'ast>>,
+	pub ctx:&'me IsolatingModuleFinalizerContext<'me>,
+	pub scope:&'me AstScopes,
+	pub alloc:&'ast Allocator,
+	pub snippet:AstSnippet<'ast>,
+	pub generated_imports_set:FxHashSet<CompactStr>,
+	pub generated_imports:oxc::allocator::Vec<'ast, Statement<'ast>>,
+	pub generated_exports:oxc::allocator::Vec<'ast, ObjectPropertyKind<'ast>>,
 }

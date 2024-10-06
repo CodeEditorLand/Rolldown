@@ -10,7 +10,11 @@ pub use crate::{
 	ecma_ast::{program_cell::WithMutFields, EcmaAst, ToSourceString},
 	ecma_compiler::EcmaCompiler,
 	ext::{
-		allocator_ext::AllocatorExt, span_ext::SpanExt, BindingIdentifierExt,
-		BindingPatternExt, ExpressionExt, StatementExt,
+		allocator_ext::AllocatorExt,
+		span_ext::SpanExt,
+		BindingIdentifierExt,
+		BindingPatternExt,
+		ExpressionExt,
+		StatementExt,
 	},
 };

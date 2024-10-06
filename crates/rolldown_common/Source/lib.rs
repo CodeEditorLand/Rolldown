@@ -7,9 +7,10 @@ mod module;
 mod type_aliases;
 mod types;
 
-/// This module is to help `rolldown` crate could export types related bundler options easily.
-/// `rolldown` crate could use `pub use rolldown_common::bundler_options::*;` to export all types, so we don't need write
-/// the same code in `rolldown` crate again.
+/// This module is to help `rolldown` crate could export types related bundler
+/// options easily. `rolldown` crate could use `pub use
+/// rolldown_common::bundler_options::*;` to export all types, so we don't need
+/// write the same code in `rolldown` crate again.
 pub mod bundler_options {
 	pub use crate::inner_bundler_options::{
 		types::{
@@ -22,13 +23,12 @@ pub mod bundler_options {
 			is_external::IsExternal,
 			module_type::ModuleType,
 			normalized_bundler_options::{
-				NormalizedBundlerOptions, SharedNormalizedBundlerOptions,
+				NormalizedBundlerOptions,
+				SharedNormalizedBundlerOptions,
 			},
 			output_exports::OutputExports,
 			output_format::OutputFormat,
-			output_option::{
-				AddonFunction, AddonOutputOption, ChunkFilenamesOutputOption,
-			},
+			output_option::{AddonFunction, AddonOutputOption, ChunkFilenamesOutputOption},
 			platform::Platform,
 			resolve_options::ResolveOptions,
 			source_map_type::SourceMapType,
@@ -40,7 +40,10 @@ pub mod bundler_options {
 	};
 }
 
-// We don't want internal position adjustment of files affect users, so all items are exported in the root.
+// We don't want internal position adjustment of files affect users, so all
+// items are exported in the root.
+pub use bundler_options::*;
+
 pub use crate::{
 	chunk::{
 		chunk_table::ChunkTable,
@@ -50,61 +53,59 @@ pub use crate::{
 		},
 		Chunk,
 	},
-	css::{
-		css_module::CssModule, css_module_idx::CssModuleIdx, css_view::CssView,
-	},
+	css::{css_module::CssModule, css_module_idx::CssModuleIdx, css_view::CssView},
 	ecmascript::{
 		ecma_asset_meta::EcmaAssetMeta,
 		ecma_view::{EcmaModuleAstUsage, EcmaView},
 		module_idx::ModuleIdx,
 	},
 	file_emitter::{EmittedAsset, FileEmitter, SharedFileEmitter},
-	module::{
-		external_module::ExternalModule, normal_module::NormalModule, Module,
+	module::{external_module::ExternalModule, normal_module::NormalModule, Module},
+	types::{
+		asset::Asset,
+		asset_idx::AssetIdx,
+		asset_meta::InstantiationKind,
+		asset_source::AssetSource,
+		ast_scopes::AstScopes,
+		bundler_file_system::BundlerFileSystem,
+		chunk_idx::ChunkIdx,
+		chunk_kind::ChunkKind,
+		ecma_ast_idx::EcmaAstIdx,
+		entry_point::{EntryPoint, EntryPointKind},
+		exports_kind::ExportsKind,
+		external_module_idx::ExternalModuleIdx,
+		import_record::{
+			ImportKind,
+			ImportRecord,
+			ImportRecordIdx,
+			ImportRecordMeta,
+			RawImportRecord,
+		},
+		importer_record::ImporterRecord,
+		instantiated_chunk::InstantiatedChunk,
+		interop::Interop,
+		member_expr_ref::MemberExprRef,
+		module_def_format::ModuleDefFormat,
+		module_id::ModuleId,
+		module_idx::LegacyModuleIdx,
+		module_info::ModuleInfo,
+		module_table::{IndexExternalModules, IndexModules, ModuleTable},
+		module_view::ModuleView,
+		named_export::LocalExport,
+		named_import::{NamedImport, Specifier},
+		output::{Output, OutputAsset},
+		output_chunk::OutputChunk,
+		package_json::PackageJson,
+		rendered_module::RenderedModule,
+		resolved_export::ResolvedExport,
+		resolved_request_info::ResolvedId,
+		rollup_pre_rendered_chunk::RollupPreRenderedChunk,
+		rollup_rendered_chunk::RollupRenderedChunk,
+		side_effects,
+		stmt_info::{DebugStmtInfoForTreeShaking, StmtInfo, StmtInfoIdx, StmtInfos},
+		str_or_bytes::StrOrBytes,
+		symbol_or_member_expr_ref::SymbolOrMemberExprRef,
+		symbol_ref::SymbolRef,
+		wrap_kind::WrapKind,
 	},
-	types::asset::Asset,
-	types::asset_idx::AssetIdx,
-	types::asset_meta::InstantiationKind,
-	types::asset_source::AssetSource,
-	types::ast_scopes::AstScopes,
-	types::bundler_file_system::BundlerFileSystem,
-	types::chunk_idx::ChunkIdx,
-	types::chunk_kind::ChunkKind,
-	types::ecma_ast_idx::EcmaAstIdx,
-	types::entry_point::{EntryPoint, EntryPointKind},
-	types::exports_kind::ExportsKind,
-	types::external_module_idx::ExternalModuleIdx,
-	types::import_record::{
-		ImportKind, ImportRecord, ImportRecordIdx, ImportRecordMeta,
-		RawImportRecord,
-	},
-	types::importer_record::ImporterRecord,
-	types::instantiated_chunk::InstantiatedChunk,
-	types::interop::Interop,
-	types::member_expr_ref::MemberExprRef,
-	types::module_def_format::ModuleDefFormat,
-	types::module_id::ModuleId,
-	types::module_idx::LegacyModuleIdx,
-	types::module_info::ModuleInfo,
-	types::module_table::{IndexExternalModules, IndexModules, ModuleTable},
-	types::module_view::ModuleView,
-	types::named_export::LocalExport,
-	types::named_import::{NamedImport, Specifier},
-	types::output::{Output, OutputAsset},
-	types::output_chunk::OutputChunk,
-	types::package_json::PackageJson,
-	types::rendered_module::RenderedModule,
-	types::resolved_export::ResolvedExport,
-	types::resolved_request_info::ResolvedId,
-	types::rollup_pre_rendered_chunk::RollupPreRenderedChunk,
-	types::rollup_rendered_chunk::RollupRenderedChunk,
-	types::side_effects,
-	types::stmt_info::{
-		DebugStmtInfoForTreeShaking, StmtInfo, StmtInfoIdx, StmtInfos,
-	},
-	types::str_or_bytes::StrOrBytes,
-	types::symbol_or_member_expr_ref::SymbolOrMemberExprRef,
-	types::symbol_ref::SymbolRef,
-	types::wrap_kind::WrapKind,
 };
-pub use bundler_options::*;

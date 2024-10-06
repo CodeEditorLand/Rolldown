@@ -1,5 +1,17 @@
 use std::sync::Arc;
 
+use anyhow::Result;
+use rolldown_common::{NormalizedBundlerOptions, SharedFileEmitter};
+use rolldown_error::{BuildDiagnostic, DiagnosableResult};
+use rolldown_fs::{FileSystem, OsFileSystem};
+use rolldown_plugin::{
+	HookBuildEndArgs,
+	HookRenderErrorArgs,
+	SharedPluginDriver,
+	__inner::SharedPluginable,
+};
+use tracing_chrome::FlushGuard;
+
 use super::stages::{
 	link_stage::{LinkStage, LinkStageOutput},
 	scan_stage::ScanStageOutput,
@@ -8,41 +20,28 @@ use crate::{
 	bundler_builder::BundlerBuilder,
 	stages::{generate_stage::GenerateStage, scan_stage::ScanStage},
 	types::bundle_output::BundleOutput,
-	BundlerOptions, SharedOptions, SharedResolver,
+	BundlerOptions,
+	SharedOptions,
+	SharedResolver,
 };
-use anyhow::Result;
-use rolldown_common::{NormalizedBundlerOptions, SharedFileEmitter};
-use rolldown_error::{BuildDiagnostic, DiagnosableResult};
-use rolldown_fs::{FileSystem, OsFileSystem};
-use rolldown_plugin::{
-	HookBuildEndArgs, HookRenderErrorArgs, SharedPluginDriver,
-	__inner::SharedPluginable,
-};
-use tracing_chrome::FlushGuard;
 
 pub struct Bundler {
-	pub(crate) closed: bool,
-	pub(crate) options: SharedOptions,
-	pub(crate) plugin_driver: SharedPluginDriver,
-	pub(crate) fs: OsFileSystem,
-	pub(crate) resolver: SharedResolver,
-	pub(crate) file_emitter: SharedFileEmitter,
-	pub(crate) _log_guard: Option<FlushGuard>,
+	pub(crate) closed:bool,
+	pub(crate) options:SharedOptions,
+	pub(crate) plugin_driver:SharedPluginDriver,
+	pub(crate) fs:OsFileSystem,
+	pub(crate) resolver:SharedResolver,
+	pub(crate) file_emitter:SharedFileEmitter,
+	pub(crate) _log_guard:Option<FlushGuard>,
 }
 
 impl Bundler {
-	pub fn new(options: BundlerOptions) -> Self {
+	pub fn new(options:BundlerOptions) -> Self {
 		BundlerBuilder::default().with_options(options).build()
 	}
 
-	pub fn with_plugins(
-		options: BundlerOptions,
-		plugins: Vec<SharedPluginable>,
-	) -> Self {
-		BundlerBuilder::default()
-			.with_options(options)
-			.with_plugins(plugins)
-			.build()
+	pub fn with_plugins(options:BundlerOptions, plugins:Vec<SharedPluginable>) -> Self {
+		BundlerBuilder::default().with_options(options).with_plugins(plugins).build()
 	}
 }
 
@@ -54,11 +53,7 @@ impl Bundler {
 		let mut output = self.bundle_up(/* is_write */ true).await?;
 
 		self.fs.create_dir_all(&dir).map_err(|err| {
-			anyhow::anyhow!(
-				"Could not create directory for output chunks: {:?}",
-				dir
-			)
-			.context(err)
+			anyhow::anyhow!("Could not create directory for output chunks: {:?}", dir).context(err)
 		})?;
 
 		for chunk in &output.assets {
@@ -69,8 +64,7 @@ impl Bundler {
 				}
 			};
 			self.fs.write(&dest, chunk.content_as_bytes()).map_err(|err| {
-				anyhow::anyhow!("Failed to write file in {:?}", dest)
-					.context(err)
+				anyhow::anyhow!("Failed to write file in {:?}", dest).context(err)
 			})?;
 		}
 
@@ -112,13 +106,13 @@ impl Bundler {
 		{
 			Ok(v) => v,
 			Err(err) => {
-				// TODO: So far we even call build end hooks on unhandleable errors . But should we call build end hook even for unhandleable errors?
+				// TODO: So far we even call build end hooks on unhandleable
+				// errors . But should we call build end hook even for
+				// unhandleable errors?
 				error_for_build_end_hook = Some(err.to_string());
 				self.plugin_driver
 					.build_end(
-						error_for_build_end_hook
-							.map(|error| HookBuildEndArgs { error })
-							.as_ref(),
+						error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref(),
 					)
 					.await?;
 				self.plugin_driver.close_bundle().await?;
@@ -134,9 +128,7 @@ impl Bundler {
 				}
 				self.plugin_driver
 					.build_end(
-						error_for_build_end_hook
-							.map(|error| HookBuildEndArgs { error })
-							.as_ref(),
+						error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref(),
 					)
 					.await?;
 				self.plugin_driver.close_bundle().await?;
@@ -145,19 +137,13 @@ impl Bundler {
 		};
 
 		self.plugin_driver
-			.build_end(
-				error_for_build_end_hook
-					.map(|error| HookBuildEndArgs { error })
-					.as_ref(),
-			)
+			.build_end(error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref())
 			.await?;
 
 		Ok(Ok(scan_stage_output))
 	}
 
-	async fn try_build(
-		&mut self,
-	) -> Result<DiagnosableResult<LinkStageOutput>> {
+	async fn try_build(&mut self) -> Result<DiagnosableResult<LinkStageOutput>> {
 		let build_info = match self.scan().await? {
 			Ok(scan_stage_output) => scan_stage_output,
 			Err(errors) => return Ok(Err(errors)),
@@ -166,49 +152,40 @@ impl Bundler {
 	}
 
 	#[allow(clippy::missing_transmute_annotations)]
-	async fn bundle_up(&mut self, is_write: bool) -> Result<BundleOutput> {
+	async fn bundle_up(&mut self, is_write:bool) -> Result<BundleOutput> {
 		if self.closed {
 			return Err(anyhow::anyhow!(
-        "Bundle is already closed, no more calls to 'generate' or 'write' are allowed."
-      ));
+				"Bundle is already closed, no more calls to 'generate' or 'write' are allowed."
+			));
 		}
 
 		let mut link_stage_output = match self.try_build().await? {
 			Ok(v) => v,
 			Err(errors) => {
-				return Ok(BundleOutput {
-					assets: vec![],
-					warnings: vec![],
-					errors,
-				})
+				return Ok(BundleOutput { assets:vec![], warnings:vec![], errors });
 			},
 		};
 
 		self.plugin_driver.set_module_table(unsafe {
 			// Can't ensure the safety here. It's only a temporary solution.
 			// - We won't mutate the `module_table` in the generate stage.
-			// - We transmute the stacked reference to a static lifetime and it haven't met errors due to we happen
-			// to only need to access the `module_table` during this function call.
+			// - We transmute the stacked reference to a static lifetime and it haven't met
+			//   errors due to we happen
+			// to only need to access the `module_table` during this function
+			// call.
 			std::mem::transmute(&link_stage_output.module_table)
 		});
 
 		self.plugin_driver.render_start().await?;
 
 		let mut output = {
-			let bundle_output = GenerateStage::new(
-				&mut link_stage_output,
-				&self.options,
-				&self.plugin_driver,
-			)
-			.generate()
-			.await;
+			let bundle_output =
+				GenerateStage::new(&mut link_stage_output, &self.options, &self.plugin_driver)
+					.generate()
+					.await;
 
-			if let Some(error) =
-				Self::normalize_error(&bundle_output, |ret| &ret.errors)
-			{
-				self.plugin_driver
-					.render_error(&HookRenderErrorArgs { error })
-					.await?;
+			if let Some(error) = Self::normalize_error(&bundle_output, |ret| &ret.errors) {
+				self.plugin_driver.render_error(&HookRenderErrorArgs { error }).await?;
 			}
 
 			bundle_output?
@@ -217,16 +194,14 @@ impl Bundler {
 		// Add additional files from build plugins.
 		self.file_emitter.add_additional_files(&mut output.assets);
 
-		self.plugin_driver
-			.generate_bundle(&mut output.assets, is_write)
-			.await?;
+		self.plugin_driver.generate_bundle(&mut output.assets, is_write).await?;
 
 		Ok(output)
 	}
 
 	fn normalize_error<T>(
-		ret: &Result<T>,
-		errors_fn: impl Fn(&T) -> &[BuildDiagnostic],
+		ret:&Result<T>,
+		errors_fn:impl Fn(&T) -> &[BuildDiagnostic],
 	) -> Option<String> {
 		ret.as_ref().map_or_else(
 			|error| Some(error.to_string()),
@@ -234,14 +209,12 @@ impl Bundler {
 		)
 	}
 
-	pub fn options(&self) -> &NormalizedBundlerOptions {
-		&self.options
-	}
+	pub fn options(&self) -> &NormalizedBundlerOptions { &self.options }
 }
 
 fn _test_bundler() {
 	#[allow(clippy::needless_pass_by_value)]
-	fn _assert_send(_foo: impl Send) {}
+	fn _assert_send(_foo:impl Send) {}
 	let mut bundler = Bundler::new(BundlerOptions::default());
 	let write_fut = bundler.write();
 	_assert_send(write_fut);

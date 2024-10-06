@@ -1,16 +1,14 @@
-use oxc::syntax::{identifier, keyword};
 use std::borrow::Cow;
 
-pub fn is_validate_identifier_name(name: &str) -> bool {
-	identifier::is_identifier_name(name)
+use oxc::syntax::{identifier, keyword};
+
+pub fn is_validate_identifier_name(name:&str) -> bool { identifier::is_identifier_name(name) }
+
+pub fn is_validate_assignee_identifier_name(name:&str) -> bool {
+	identifier::is_identifier_name(name) && !keyword::is_reserved_keyword_or_global_object(name)
 }
 
-pub fn is_validate_assignee_identifier_name(name: &str) -> bool {
-	identifier::is_identifier_name(name)
-		&& !keyword::is_reserved_keyword_or_global_object(name)
-}
-
-pub fn legitimize_identifier_name(name: &str) -> Cow<str> {
+pub fn legitimize_identifier_name(name:&str) -> Cow<str> {
 	let mut legitimized = String::new();
 	let mut chars_indices = name.char_indices();
 
@@ -31,8 +29,7 @@ pub fn legitimize_identifier_name(name: &str) -> Cow<str> {
 	}
 
 	if let Some(first_invalid_char_index) = first_invalid_char_index {
-		let (first_valid_part, rest_part) =
-			name.split_at(first_invalid_char_index);
+		let (first_valid_part, rest_part) = name.split_at(first_invalid_char_index);
 		legitimized.push_str(first_valid_part);
 		let skip_count = if first_invalid_char_index == 0 {
 			legitimized.push('_');
@@ -54,7 +51,7 @@ pub fn legitimize_identifier_name(name: &str) -> Cow<str> {
 	Cow::Borrowed(name)
 }
 
-pub fn property_access_str(obj: &str, prop: &str) -> String {
+pub fn property_access_str(obj:&str, prop:&str) -> String {
 	if is_validate_identifier_name(prop) {
 		format!("{obj}.{prop}")
 	} else {

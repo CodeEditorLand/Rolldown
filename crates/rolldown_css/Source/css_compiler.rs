@@ -8,9 +8,8 @@ use crate::css_ast::CssAst;
 pub struct CssCompiler;
 
 impl CssCompiler {
-	pub fn parse(source: &str, filename: String) -> anyhow::Result<CssAst> {
-		let options =
-			ParserOptions { filename: filename.clone(), ..Default::default() };
+	pub fn parse(source:&str, filename:String) -> anyhow::Result<CssAst> {
+		let options = ParserOptions { filename:filename.clone(), ..Default::default() };
 		let stylesheet = StyleSheet::parse(source, options.clone())
 			.map_err(lightningcss::error::Error::into_owned)?;
 
@@ -26,8 +25,7 @@ impl CssCompiler {
 #[test]
 fn basic_test() {
 	use lightningcss::printer::PrinterOptions;
-	let ast = CssCompiler::parse(".bar { color: green; }", "Noop".to_string())
-		.unwrap();
+	let ast = CssCompiler::parse(".bar { color: green; }", "Noop".to_string()).unwrap();
 	let res = ast.stylesheet.to_css(PrinterOptions::default()).unwrap();
 
 	assert_eq!(res.code, ".bar {\n  color: green;\n}\n");

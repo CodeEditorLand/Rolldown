@@ -1,5 +1,4 @@
-use std::ops::Range;
-use std::{cmp::Reverse, collections::HashMap, sync::LazyLock};
+use std::{cmp::Reverse, collections::HashMap, ops::Range, sync::LazyLock};
 
 // use fancy_regex::Regex;
 use regex::Regex;
@@ -11,12 +10,12 @@ use crate::utils::expand_typeof_replacements;
 
 #[derive(Debug, Default)]
 pub struct ReplaceOptions {
-	pub values:
-		HashMap</* Target */ String, /* Replacement */ String>,
-	/// Default to `("\\b", "\\b(?!\\.)")`. To prevent `typeof window.document` from being replaced by config item `typeof window` => `"object"`.
-	pub delimiters: Option<(String, String)>,
-	pub prevent_assignment: bool,
-	pub object_guards: bool,
+	pub values:HashMap</* Target */ String, /* Replacement */ String>,
+	/// Default to `("\\b", "\\b(?!\\.)")`. To prevent `typeof window.document`
+	/// from being replaced by config item `typeof window` => `"object"`.
+	pub delimiters:Option<(String, String)>,
+	pub prevent_assignment:bool,
+	pub object_guards:bool,
 }
 
 // We don't reuse `HybridRegex` in `rolldown_utils`, since
@@ -29,21 +28,20 @@ enum HybridRegex {
 
 #[derive(Debug)]
 pub struct ReplacePlugin {
-	matcher: HybridRegex,
-	prevent_assignment: bool,
-	values: FxHashMap</* Target */ String, /* Replacement */ String>,
+	matcher:HybridRegex,
+	prevent_assignment:bool,
+	values:FxHashMap</* Target */ String, /* Replacement */ String>,
 }
 
-static NON_ASSIGNMENT_MATCHER: LazyLock<Regex> = LazyLock::new(|| {
-	Regex::new("\\b(?:const|let|var)\\s+$").expect("Should be valid regex")
-});
+static NON_ASSIGNMENT_MATCHER:LazyLock<Regex> =
+	LazyLock::new(|| Regex::new("\\b(?:const|let|var)\\s+$").expect("Should be valid regex"));
 
 impl ReplacePlugin {
-	pub fn new(values: HashMap<String, String>) -> Self {
+	pub fn new(values:HashMap<String, String>) -> Self {
 		Self::with_options(ReplaceOptions { values, ..Default::default() })
 	}
 
-	pub fn with_options(options: ReplaceOptions) -> Self {
+	pub fn with_options(options:ReplaceOptions) -> Self {
 		let values = if options.object_guards {
 			expand_typeof_replacements(&options.values)
 				.into_iter()
@@ -56,54 +54,39 @@ impl ReplacePlugin {
 		// Sort by length in descending order so that longer targets are matched first.
 		keys.sort_by_key(|key| Reverse(key.len()));
 
-		let lookahead =
-			if options.prevent_assignment { "(?!\\s*=[^=])" } else { "" };
+		let lookahead = if options.prevent_assignment { "(?!\\s*=[^=])" } else { "" };
 
-		let joined_keys = keys
-			.iter()
-			.map(|key| regex::escape(key))
-			.collect::<Vec<_>>()
-			.join("|");
+		let joined_keys = keys.iter().map(|key| regex::escape(key)).collect::<Vec<_>>().join("|");
 		// https://rustexp.lpil.uk/
-		let matcher = if let Some((delimiter_left, delimiter_right)) =
-			options.delimiters
-		{
-			let pattern = format!(
-				"{delimiter_left}({joined_keys}){delimiter_right}{lookahead}"
-			);
+		let matcher = if let Some((delimiter_left, delimiter_right)) = options.delimiters {
+			let pattern = format!("{delimiter_left}({joined_keys}){delimiter_right}{lookahead}");
 			HybridRegex::Ecma(regress::Regex::new(&pattern).unwrap())
 		} else {
-			HybridRegex::Optimize(
-				regex::Regex::new(&format!("\\b({joined_keys})\\b")).unwrap(),
-			)
+			HybridRegex::Optimize(regex::Regex::new(&format!("\\b({joined_keys})\\b")).unwrap())
 		};
 		Self {
 			matcher,
-			prevent_assignment: options.prevent_assignment,
-			values: values.into_iter().collect(),
+			prevent_assignment:options.prevent_assignment,
+			values:values.into_iter().collect(),
 		}
 	}
 
 	fn try_replace<'text>(
 		&'text self,
-		code: &'text str,
-		magic_string: &mut MagicString<'text>,
+		code:&'text str,
+		magic_string:&mut MagicString<'text>,
 	) -> bool {
 		match self.matcher {
-			HybridRegex::Optimize(ref regex) => {
-				self.optimized_replace(code, magic_string, regex)
-			},
-			HybridRegex::Ecma(ref regex) => {
-				self.fallback_replace(code, magic_string, regex)
-			},
+			HybridRegex::Optimize(ref regex) => self.optimized_replace(code, magic_string, regex),
+			HybridRegex::Ecma(ref regex) => self.fallback_replace(code, magic_string, regex),
 		}
 	}
 
 	fn optimized_replace<'text>(
 		&'text self,
-		code: &'text str,
-		magic_string: &mut MagicString<'text>,
-		regex: &regex::Regex,
+		code:&'text str,
+		magic_string:&mut MagicString<'text>,
+		regex:&regex::Regex,
 	) -> bool {
 		let mut changed = false;
 		for captures in regex.captures_iter(code) {
@@ -123,11 +106,7 @@ impl ReplacePlugin {
 		changed
 	}
 
-	fn look_around_assert(
-		&self,
-		code: &str,
-		matched_range: Range<usize>,
-	) -> bool {
+	fn look_around_assert(&self, code:&str, matched_range:Range<usize>) -> bool {
 		if self.prevent_assignment {
 			let before = &code[..matched_range.start];
 			if NON_ASSIGNMENT_MATCHER.is_match(before) {
@@ -142,9 +121,7 @@ impl ReplacePlugin {
 		}
 		if self.prevent_assignment {
 			let stripped_after = after.trim_start();
-			if stripped_after.starts_with('=')
-				&& !stripped_after[1..].starts_with('=')
-			{
+			if stripped_after.starts_with('=') && !stripped_after[1..].starts_with('=') {
 				return true;
 			}
 		}
@@ -153,9 +130,9 @@ impl ReplacePlugin {
 
 	fn fallback_replace<'text>(
 		&'text self,
-		code: &'text str,
-		magic_string: &mut MagicString<'text>,
-		regex: &regress::Regex,
+		code:&'text str,
+		magic_string:&mut MagicString<'text>,
+		regex:&regress::Regex,
 	) -> bool {
 		let mut changed = false;
 		for captures in regex.find_iter(code) {
@@ -163,13 +140,10 @@ impl ReplacePlugin {
 			let Some(Some(matched)) = captures.captures.first() else {
 				break;
 			};
-			if self.prevent_assignment
-				&& NON_ASSIGNMENT_MATCHER.is_match(&code[0..matched.start])
-			{
+			if self.prevent_assignment && NON_ASSIGNMENT_MATCHER.is_match(&code[0..matched.start]) {
 				continue;
 			}
-			let Some(replacement) = self.values.get(&code[matched.clone()])
-			else {
+			let Some(replacement) = self.values.get(&code[matched.clone()]) else {
 				break;
 			};
 			changed = true;
@@ -180,19 +154,17 @@ impl ReplacePlugin {
 }
 
 impl Plugin for ReplacePlugin {
-	fn name(&self) -> std::borrow::Cow<'static, str> {
-		"builtin:replace".into()
-	}
+	fn name(&self) -> std::borrow::Cow<'static, str> { "builtin:replace".into() }
 
 	async fn transform(
 		&self,
-		_ctx: &rolldown_plugin::TransformPluginContext<'_>,
-		args: &rolldown_plugin::HookTransformArgs<'_>,
+		_ctx:&rolldown_plugin::TransformPluginContext<'_>,
+		args:&rolldown_plugin::HookTransformArgs<'_>,
 	) -> rolldown_plugin::HookTransformReturn {
 		let mut magic_string = MagicString::new(args.code);
 		if self.try_replace(args.code, &mut magic_string) {
 			return Ok(Some(HookTransformOutput {
-				code: Some(magic_string.to_string()),
+				code:Some(magic_string.to_string()),
 				..Default::default()
 			}));
 		}
@@ -201,15 +173,12 @@ impl Plugin for ReplacePlugin {
 
 	async fn render_chunk(
 		&self,
-		_ctx: &rolldown_plugin::PluginContext,
-		args: &rolldown_plugin::HookRenderChunkArgs<'_>,
+		_ctx:&rolldown_plugin::PluginContext,
+		args:&rolldown_plugin::HookRenderChunkArgs<'_>,
 	) -> rolldown_plugin::HookRenderChunkReturn {
 		let mut magic_string = MagicString::new(&args.code);
 		if self.try_replace(&args.code, &mut magic_string) {
-			return Ok(Some(HookRenderChunkOutput {
-				code: magic_string.to_string(),
-				map: None,
-			}));
+			return Ok(Some(HookRenderChunkOutput { code:magic_string.to_string(), map:None }));
 		}
 		Ok(None)
 	}

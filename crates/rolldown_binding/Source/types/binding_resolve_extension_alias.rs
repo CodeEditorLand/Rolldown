@@ -4,6 +4,6 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ExtensionAliasItem {
-  pub target: String,
-  pub replacements: Vec<String>,
+	pub target:String,
+	pub replacements:Vec<String>,
 }
