@@ -1,8 +1,6 @@
 set windows-shell := ["powershell"]
 set shell := ["bash", "-cu"]
-
 alias ued := update-esbuild-diff
-
 _default:
     just --list -u
 
@@ -57,15 +55,16 @@ check-rust:
 
 check-node:
     pnpm type-check
-
-update-esbuild-diff *args="":
-    pnpm --filter=scripts esbuild-snap-diff {{ args }}
-
+update-esbuild-diff:
+    pnpm --filter=scripts esbuild-snap-diff
+  
 # run tests for both Rust and Node.js
 test: test-rust test-node
 
+
 test-rust:
     cargo test --workspace --exclude rolldown_binding
+    
 
 # Supported presets: all, rolldown, rollup
 test-node preset="all" *args="": _build-native-debug

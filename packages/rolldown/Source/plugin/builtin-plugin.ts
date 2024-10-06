@@ -1,153 +1,155 @@
 import {
-  normalizeEcmaTransformPluginConfig,
-  TransformPluginConfig,
-} from '../options/normalized-ecma-transform-plugin-config'
-
+	BindingBuildImportAnalysisPluginConfig,
+	BindingBuiltinPlugin,
+	BindingBuiltinPluginName,
+	BindingGlobImportPluginConfig,
+	BindingJsonPluginConfig,
+	BindingManifestPluginConfig,
+	BindingModulePreloadPolyfillPluginConfig,
+	BindingReplacePluginConfig,
+} from "../binding";
 import {
-  AliasPluginConfig,
-  normalizeAliasPluginConfig,
-} from '../options/normalized-alias-plugin-config'
+	AliasPluginConfig,
+	normalizeAliasPluginConfig,
+} from "../options/normalized-alias-plugin-config";
 import {
-  BindingBuiltinPluginName,
-  BindingGlobImportPluginConfig,
-  BindingBuiltinPlugin,
-  BindingManifestPluginConfig,
-  BindingModulePreloadPolyfillPluginConfig,
-  BindingJsonPluginConfig,
-  BindingBuildImportAnalysisPluginConfig,
-  BindingReplacePluginConfig,
-} from '../binding'
+	normalizeEcmaTransformPluginConfig,
+	TransformPluginConfig,
+} from "../options/normalized-ecma-transform-plugin-config";
 
 export class BuiltinPlugin {
-  constructor(
-    public name: BindingBuiltinPluginName,
-    public options?: unknown,
-  ) {
-    this.name = name
-    this.options = options
-  }
+	constructor(
+		public name: BindingBuiltinPluginName,
+		public options?: unknown,
+	) {
+		this.name = name;
+		this.options = options;
+	}
 }
 
 export class ModulePreloadPolyfillPlugin extends BuiltinPlugin {
-  constructor(config?: BindingModulePreloadPolyfillPluginConfig) {
-    super(BindingBuiltinPluginName.ModulePreloadPolyfillPlugin, config)
-  }
+	constructor(config?: BindingModulePreloadPolyfillPluginConfig) {
+		super(BindingBuiltinPluginName.ModulePreloadPolyfillPlugin, config);
+	}
 }
 
 export class DynamicImportVarsPlugin extends BuiltinPlugin {
-  constructor() {
-    super(BindingBuiltinPluginName.DynamicImportVarsPlugin)
-  }
+	constructor() {
+		super(BindingBuiltinPluginName.DynamicImportVarsPlugin);
+	}
 }
 
 export class ImportGlobPlugin extends BuiltinPlugin {
-  constructor(config?: BindingGlobImportPluginConfig) {
-    super(BindingBuiltinPluginName.ImportGlobPlugin, config)
-  }
+	constructor(config?: BindingGlobImportPluginConfig) {
+		super(BindingBuiltinPluginName.ImportGlobPlugin, config);
+	}
 }
 
 export class ManifestPlugin extends BuiltinPlugin {
-  constructor(config?: BindingManifestPluginConfig) {
-    super(BindingBuiltinPluginName.ManifestPlugin, config)
-  }
+	constructor(config?: BindingManifestPluginConfig) {
+		super(BindingBuiltinPluginName.ManifestPlugin, config);
+	}
 }
 
 export class WasmHelperPlugin extends BuiltinPlugin {
-  constructor() {
-    super(BindingBuiltinPluginName.WasmHelperPlugin)
-  }
+	constructor() {
+		super(BindingBuiltinPluginName.WasmHelperPlugin);
+	}
 }
 
 export class WasmFallbackPlugin extends BuiltinPlugin {
-  constructor() {
-    super(BindingBuiltinPluginName.WasmFallbackPlugin)
-  }
+	constructor() {
+		super(BindingBuiltinPluginName.WasmFallbackPlugin);
+	}
 }
 
 export class LoadFallbackPlugin extends BuiltinPlugin {
-  constructor() {
-    super(BindingBuiltinPluginName.LoadFallbackPlugin)
-  }
+	constructor() {
+		super(BindingBuiltinPluginName.LoadFallbackPlugin);
+	}
 }
 
 export class AliasPlugin extends BuiltinPlugin {
-  constructor(config?: AliasPluginConfig) {
-    let normalizedAliasPluginConfig = normalizeAliasPluginConfig(config)
-    super(BindingBuiltinPluginName.AliasPlugin, normalizedAliasPluginConfig)
-  }
+	constructor(config?: AliasPluginConfig) {
+		let normalizedAliasPluginConfig = normalizeAliasPluginConfig(config);
+		super(
+			BindingBuiltinPluginName.AliasPlugin,
+			normalizedAliasPluginConfig,
+		);
+	}
 }
 
 export class TransformPlugin extends BuiltinPlugin {
-  constructor(config?: TransformPluginConfig) {
-    let normalizedConfig = normalizeEcmaTransformPluginConfig(config)
-    super(BindingBuiltinPluginName.TransformPlugin, normalizedConfig)
-  }
+	constructor(config?: TransformPluginConfig) {
+		let normalizedConfig = normalizeEcmaTransformPluginConfig(config);
+		super(BindingBuiltinPluginName.TransformPlugin, normalizedConfig);
+	}
 }
 
 export class JsonPlugin extends BuiltinPlugin {
-  constructor(config?: BindingJsonPluginConfig) {
-    super(BindingBuiltinPluginName.JsonPlugin, config)
-  }
+	constructor(config?: BindingJsonPluginConfig) {
+		super(BindingBuiltinPluginName.JsonPlugin, config);
+	}
 }
 
 export class BuildImportAnalysisPlugin extends BuiltinPlugin {
-  constructor(config?: BindingBuildImportAnalysisPluginConfig) {
-    super(BindingBuiltinPluginName.BuildImportAnalysisPlugin, config)
-  }
+	constructor(config?: BindingBuildImportAnalysisPluginConfig) {
+		super(BindingBuiltinPluginName.BuildImportAnalysisPlugin, config);
+	}
 }
 
 export class ReplacePlugin extends BuiltinPlugin {
-  constructor(config?: BindingReplacePluginConfig) {
-    super(BindingBuiltinPluginName.ReplacePlugin, config)
-  }
+	constructor(config?: BindingReplacePluginConfig) {
+		super(BindingBuiltinPluginName.ReplacePlugin, config);
+	}
 }
 
 export function modulePreloadPolyfillPlugin(
-  config?: BindingModulePreloadPolyfillPluginConfig,
+	config?: BindingModulePreloadPolyfillPluginConfig,
 ) {
-  return new ModulePreloadPolyfillPlugin(config)
+	return new ModulePreloadPolyfillPlugin(config);
 }
 
 export function dynamicImportVarsPlugin() {
-  return new DynamicImportVarsPlugin()
+	return new DynamicImportVarsPlugin();
 }
 
 export function importGlobPlugin(config?: BindingGlobImportPluginConfig) {
-  return new ImportGlobPlugin(config)
+	return new ImportGlobPlugin(config);
 }
 
 export function manifestPlugin(config?: BindingManifestPluginConfig) {
-  return new ManifestPlugin(config)
+	return new ManifestPlugin(config);
 }
 
 export function wasmHelperPlugin() {
-  return new WasmHelperPlugin()
+	return new WasmHelperPlugin();
 }
 
 export function wasmFallbackPlugin() {
-  return new WasmFallbackPlugin()
+	return new WasmFallbackPlugin();
 }
 
 export function transformPlugin(config?: TransformPluginConfig) {
-  return new TransformPlugin(config)
+	return new TransformPlugin(config);
 }
 
 export function loadFallbackPlugin() {
-  return new LoadFallbackPlugin()
+	return new LoadFallbackPlugin();
 }
 
 export function aliasPlugin(config: AliasPluginConfig) {
-  return new AliasPlugin(config)
+	return new AliasPlugin(config);
 }
 
 export function jsonPlugin(config?: BindingJsonPluginConfig) {
-  return new JsonPlugin(config)
+	return new JsonPlugin(config);
 }
 
 export function buildImportAnalysisPlugin(
-  config: BindingBuildImportAnalysisPluginConfig,
+	config: BindingBuildImportAnalysisPluginConfig,
 ) {
-  return new BuildImportAnalysisPlugin(config)
+	return new BuildImportAnalysisPlugin(config);
 }
 
 /**
@@ -175,17 +177,17 @@ export function buildImportAnalysisPlugin(
  *
  */
 export function replacePlugin(
-  values: BindingReplacePluginConfig['values'] = {},
-  options: Omit<BindingReplacePluginConfig, 'values'> = {},
+	values: BindingReplacePluginConfig["values"] = {},
+	options: Omit<BindingReplacePluginConfig, "values"> = {},
 ) {
-  return new ReplacePlugin({ ...options, values })
+	return new ReplacePlugin({ ...options, values });
 }
 
 export function bindingifyBuiltInPlugin(
-  plugin: BuiltinPlugin,
+	plugin: BuiltinPlugin,
 ): BindingBuiltinPlugin {
-  return {
-    __name: plugin.name,
-    options: plugin.options,
-  }
+	return {
+		__name: plugin.name,
+		options: plugin.options,
+	};
 }
