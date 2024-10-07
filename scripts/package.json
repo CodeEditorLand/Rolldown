@@ -22,7 +22,7 @@
 		"follow-redirects": "1.15.9",
 		"fs-extra": "11.2.0",
 		"semver": "7.6.3",
-		"zx": "8.1.8"
+		"zx": "8.1.9"
 	},
 	"devDependencies": {
 		"@oxc-node/core": "0.0.15",
@@ -36,7 +36,7 @@
 		"estree-toolkit": "1.7.8",
 		"lodash-es": "4.17.21",
 		"markdown-it": "14.1.0",
-		"web-tree-sitter": "0.24.1"
+		"web-tree-sitter": "0.24.2"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [
