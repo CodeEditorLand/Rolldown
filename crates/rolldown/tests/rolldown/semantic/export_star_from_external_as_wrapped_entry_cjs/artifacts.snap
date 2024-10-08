@@ -1,0 +1,33 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.cjs
+
+```js
+"use strict";
+var node_fs = require("node:fs");
+Object.keys(node_fs).forEach(function (k) {
+  if (k !== 'default' && !Object.prototype.hasOwnProperty.call(exports, k)) Object.defineProperty(exports, k, {
+    enumerable: true,
+    get: function () { return node_fs[k]; }
+  });
+});
+
+require("node:fs");
+
+//#region main.js
+var main_exports, main;
+var init_main = __esm({ "main.js"() {
+	main_exports = {};
+	__export(main_exports, { main: () => main });
+	__reExport(main_exports, require("node:fs"));
+	main = "main";
+	console.log((init_main(), __toCommonJS(main_exports)));
+} });
+
+//#endregion
+init_main();
+exports.main = main
+```
