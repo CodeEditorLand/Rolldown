@@ -64,7 +64,7 @@ jobs:
                   profile: minimal
                   toolchain: ${{ matrix.toolchain }}
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -79,7 +79,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -94,7 +94,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/bench/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -109,7 +109,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -124,7 +124,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_binding/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -139,7 +139,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_common/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -154,7 +154,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_css/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -169,7 +169,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_ecmascript/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -184,7 +184,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_error/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -199,7 +199,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_fs/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -214,7 +214,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_loader_utils/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -229,7 +229,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -244,7 +244,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_alias/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -259,7 +259,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_build_import_analysis/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -274,7 +274,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_data_url/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -289,7 +289,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_dynamic_import_vars/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -304,7 +304,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_import_glob/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -319,7 +319,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_json/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -334,7 +334,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_load_fallback/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -349,7 +349,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_manifest/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -364,7 +364,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_module_preload_polyfill/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -379,7 +379,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_replace/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -394,7 +394,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_transform/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -409,7 +409,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_wasm_fallback/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -424,7 +424,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_plugin_wasm_helper/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -439,7 +439,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_resolver/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -454,7 +454,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_rstr/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -469,7 +469,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_sourcemap/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -484,7 +484,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_std_utils/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -499,7 +499,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_testing/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -514,7 +514,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_testing_config/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/
@@ -529,7 +529,7 @@ jobs:
                 command: build
                 args: --release --all-features --manifest-path ./crates/rolldown_tracing/Cargo.toml
 
-            - uses: actions/cache@v4.0.2
+            - uses: actions/cache@v4.1.1
               with:
                   path: |
                       ~/.cargo/bin/

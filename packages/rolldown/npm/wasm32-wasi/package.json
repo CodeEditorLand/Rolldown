@@ -1,23 +1,30 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"browser": "rolldown-binding.wasi-browser.js",
+	"name": "@rolldown/binding-wasm32-wasi",
+	"version": "0.0.1",
+	"private": false,
+	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"bugs": {
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
 	},
-	"cpu": [
-		"wasm32"
-	],
-	"dependencies": {
-		"@napi-rs/wasm-runtime": "0.2.5"
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
 	},
-	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-	"devDependencies": {
-		"@playform/build": ""
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
 	},
+	"type": "module",
+	"main": "rolldown-binding.wasi.cjs",
+	"browser": "rolldown-binding.wasi-browser.js",
 	"files": [
 		"rolldown-binding.wasm32-wasi.wasm",
 		"rolldown-binding.wasi.cjs",
@@ -25,26 +32,19 @@
 		"wasi-worker.mjs",
 		"wasi-worker-browser.mjs"
 	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
-	"main": "rolldown-binding.wasi.cjs",
-	"name": "@rolldown/binding-wasm32-wasi",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
 	"scripts": {
 		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
-	"type": "module",
-	"version": "0.0.1"
+	"dependencies": {
+		"@napi-rs/wasm-runtime": "0.2.5"
+	},
+	"devDependencies": {
+		"@playform/build": ""
+	},
+	"cpu": [
+		"wasm32"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
 }
