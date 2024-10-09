@@ -1,7 +1,7 @@
 packages:
-  - packages/*
-  - packages/rolldown/npm/*
-  - docs
-  - examples/*
-  - scripts
-  - crates/rolldown/tests/rolldown/topics/npm_packages
+    - packages/*
+    - packages/rolldown/npm/*
+    - docs
+    - examples/*
+    - scripts
+    - crates/rolldown/tests/rolldown/topics/npm_packages

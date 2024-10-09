@@ -5,10 +5,5 @@
 		"rootDir": "src"
 	},
 	"extends": "@playform/build/tsconfig",
-	"include": [
-		"src/**/*.js",
-		"index.d.ts",
-		"src",
-		"src"
-	]
+	"include": ["src/**/*.js", "index.d.ts", "src", "src"]
 }
