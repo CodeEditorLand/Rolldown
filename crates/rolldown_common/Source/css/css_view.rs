@@ -1,10 +1,10 @@
 use arcstr::ArcStr;
 use oxc::index::IndexVec;
 
-use crate::{ImportRecordIdx, ResolvedImportRecord};
+use crate::{ImportRecord, ImportRecordIdx};
 
 #[derive(Debug)]
 pub struct CssView {
-  pub source: ArcStr,
-  pub import_records: IndexVec<ImportRecordIdx, ResolvedImportRecord>,
+	pub source:ArcStr,
+	pub import_records:IndexVec<ImportRecordIdx, ImportRecord>,
 }

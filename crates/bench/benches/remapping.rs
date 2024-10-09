@@ -1,17 +1,17 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use oxc::{
-  allocator::Allocator,
-  codegen::{CodeGenerator, CodegenReturn},
-  parser::Parser,
-  span::SourceType,
+	allocator::Allocator,
+	codegen::{CodeGenerator, CodegenReturn},
+	parser::Parser,
+	span::SourceType,
 };
 use rolldown_sourcemap::{collapse_sourcemaps, ConcatSource, SourceMapSource};
 use rolldown_testing::workspace::root_dir;
 
-fn criterion_benchmark(c: &mut Criterion) {
-  let mut group = c.benchmark_group("remapping");
+fn criterion_benchmark(c:&mut Criterion) {
+	let mut group = c.benchmark_group("remapping");
 
-  let mut sourcemap_chain = vec![];
+	let mut sourcemap_chain = vec![];
 
   let filename = root_dir().join("tmp/bench/antd/antd.js").to_str().unwrap().to_string();
   let source_text = std::fs::read_to_string(&filename).unwrap();
@@ -27,13 +27,13 @@ fn criterion_benchmark(c: &mut Criterion) {
     CodeGenerator::new().enable_source_map(&filename, &code).build(&ret2.program);
   sourcemap_chain.push(map.as_ref().unwrap());
 
-  group.sample_size(20);
-  group.bench_with_input("remapping", &sourcemap_chain, move |b, sourcemap_chain| {
-    b.iter(|| {
-      let map = collapse_sourcemaps(sourcemap_chain.to_vec());
-      map.to_json_string();
-    });
-  });
+	group.sample_size(20);
+	group.bench_with_input("remapping", &sourcemap_chain, move |b, sourcemap_chain| {
+		b.iter(|| {
+			let map = collapse_sourcemaps(sourcemap_chain.to_vec());
+			map.to_json_string();
+		});
+	});
 
   // simulate render-chunk-remapping
   let mut sourcemap_chain = vec![];
@@ -58,12 +58,16 @@ fn criterion_benchmark(c: &mut Criterion) {
     CodeGenerator::new().enable_source_map(&filename, &source_text).build(&ret3.program);
   sourcemap_chain.push(map.as_ref().unwrap());
 
-  group.bench_with_input("render-chunk-remapping", &sourcemap_chain, move |b, sourcemap_chain| {
-    b.iter(|| {
-      let map = collapse_sourcemaps(sourcemap_chain.to_vec());
-      map.to_json_string();
-    });
-  });
+	group.bench_with_input(
+		"render-chunk-remapping",
+		&sourcemap_chain,
+		move |b, sourcemap_chain| {
+			b.iter(|| {
+				let map = collapse_sourcemaps(sourcemap_chain.to_vec());
+				map.to_json_string();
+			});
+		},
+	);
 }
 
 criterion_group!(benches, criterion_benchmark);

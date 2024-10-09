@@ -9,8 +9,8 @@ use rolldown_error::BuildDiagnostic;
 
 use self::{runtime_module_task::RuntimeModuleTaskResult, task_result::NormalModuleTaskResult};
 pub enum Msg {
-  NormalModuleDone(NormalModuleTaskResult),
-  RuntimeNormalModuleDone(RuntimeModuleTaskResult),
-  BuildErrors(Vec<BuildDiagnostic>),
-  Panics(anyhow::Error),
+	NormalModuleDone(NormalModuleTaskResult),
+	RuntimeNormalModuleDone(RuntimeModuleTaskResult),
+	BuildErrors(Vec<BuildDiagnostic>),
+	Panics(anyhow::Error),
 }

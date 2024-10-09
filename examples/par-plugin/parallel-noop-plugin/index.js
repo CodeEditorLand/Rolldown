@@ -1,7 +1,7 @@
-import { defineParallelPlugin } from 'rolldown'
-import path from 'node:path'
+import path from "node:path";
+import { defineParallelPlugin } from "rolldown";
 
 /** @type {import('rolldown').DefineParallelPluginResult<void>} */
 export default defineParallelPlugin(
-  path.resolve(import.meta.dirname, './impl.js'),
-)
+	path.resolve(import.meta.dirname, "./impl.js"),
+);

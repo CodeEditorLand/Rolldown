@@ -1,6 +1,6 @@
-import nodePath from 'node:path'
-import nodeAssert from 'node:assert'
-import nodeFs from 'node:fs'
+import nodeAssert from "node:assert";
+import nodeFs from "node:fs";
+import nodePath from "node:path";
 
 /**
  * @param  {string[]} joined
@@ -11,10 +11,10 @@ import nodeFs from 'node:fs'
  *
  */
 export function workspaceRoot(...joined) {
-  return nodePath.resolve(import.meta.dirname, '../../..', ...joined)
+	return nodePath.resolve(import.meta.dirname, "../../..", ...joined);
 }
 
 nodeAssert(
-  nodeFs.existsSync(workspaceRoot('pnpm-workspace.yaml')),
-  `${workspaceRoot('pnpm-workspace.yaml')} does not exist`,
-)
+	nodeFs.existsSync(workspaceRoot("pnpm-workspace.yaml")),
+	`${workspaceRoot("pnpm-workspace.yaml")} does not exist`,
+);

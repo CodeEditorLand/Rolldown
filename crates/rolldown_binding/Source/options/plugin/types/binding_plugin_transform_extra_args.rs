@@ -6,5 +6,5 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 #[derivative(Debug)]
 pub struct BindingTransformHookExtraArgs {
-  pub module_type: String,
+	pub module_type:String,
 }

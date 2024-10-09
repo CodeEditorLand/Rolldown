@@ -1,15 +1,15 @@
 import {
-  ModuleSideEffectsOptionSchema,
-  NormalizedTreeshakingOptionsSchema,
-} from './module-side-effects'
+	ModuleSideEffectsOptionSchema,
+	NormalizedTreeshakingOptionsSchema,
+} from "./module-side-effects";
 
 export const TreeshakingOptionsSchema =
-  NormalizedTreeshakingOptionsSchema.extend({
-    moduleSideEffects: ModuleSideEffectsOptionSchema.optional(),
-  })
+	NormalizedTreeshakingOptionsSchema.extend({
+		moduleSideEffects: ModuleSideEffectsOptionSchema.optional(),
+	});
 
 export interface TreeshakingOptions {
-  moduleSideEffects?: boolean | RegExp
+	moduleSideEffects?: boolean | RegExp;
 }
 
-export * from './module-side-effects'
+export * from "./module-side-effects";
