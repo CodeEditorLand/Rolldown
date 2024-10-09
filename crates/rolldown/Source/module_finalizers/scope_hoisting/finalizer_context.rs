@@ -1,4 +1,4 @@
-use rolldown_common::{IndexModules, ModuleIdx, NormalModule, SymbolRef};
+use rolldown_common::{IndexModules, ModuleIdx, NormalModule, SymbolRef, SymbolRefDb};
 
 use rolldown_rstr::Rstr;
 use rustc_hash::FxHashMap;
@@ -6,10 +6,7 @@ use rustc_hash::FxHashMap;
 use crate::{
   chunk_graph::ChunkGraph,
   runtime::RuntimeModuleBrief,
-  types::{
-    linking_metadata::{LinkingMetadata, LinkingMetadataVec},
-    symbol_ref_db::SymbolRefDb,
-  },
+  types::linking_metadata::{LinkingMetadata, LinkingMetadataVec},
   SharedOptions,
 };
 
@@ -19,7 +16,7 @@ pub struct ScopeHoistingFinalizerContext<'me> {
   pub modules: &'me IndexModules,
   pub linking_info: &'me LinkingMetadata,
   pub linking_infos: &'me LinkingMetadataVec,
-  pub symbols: &'me SymbolRefDb,
+  pub symbol_db: &'me SymbolRefDb,
   pub canonical_names: &'me FxHashMap<SymbolRef, Rstr>,
   pub runtime: &'me RuntimeModuleBrief,
   pub chunk_graph: &'me ChunkGraph,

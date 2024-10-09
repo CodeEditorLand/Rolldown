@@ -3,18 +3,16 @@ use oxc::{
   ast::ast::{ObjectPropertyKind, Statement},
   span::CompactStr,
 };
-use rolldown_common::{AstScopes, IndexModules, NormalModule};
+use rolldown_common::{AstScopes, IndexModules, NormalModule, SymbolRefDb};
 use rolldown_ecmascript::AstSnippet;
 use rustc_hash::FxHashSet;
-
-use crate::types::symbol_ref_db::SymbolRefDb;
 
 mod impl_visit_mut;
 
 pub struct IsolatingModuleFinalizerContext<'me> {
   pub module: &'me NormalModule,
   pub modules: &'me IndexModules,
-  pub symbols: &'me SymbolRefDb,
+  pub symbol_db: &'me SymbolRefDb,
 }
 
 pub struct IsolatingModuleFinalizer<'me, 'ast> {

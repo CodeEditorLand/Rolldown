@@ -2,8 +2,8 @@ use arcstr::ArcStr;
 // TODO: The current implementation for matching imports is enough so far but incomplete. It needs to be refactored
 // if we want more enhancements related to exports.
 use rolldown_common::{
-  ExportsKind, IndexModules, Module, ModuleIdx, ModuleType, ResolvedExport, Specifier,
-  SymbolOrMemberExprRef, SymbolRef,
+  ExportsKind, IndexModules, Module, ModuleIdx, ModuleType, NamespaceAlias, ResolvedExport,
+  Specifier, SymbolOrMemberExprRef, SymbolRef, SymbolRefDb,
 };
 use rolldown_error::{AmbiguousExternalNamespaceModule, BuildDiagnostic};
 use rolldown_rstr::{Rstr, ToRstr};
@@ -15,13 +15,7 @@ use rolldown_utils::rayon::{
 
 use rustc_hash::FxHashMap;
 
-use crate::{
-  types::{
-    linking_metadata::LinkingMetadataVec, namespace_alias::NamespaceAlias,
-    symbol_ref_db::SymbolRefDb,
-  },
-  SharedOptions,
-};
+use crate::{types::linking_metadata::LinkingMetadataVec, SharedOptions};
 
 use super::LinkStage;
 
@@ -146,7 +140,7 @@ impl<'link> LinkStage<'link> {
     let mut binding_ctx = BindImportsAndExportsContext {
       normal_modules: &self.module_table.modules,
       metas: &mut self.metas,
-      symbols: &mut self.symbols,
+      symbol_db: &mut self.symbols,
       options: self.options,
       errors: Vec::default(),
       warnings: Vec::default(),
@@ -350,7 +344,7 @@ impl<'link> LinkStage<'link> {
 struct BindImportsAndExportsContext<'a> {
   pub normal_modules: &'a IndexModules,
   pub metas: &'a mut LinkingMetadataVec,
-  pub symbols: &'a mut SymbolRefDb,
+  pub symbol_db: &'a mut SymbolRefDb,
   pub options: &'a SharedOptions,
   pub errors: Vec<BuildDiagnostic>,
   pub warnings: Vec<BuildDiagnostic>,
@@ -434,13 +428,13 @@ impl<'a> BindImportsAndExportsContext<'a> {
           ));
         }
         MatchImportKind::Normal { symbol } => {
-          self.symbols.link(*imported_as_ref, symbol);
+          self.symbol_db.link(*imported_as_ref, symbol);
         }
         MatchImportKind::Namespace { namespace_ref } => {
-          self.symbols.link(*imported_as_ref, namespace_ref);
+          self.symbol_db.link(*imported_as_ref, namespace_ref);
         }
         MatchImportKind::NormalAndNamespace { namespace_ref, alias } => {
-          self.symbols.get_mut(*imported_as_ref).namespace_alias =
+          self.symbol_db.get_mut(*imported_as_ref).namespace_alias =
             Some(NamespaceAlias { property_name: alias, namespace_ref });
         }
         MatchImportKind::NoMatch => {
@@ -650,7 +644,7 @@ impl<'a> BindImportsAndExportsContext<'a> {
               .shimmed_missing_exports
               .entry(imported.clone())
               .or_insert_with(|| {
-                self.symbols.create_symbol(tracker.importee, imported.clone().to_string().into())
+                self.symbol_db.create_symbol(tracker.importee, imported.clone().to_string().into())
               });
             return MatchImportKind::Normal { symbol: *shimmed_symbol_ref };
           }

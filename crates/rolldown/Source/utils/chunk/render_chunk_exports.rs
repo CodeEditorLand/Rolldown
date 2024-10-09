@@ -1,15 +1,9 @@
-use crate::{
-  stages::link_stage::LinkStageOutput,
-  types::{
-    generator::GenerateContext,
-    symbol_ref_db::{SymbolRefDb, SymbolRefFlags},
-  },
-};
+use crate::{stages::link_stage::LinkStageOutput, types::generator::GenerateContext};
 use std::borrow::Cow;
 
 use rolldown_common::{
   Chunk, ChunkKind, ExportsKind, IndexModules, NormalizedBundlerOptions, OutputExports,
-  OutputFormat, SymbolRef, WrapKind,
+  OutputFormat, SymbolRef, SymbolRefDb, WrapKind,
 };
 use rolldown_rstr::Rstr;
 use rolldown_utils::ecma_script::{is_validate_identifier_name, property_access_str};
@@ -32,8 +26,8 @@ pub fn render_chunk_exports(
       let rendered_items = export_items
         .into_iter()
         .map(|(exported_name, export_ref)| {
-          let canonical_ref = link_output.symbols.par_canonical_ref_for(export_ref);
-          let symbol = link_output.symbols.get(canonical_ref);
+          let canonical_ref = link_output.symbol_db.par_canonical_ref_for(export_ref);
+          let symbol = link_output.symbol_db.get(canonical_ref);
           let canonical_name = &chunk.canonical_names[&canonical_ref];
           if let Some(ns_alias) = &symbol.namespace_alias {
             let canonical_ns_name = &chunk.canonical_names[&ns_alias.namespace_ref];
@@ -63,8 +57,8 @@ pub fn render_chunk_exports(
             let rendered_items = export_items
               .into_iter()
               .map(|(exported_name, export_ref)| {
-                let canonical_ref = link_output.symbols.par_canonical_ref_for(export_ref);
-                let symbol = link_output.symbols.get(canonical_ref);
+                let canonical_ref = link_output.symbol_db.par_canonical_ref_for(export_ref);
+                let symbol = link_output.symbol_db.get(canonical_ref);
                 let mut canonical_name = Cow::Borrowed(&chunk.canonical_names[&canonical_ref]);
                 let exported_value = if let Some(ns_alias) = &symbol.namespace_alias {
                   let canonical_ns_name = &chunk.canonical_names[&ns_alias.namespace_ref];
@@ -73,7 +67,7 @@ pub fn render_chunk_exports(
                 } else {
                   let cur_chunk_idx = ctx.chunk_idx;
                   let canonical_ref_owner_chunk_idx =
-                    link_output.symbols.get(canonical_ref).chunk_id.unwrap();
+                    link_output.symbol_db.get(canonical_ref).chunk_id.unwrap();
                   let is_this_symbol_point_to_other_chunk =
                     cur_chunk_idx != canonical_ref_owner_chunk_idx;
                   if is_this_symbol_point_to_other_chunk {
@@ -89,7 +83,7 @@ pub fn render_chunk_exports(
                   Some(OutputExports::Named) => {
                     if must_keep_live_binding(
                       export_ref,
-                      &link_output.symbols,
+                      &link_output.symbol_db,
                       options,
                       &link_output.module_table.modules,
                     ) {
@@ -125,8 +119,8 @@ pub fn render_chunk_exports(
         }
         ChunkKind::Common => {
           export_items.into_iter().for_each(|(exported_name, export_ref)| {
-            let canonical_ref = link_output.symbols.par_canonical_ref_for(export_ref);
-            let symbol = link_output.symbols.get(canonical_ref);
+            let canonical_ref = link_output.symbol_db.par_canonical_ref_for(export_ref);
+            let symbol = link_output.symbol_db.get(canonical_ref);
             let canonical_name = &chunk.canonical_names[&canonical_ref];
 
             if let Some(ns_alias) = &symbol.namespace_alias {
@@ -205,7 +199,7 @@ pub fn get_chunk_export_names(
 
 fn must_keep_live_binding(
   export_ref: SymbolRef,
-  symbol_ref_db: &SymbolRefDb,
+  symbol_db: &SymbolRefDb,
   options: &NormalizedBundlerOptions,
   modules: &IndexModules,
 ) -> bool {
@@ -213,17 +207,21 @@ fn must_keep_live_binding(
     return false;
   }
 
-  let canonical_ref = symbol_ref_db.par_canonical_ref_for(export_ref);
+  let canonical_ref = symbol_db.par_canonical_ref_for(export_ref);
 
-  let canonical_ref_flags = symbol_ref_db.get_flags(canonical_ref);
-
-  if let Some(flags) = canonical_ref_flags {
-    if flags.intersects(SymbolRefFlags::IS_CONST | SymbolRefFlags::IS_NOT_REASSIGNED) {
-      return false;
-    }
+  if canonical_ref.is_declared_by_const(symbol_db).unwrap_or(false) {
+    // For unknown case, we consider it as not declared by `const`.
+    return false;
   }
 
-  if !options.external_live_bindings && export_ref.is_created_by_import_from_external(modules) {
+  if canonical_ref.is_not_reassigned(symbol_db).unwrap_or(false) {
+    // For unknown case, we consider it as reassigned.
+    return false;
+  }
+
+  if !options.external_live_bindings
+    && canonical_ref.is_created_by_import_stmt_that_target_external(symbol_db, modules)
+  {
     return false;
   }
 
