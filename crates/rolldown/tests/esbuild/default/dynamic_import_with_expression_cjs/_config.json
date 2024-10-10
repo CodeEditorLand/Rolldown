@@ -1,0 +1,15 @@
+{
+  "config": {
+    "input": [
+      {
+        "name": "a_js",
+        "import": "a.js"
+      }
+    ],
+    "format": "cjs",
+    "external": [
+      "foo"
+    ]
+  },
+  "expectExecuted": false
+}

@@ -1,0 +1,24 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.js
+
+```js
+import { default as assert } from "node:assert";
+
+
+//#region node_modules/demo-pkg/a.js
+var require_a = __commonJS({ "node_modules/demo-pkg/a.js"(exports, module) {
+	module.exports = "a";
+} });
+
+//#endregion
+//#region src/entry.js
+var import_a = __toESM(require_a());
+console.log(import_a.default);
+assert.equal(import_a.default, "a");
+
+//#endregion
+```

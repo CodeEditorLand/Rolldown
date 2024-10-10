@@ -1,4 +1,4 @@
-const rolldown = require("rolldown");
+const rolldown = require('rolldown')
 
-module.exports = rolldown;
-module.exports.rollup = rolldown.rolldown;
+module.exports = rolldown
+module.exports.rollup = rolldown.rolldown

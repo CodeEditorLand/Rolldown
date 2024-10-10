@@ -1,0 +1,30 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry_js.js
+
+```js
+
+//#region entry.js
+let keep, keep2;
+keep = keep2;
+keep += keep2;
+keep -= keep2;
+keep *= keep2;
+keep /= keep2;
+keep %= keep2;
+keep **= keep2;
+keep <<= keep2;
+keep >>= keep2;
+keep >>>= keep2;
+keep |= keep2;
+keep &= keep2;
+keep ^= keep2;
+keep ??= keep2;
+keep ||= keep2;
+keep &&= keep2;
+
+//#endregion
+```

@@ -1,0 +1,19 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.js
+
+```js
+import { default as assert } from "assert";
+
+//#region main.js
+let result = "FAIL";
+const unused = { ...{ get prop() {
+	result = "PASS";
+} } };
+assert.strictEqual(result, "PASS");
+
+//#endregion
+```
