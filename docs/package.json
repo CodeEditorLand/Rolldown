@@ -9,7 +9,7 @@
 	},
 	"devDependencies": {
 		"@iconify-json/vscode-icons": "^1.2.2",
-		"@playform/build": "",
+		"@playform/build": "0.1.7",
 		"vitepress": "^1.4.0",
 		"vitepress-plugin-group-icons": "^1.2.4"
 	},

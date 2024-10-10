@@ -9,7 +9,7 @@
 	},
 	"dependencies": {},
 	"devDependencies": {
-		"@playform/build": "",
+		"@playform/build": "0.1.7",
 		"rolldown": "workspace:*"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
