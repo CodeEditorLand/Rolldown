@@ -4,137 +4,140 @@ pub mod normal_module;
 use oxc::index::IndexVec;
 
 use crate::{
-	types::interop,
-	EcmaAstIdx,
-	ExternalModule,
-	ImportRecord,
-	ImportRecordIdx,
-	ModuleIdx,
-	NormalModule,
+  types::interop, EcmaAstIdx, ExternalModule, ImportRecordIdx, ModuleIdx, NormalModule,
+  ResolvedImportRecord,
 };
 
 #[derive(Debug)]
 pub enum Module {
-	Normal(Box<NormalModule>),
-	External(Box<ExternalModule>),
+  Normal(Box<NormalModule>),
+  External(Box<ExternalModule>),
 }
 
 impl Module {
-	pub fn idx(&self) -> ModuleIdx {
-		match self {
-			Module::Normal(v) => v.idx,
-			Module::External(v) => v.idx,
-		}
-	}
+  pub fn idx(&self) -> ModuleIdx {
+    match self {
+      Module::Normal(v) => v.idx,
+      Module::External(v) => v.idx,
+    }
+  }
 
-	pub fn exec_order(&self) -> u32 {
-		match self {
-			Module::Normal(v) => v.exec_order,
-			Module::External(v) => v.exec_order,
-		}
-	}
+  pub fn exec_order(&self) -> u32 {
+    match self {
+      Module::Normal(v) => v.exec_order,
+      Module::External(v) => v.exec_order,
+    }
+  }
 
-	pub fn id(&self) -> &str {
-		match self {
-			Module::Normal(v) => &v.id,
-			Module::External(v) => &v.name,
-		}
-	}
+  pub fn id(&self) -> &str {
+    match self {
+      Module::Normal(v) => &v.id,
+      Module::External(v) => &v.name,
+    }
+  }
 
-	pub fn side_effects(&self) -> &crate::side_effects::DeterminedSideEffects {
-		match self {
-			Module::Normal(v) => &v.side_effects,
-			Module::External(v) => &v.side_effects,
-		}
-	}
+  pub fn side_effects(&self) -> &crate::side_effects::DeterminedSideEffects {
+    match self {
+      Module::Normal(v) => &v.side_effects,
+      Module::External(v) => &v.side_effects,
+    }
+  }
 
-	pub fn stable_id(&self) -> &str {
-		match self {
-			Module::Normal(v) => &v.stable_id,
-			Module::External(v) => &v.name,
-		}
-	}
+  pub fn stable_id(&self) -> &str {
+    match self {
+      Module::Normal(v) => &v.stable_id,
+      Module::External(v) => &v.name,
+    }
+  }
 
-	pub fn normal(v:NormalModule) -> Self { Module::Normal(Box::new(v)) }
+  pub fn normal(v: NormalModule) -> Self {
+    Module::Normal(Box::new(v))
+  }
 
-	pub fn external(v:ExternalModule) -> Self { Module::External(Box::new(v)) }
+  pub fn external(v: ExternalModule) -> Self {
+    Module::External(Box::new(v))
+  }
 
-	pub fn as_normal(&self) -> Option<&NormalModule> {
-		match self {
-			Module::Normal(v) => Some(v),
-			Module::External(_) => None,
-		}
-	}
+  pub fn as_normal(&self) -> Option<&NormalModule> {
+    match self {
+      Module::Normal(v) => Some(v),
+      Module::External(_) => None,
+    }
+  }
 
-	pub fn as_external(&self) -> Option<&ExternalModule> {
-		match self {
-			Module::External(v) => Some(v),
-			Module::Normal(_) => None,
-		}
-	}
+  pub fn as_external(&self) -> Option<&ExternalModule> {
+    match self {
+      Module::External(v) => Some(v),
+      Module::Normal(_) => None,
+    }
+  }
 
-	pub fn as_normal_mut(&mut self) -> Option<&mut NormalModule> {
-		match self {
-			Module::Normal(v) => Some(v),
-			Module::External(_) => None,
-		}
-	}
+  pub fn as_normal_mut(&mut self) -> Option<&mut NormalModule> {
+    match self {
+      Module::Normal(v) => Some(v),
+      Module::External(_) => None,
+    }
+  }
 
-	pub fn as_external_mut(&mut self) -> Option<&mut ExternalModule> {
-		match self {
-			Module::External(v) => Some(v),
-			Module::Normal(_) => None,
-		}
-	}
+  pub fn as_external_mut(&mut self) -> Option<&mut ExternalModule> {
+    match self {
+      Module::External(v) => Some(v),
+      Module::Normal(_) => None,
+    }
+  }
 
-	pub fn import_records(&self) -> &IndexVec<ImportRecordIdx, ImportRecord> {
-		match self {
-			Module::Normal(v) => &v.import_records,
-			Module::External(v) => &v.import_records,
-		}
-	}
+  pub fn import_records(&self) -> &IndexVec<ImportRecordIdx, ResolvedImportRecord> {
+    match self {
+      Module::Normal(v) => &v.import_records,
+      Module::External(v) => &v.import_records,
+    }
+  }
 
-	pub fn set_import_records(&mut self, records:IndexVec<ImportRecordIdx, ImportRecord>) {
-		match self {
-			Module::Normal(v) => v.import_records = records,
-			Module::External(v) => v.import_records = records,
-		}
-	}
+  pub fn set_import_records(&mut self, records: IndexVec<ImportRecordIdx, ResolvedImportRecord>) {
+    match self {
+      Module::Normal(v) => v.import_records = records,
+      Module::External(v) => v.import_records = records,
+    }
+  }
 
-	pub fn set_ecma_ast_idx(&mut self, idx:EcmaAstIdx) {
-		match self {
-			Module::Normal(v) => v.ecma_ast_idx = Some(idx),
-			Module::External(_) => {
-				panic!("set_ecma_ast_idx should be called on EcmaModule")
-			},
-		}
-	}
+  pub fn set_ecma_ast_idx(&mut self, idx: EcmaAstIdx) {
+    match self {
+      Module::Normal(v) => v.ecma_ast_idx = Some(idx),
+      Module::External(_) => panic!("set_ecma_ast_idx should be called on EcmaModule"),
+    }
+  }
 
-	/// Returns `true` if the module is [`Ecma`].
-	///
-	/// [`Ecma`]: Module::Ecma
-	#[must_use]
-	pub fn is_normal(&self) -> bool { matches!(self, Self::Normal(..)) }
+  /// Returns `true` if the module is [`Ecma`].
+  ///
+  /// [`Ecma`]: Module::Ecma
+  #[must_use]
+  pub fn is_normal(&self) -> bool {
+    matches!(self, Self::Normal(..))
+  }
 
-	pub fn size(&self) -> usize {
-		match self {
-			Module::Normal(v) => v.source.len(),
-			Module::External(_) => 0,
-		}
-	}
+  pub fn size(&self) -> usize {
+    match self {
+      Module::Normal(v) => v.source.len(),
+      Module::External(_) => 0,
+    }
+  }
 
-	pub fn interop(&self) -> Option<interop::Interop> {
-		match self {
-			Module::Normal(v) => v.interop(),
-			Module::External(_) => None,
-		}
-	}
+  pub fn interop(&self) -> Option<interop::Interop> {
+    match self {
+      Module::Normal(v) => v.interop(),
+      Module::External(_) => None,
+    }
+  }
 }
 
 impl From<NormalModule> for Module {
-	fn from(module:NormalModule) -> Self { Module::Normal(Box::new(module)) }
+  fn from(module: NormalModule) -> Self {
+    Module::Normal(Box::new(module))
+  }
 }
 
 impl From<ExternalModule> for Module {
-	fn from(module:ExternalModule) -> Self { Module::External(Box::new(module)) }
+  fn from(module: ExternalModule) -> Self {
+    Module::External(Box::new(module))
+  }
 }

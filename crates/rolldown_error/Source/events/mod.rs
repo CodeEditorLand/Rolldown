@@ -1,9 +1,7 @@
 use std::fmt::Debug;
 
 use crate::{
-	diagnostic::Diagnostic,
-	event_kind::EventKind,
-	types::diagnostic_options::DiagnosticOptions,
+  diagnostic::Diagnostic, event_kind::EventKind, types::diagnostic_options::DiagnosticOptions,
 };
 
 pub mod ambiguous_external_namespace;
@@ -30,41 +28,48 @@ pub mod unresolved_import;
 pub mod unresolved_import_treated_as_external;
 
 pub trait BuildEvent: Debug + Sync + Send {
-	fn kind(&self) -> EventKind;
+  fn kind(&self) -> EventKind;
 
-	fn message(&self, opts:&DiagnosticOptions) -> String;
+  fn message(&self, opts: &DiagnosticOptions) -> String;
 
-	fn on_diagnostic(&self, _diagnostic:&mut Diagnostic, _opts:&DiagnosticOptions) {}
+  fn on_diagnostic(&self, _diagnostic: &mut Diagnostic, _opts: &DiagnosticOptions) {}
 }
 
-impl<T:BuildEvent + 'static> From<T> for Box<dyn BuildEvent>
+impl<T: BuildEvent + 'static> From<T> for Box<dyn BuildEvent>
 where
-	Self: Sized,
+  Self: Sized,
 {
-	fn from(e:T) -> Self { Box::new(e) }
+  fn from(e: T) -> Self {
+    Box::new(e)
+  }
 }
 
-// --- TODO(hyf0): These errors are only for compatibility with legacy code.
-// They should be replaced with more specific errors.
+// --- TODO(hyf0): These errors are only for compatibility with legacy code. They should be replaced with more specific errors.
 
 #[derive(Debug)]
 pub struct NapiError {
-	pub status:String,
-	pub reason:String,
+  pub status: String,
+  pub reason: String,
 }
 
 impl BuildEvent for NapiError {
-	fn kind(&self) -> EventKind { EventKind::NapiError }
+  fn kind(&self) -> EventKind {
+    EventKind::NapiError
+  }
 
-	fn message(&self, _opts:&DiagnosticOptions) -> String {
-		format!("Napi error: {status}: {reason}", status = self.status, reason = self.reason)
-	}
+  fn message(&self, _opts: &DiagnosticOptions) -> String {
+    format!("Napi error: {status}: {reason}", status = self.status, reason = self.reason)
+  }
 }
 
 impl BuildEvent for std::io::Error {
-	fn kind(&self) -> EventKind { EventKind::IoError }
+  fn kind(&self) -> EventKind {
+    EventKind::IoError
+  }
 
-	fn message(&self, _opts:&DiagnosticOptions) -> String { format!("IO error: {self}") }
+  fn message(&self, _opts: &DiagnosticOptions) -> String {
+    format!("IO error: {self}")
+  }
 }
 
 // --- end

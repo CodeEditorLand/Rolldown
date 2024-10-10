@@ -1,28 +1,28 @@
-import { BindingTransformPluginConfig } from "../binding";
-import { normalizedStringOrRegex } from "./utils";
+import { BindingTransformPluginConfig } from '../binding'
+import { normalizedStringOrRegex } from './utils'
 
-type TransformPattern = string | RegExp | (RegExp | string)[];
+type TransformPattern = string | RegExp | (RegExp | string)[]
 // A temp config type for giving better user experience
 export type TransformPluginConfig = Omit<
-	BindingTransformPluginConfig,
-	"include" | "exclude"
+  BindingTransformPluginConfig,
+  'include' | 'exclude'
 > & {
-	include?: TransformPattern;
-	exclude?: TransformPattern;
-};
+  include?: TransformPattern
+  exclude?: TransformPattern
+}
 
 export function normalizeEcmaTransformPluginConfig(
-	config?: TransformPluginConfig,
+  config?: TransformPluginConfig,
 ): BindingTransformPluginConfig | undefined {
-	if (!config) {
-		return undefined;
-	}
-	let normalizedConfig: BindingTransformPluginConfig = {
-		jsxInject: config?.jsxInject,
-		exclude: normalizedStringOrRegex(config.exclude),
-		include: normalizedStringOrRegex(config.include),
-		targets: config.targets,
-	};
+  if (!config) {
+    return undefined
+  }
+  let normalizedConfig: BindingTransformPluginConfig = {
+    jsxInject: config?.jsxInject,
+    exclude: normalizedStringOrRegex(config.exclude),
+    include: normalizedStringOrRegex(config.include),
+    targets: config.targets,
+  }
 
-	return normalizedConfig;
+  return normalizedConfig
 }

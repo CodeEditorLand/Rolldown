@@ -6,44 +6,45 @@ use serde::{Deserialize, Deserializer};
 
 #[derive(Default, Debug)]
 #[cfg_attr(
-	feature = "deserialize_bundler_options",
-	derive(Deserialize, JsonSchema),
-	serde(rename_all = "camelCase", deny_unknown_fields)
+  feature = "deserialize_bundler_options",
+  derive(Deserialize, JsonSchema),
+  serde(rename_all = "camelCase", deny_unknown_fields)
 )]
 pub struct AdvancedChunksOptions {
-	pub min_share_count:Option<u32>,
-	pub min_size:Option<f64>,
-	pub groups:Option<Vec<MatchGroup>>,
+  pub min_share_count: Option<u32>,
+  pub min_size: Option<f64>,
+  pub groups: Option<Vec<MatchGroup>>,
 }
 
 #[derive(Default, Debug)]
 #[cfg_attr(
-	feature = "deserialize_bundler_options",
-	derive(Deserialize, JsonSchema),
-	serde(rename_all = "camelCase", deny_unknown_fields)
+  feature = "deserialize_bundler_options",
+  derive(Deserialize, JsonSchema),
+  serde(rename_all = "camelCase", deny_unknown_fields)
 )]
 pub struct MatchGroup {
-	pub name:String,
-	#[cfg_attr(
-		feature = "deserialize_bundler_options",
-		serde(deserialize_with = "deserialize_test", default),
-		schemars(with = "Option<String>")
-	)]
-	pub test:Option<HybridRegex>,
-	// pub share_count: Option<u32>,
-	pub priority:Option<u32>,
-	pub min_size:Option<f64>,
-	pub min_share_count:Option<u32>,
+  pub name: String,
+  #[cfg_attr(
+    feature = "deserialize_bundler_options",
+    serde(deserialize_with = "deserialize_test", default),
+    schemars(with = "Option<String>")
+  )]
+  pub test: Option<HybridRegex>,
+  // pub share_count: Option<u32>,
+  pub priority: Option<u32>,
+  pub min_size: Option<f64>,
+  pub min_share_count: Option<u32>,
 }
 
 #[cfg(feature = "deserialize_bundler_options")]
-fn deserialize_test<'de, D>(deserializer:D) -> Result<Option<HybridRegex>, D::Error>
+fn deserialize_test<'de, D>(deserializer: D) -> Result<Option<HybridRegex>, D::Error>
 where
-	D: Deserializer<'de>, {
-	let deserialized = Option::<String>::deserialize(deserializer)?;
-	let transformed =
-		deserialized.map(|inner| HybridRegex::new(&inner)).transpose().map_err(|e| {
-			serde::de::Error::custom(format!("failed to deserialize {e:?} to HybridRegex"))
-		})?;
-	Ok(transformed)
+  D: Deserializer<'de>,
+{
+  let deserialized = Option::<String>::deserialize(deserializer)?;
+  let transformed = deserialized
+    .map(|inner| HybridRegex::new(&inner))
+    .transpose()
+    .map_err(|e| serde::de::Error::custom(format!("failed to deserialize {e:?} to HybridRegex")))?;
+  Ok(transformed)
 }

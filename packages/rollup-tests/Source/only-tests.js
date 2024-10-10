@@ -1,8 +1,8 @@
 /**
  * @type {string[]}
  */
-const onlyTests = [];
+const onlyTests = []
 
 module.exports = {
-	onlyTests,
-};
+  onlyTests,
+}

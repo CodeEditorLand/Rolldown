@@ -1,4 +1,4 @@
 pub enum Interop {
-	Babel,
-	Node,
+  Babel,
+  Node,
 }

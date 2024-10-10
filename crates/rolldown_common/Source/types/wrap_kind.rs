@@ -1,7 +1,7 @@
 #[derive(Debug, Default)]
 pub enum WrapKind {
-	#[default]
-	None,
-	Cjs,
-	Esm,
+  #[default]
+  None,
+  Cjs,
+  Esm,
 }

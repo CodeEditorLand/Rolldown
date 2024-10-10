@@ -1,6 +1,6 @@
 pub enum OxcParseType {
-	Js,
-	Jsx,
-	Ts,
-	Tsx,
+  Js,
+  Jsx,
+  Ts,
+  Tsx,
 }

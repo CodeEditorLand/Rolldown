@@ -4,7 +4,7 @@ use xxhash_rust::xxh3::xxh3_128;
 
 use crate::base64::to_url_safe_base64;
 
-pub fn xxhash_base64_url(input:&[u8]) -> String {
-	let hash = xxh3_128(input).to_le_bytes();
-	to_url_safe_base64(hash)
+pub fn xxhash_base64_url(input: &[u8]) -> String {
+  let hash = xxh3_128(input).to_le_bytes();
+  to_url_safe_base64(hash)
 }

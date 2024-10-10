@@ -1,39 +1,36 @@
 {
-  "name": "scripts",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "type-check": "tsc -b",
-    "esbuild-snap-diff": "node --import @oxc-node/core/register ./snap-diff/index.ts"
-  },
-  "dependencies": {
-    "@parcel/watcher": "^2.4.1",
-    "@pnpm/find-workspace-packages": "^6.0.9",
-    "@rolldown/testing": "workspace:*",
-    "@types/debug": "^4.1.12",
-    "@types/fs-extra": "^11.0.4",
-    "@types/semver": "^7.5.8",
-    "chalk": "^5.3.0",
-    "change-case": "^5.4.4",
-    "debug": "^4.3.5",
-    "dedent": "^1.5.3",
-    "execa": "^9.2.0",
-    "fast-glob": "^3.3.2",
-    "follow-redirects": "^1.15.6",
-    "fs-extra": "^11.2.0",
-    "semver": "^7.6.2",
-    "zx": "^8.1.2"
-  },
-  "devDependencies": {
-    "@oxc-node/core": "^0.0.15",
-    "@types/diff": "^5.2.2",
-    "@types/lodash-es": "^4.17.12",
-    "@types/markdown-it": "^14.1.2",
-    "acorn": "^8.12.1",
-    "astring": "^1.9.0",
-    "diff": "^7.0.0",
-    "estree-toolkit": "^1.7.8",
-    "markdown-it": "^14.1.0",
-    "web-tree-sitter": "^0.23.0"
-  }
+	"dependencies": {
+		"@pnpm/find-workspace-packages": "^6.0.9",
+		"@rolldown/testing": "workspace:*",
+		"@types/debug": "^4.1.12",
+		"@types/fs-extra": "^11.0.4",
+		"@types/semver": "^7.5.8",
+		"chalk": "^5.3.0",
+		"change-case": "^5.4.4",
+		"debug": "^4.3.5",
+		"dedent": "^1.5.3",
+		"execa": "^9.2.0",
+		"fast-glob": "^3.3.2",
+		"follow-redirects": "^1.15.6",
+		"fs-extra": "^11.2.0",
+		"semver": "^7.6.2",
+		"zx": "^8.1.2"
+	},
+	"devDependencies": {
+		"@oxc-node/core": "^0.0.15",
+		"@types/diff": "^5.2.2",
+		"@types/lodash-es": "^4.17.12",
+		"@types/markdown-it": "^14.1.2",
+		"acorn": "^8.12.1",
+		"astring": "^1.9.0",
+		"diff": "^7.0.0",
+		"estree-toolkit": "^1.7.8",
+		"markdown-it": "^14.1.0",
+		"web-tree-sitter": "^0.23.0"
+	},
+	"name": "scripts",
+	"scripts": {
+		"esbuild-snap-diff": "node --import @oxc-node/core/register ./snap-diff/index.ts",
+		"type-check": "tsc -b"
+	}
 }
