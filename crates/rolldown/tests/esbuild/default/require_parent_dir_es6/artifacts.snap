@@ -1,0 +1,19 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## dir_entry.js
+
+```js
+import { default as assert } from "node:assert";
+
+//#region index.js
+var require_parent_dir_es6_index_default = 123;
+
+//#endregion
+//#region dir/entry.js
+assert.equal(require_parent_dir_es6_index_default, 123);
+
+//#endregion
+```

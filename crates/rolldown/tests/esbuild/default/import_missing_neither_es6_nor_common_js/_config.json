@@ -1,0 +1,31 @@
+{
+  "config": {
+    "input": [
+      {
+        "name": "named",
+        "import": "named.js"
+      },
+      {
+        "name": "star",
+        "import": "star.js"
+      },
+      {
+        "name": "star-capture",
+        "import": "star-capture.js"
+      },
+      {
+        "name": "bare",
+        "import": "bare.js"
+      },
+      {
+        "name": "require",
+        "import": "require.js"
+      },
+      {
+        "name": "import",
+        "import": "import.js"
+      }
+    ]
+  },
+  "expectExecuted": false
+}

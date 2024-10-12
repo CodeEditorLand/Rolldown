@@ -1,0 +1,24 @@
+{
+  "config": {
+    "input": [
+      {
+        "name": "import",
+        "import": "import-shorthand.js"
+      },
+      {
+        "name": "import",
+        "import": "import-normal.js"
+      },
+      {
+        "name": "local",
+        "import": "local-shorthand.js"
+      },
+      {
+        "name": "local",
+        "import": "local-normal.js"
+      }
+    ]
+  },
+  "expectExecuted": false
+}
+

@@ -1,0 +1,23 @@
+{
+  "config": {
+    "input": [
+      {
+        "name": "import",
+        "import": "import-computed.js"
+      },
+      {
+        "name": "import",
+        "import": "import-normal.js"
+      },
+      {
+        "name": "local",
+        "import": "local-computed.js"
+      },
+      {
+        "name": "local",
+        "import": "local-normal.js"
+      }
+    ]
+  },
+  "expectExecuted": false
+}
