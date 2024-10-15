@@ -1,64 +1,39 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
 	"dependencies": {
-		"@pnpm/find-workspace-packages": "^6.0.9",
+		"@pnpm/find-workspace-packages": "6.0.9",
 		"@rolldown/testing": "workspace:*",
-		"@types/debug": "^4.1.12",
-		"@types/fs-extra": "^11.0.4",
-		"@types/semver": "^7.5.8",
-		"chalk": "^5.3.0",
-		"change-case": "^5.4.4",
-		"debug": "^4.3.5",
-		"dedent": "^1.5.3",
-		"execa": "^9.2.0",
-		"fast-glob": "^3.3.2",
-		"follow-redirects": "^1.15.6",
-		"fs-extra": "^11.2.0",
-		"remark-parse": "^11.0.0",
-		"semver": "^7.6.2",
-		"tree-sitter": "^0.21.1",
-		"unified": "^11.0.5",
-		"zx": "^8.1.2"
+		"@types/debug": "4.1.12",
+		"@types/fs-extra": "11.0.4",
+		"@types/semver": "7.5.8",
+		"chalk": "5.3.0",
+		"change-case": "5.4.4",
+		"debug": "4.3.7",
+		"dedent": "1.5.3",
+		"execa": "9.4.0",
+		"fast-glob": "3.3.2",
+		"follow-redirects": "1.15.9",
+		"fs-extra": "11.2.0",
+		"remark-parse": "11.0.0",
+		"semver": "7.6.3",
+		"tree-sitter": "0.21.1",
+		"unified": "11.0.5",
+		"zx": "8.1.9"
 	},
 	"devDependencies": {
-		"@oxc-node/core": "^0.0.15",
+		"@oxc-node/core": "0.0.15",
 		"@playform/build": "0.1.7",
-		"@types/diff": "^5.2.2",
-		"@types/lodash-es": "^4.17.12",
-		"acorn": "^8.12.1",
-		"astring": "^1.9.0",
-		"diff": "^7.0.0",
-		"estree-toolkit": "^1.7.8",
-		"web-tree-sitter": "^0.23.0"
+		"@types/diff": "5.2.3",
+		"@types/lodash-es": "4.17.12",
+		"acorn": "8.12.1",
+		"astring": "1.9.0",
+		"diff": "7.0.0",
+		"estree-toolkit": "1.7.8",
+		"web-tree-sitter": "0.24.3"
 	},
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
 	"name": "scripts",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
 	"scripts": {
 		"esbuild-snap-diff": "node --import @oxc-node/core/register ./snap-diff/index.ts",
 		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"type-check": "tsc -b"
-	},
-	"type": "module",
-	"version": "0.0.1"
+	}
 }
