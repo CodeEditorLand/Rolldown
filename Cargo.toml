@@ -76,6 +76,7 @@ single_match      = "allow"
 single_match_else = "allow"
 
 [workspace.dependencies]
+css-module-lexer                        = "0.0.14"
 rolldown                                = { version = "0.1.0", path = "./crates/rolldown" }
 rolldown_common                         = { version = "0.1.0", path = "./crates/rolldown_common" }
 rolldown_ecmascript                     = { version = "0.1.0", path = "./crates/rolldown_ecmascript" }
@@ -105,7 +106,6 @@ rolldown_testing_config                 = { version = "0.1.0", path = "./crates/
 rolldown_tracing                        = { version = "0.1.0", path = "./crates/rolldown_tracing" }
 rolldown_utils                          = { version = "0.1.0", path = "./crates/rolldown_utils" }
 
-
 anyhow              = "1.0.86"
 append-only-vec     = { version = "0.1.5" }
 arcstr              = "1.2.0"
@@ -128,7 +128,7 @@ insta               = "1.39.0"
 itertools           = "0.13.0"
 itoa                = "1.0.11"
 json-strip-comments = "1.0.4"
-jsonschema          = { version = "0.21.0", default-features = false }
+jsonschema          = { version = "0.23.0", default-features = false }
 lightningcss        = { version = "1.0.0-alpha.57" }
 memchr              = "2.7.2"
 mimalloc            = "0.1.42"
@@ -151,7 +151,7 @@ simdutf8            = { version = "0.1.4", features = ["aarch64_neon"] }
 smallvec            = "1.13.2"
 string_wizard       = "0.0.22"
 sugar_path          = { version = "1.2.0", features = ["cached_current_dir"] }
-testing_macros      = "0.2.13"
+testing_macros      = "1.0.0"
 tokio               = { version = "1.38.0", default-features = false }
 tracing             = "0.1.40"
 tracing-chrome      = "0.7.2"

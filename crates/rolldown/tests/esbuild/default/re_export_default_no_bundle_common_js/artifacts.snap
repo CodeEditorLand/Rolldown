@@ -1,0 +1,40 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# warnings
+
+## UNRESOLVED_IMPORT
+
+```text
+[UNRESOLVED_IMPORT] Warning: "./bar" is imported by "entry.js", but could not be resolved – treating it as an external dependency.
+
+```
+## UNRESOLVED_IMPORT
+
+```text
+[UNRESOLVED_IMPORT] Warning: "./foo" is imported by "entry.js", but could not be resolved – treating it as an external dependency.
+
+```
+# Assets
+
+## entry.js
+
+```js
+"use strict";
+
+const { default: foo } = __toESM(require("./foo"));
+const { default: bar } = __toESM(require("./bar"));
+
+Object.defineProperty(exports, 'bar', {
+  enumerable: true,
+  get: function () {
+    return bar;
+  }
+});
+Object.defineProperty(exports, 'foo', {
+  enumerable: true,
+  get: function () {
+    return foo;
+  }
+});
+```
