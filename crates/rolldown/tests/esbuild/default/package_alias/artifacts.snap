@@ -1,0 +1,19 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Errors
+
+## PARSE_ERROR
+
+```text
+[PARSE_ERROR] Error: Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[nested3/node_modules/alias3/index.js:1:5]
+   │
+ 1 │ test failure
+   │     │ 
+   │     ╰─ 
+   │ 
+   │ Help: Try insert a semicolon here
+───╯
+
+```

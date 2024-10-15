@@ -1,0 +1,33 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## foo.js
+
+```js
+import { devil } from "./foo2.js";
+
+export { devil as '😈' };
+```
+## foo2.js
+
+```js
+
+//#region foo.js
+const devil = "devil";
+
+//#endregion
+export { devil };
+```
+## main.js
+
+```js
+import { devil } from "./foo2.js";
+
+//#region main.js
+const moduleFoo = import("./foo.js");
+
+//#endregion
+export { moduleFoo, devil as '😈' };
+```

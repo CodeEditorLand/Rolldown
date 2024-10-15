@@ -1,0 +1,18 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.js
+
+```js
+"use strict";
+
+const fs = __toESM(require("node:fs"));
+const { default: defaultValue, readFileSync } = __toESM(require("node:fs"));
+
+//#region entry.js
+console.log(fs, readFileSync, defaultValue);
+
+//#endregion
+```

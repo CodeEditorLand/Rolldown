@@ -1,0 +1,21 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.js
+
+```js
+"use strict";
+
+
+//#region mod.js
+var default_mod_exports = {};
+__export(default_mod_exports, { default: () => example });
+function example() {
+	return "default";
+}
+
+//#endregion
+module.exports = default_mod_exports;
+```
