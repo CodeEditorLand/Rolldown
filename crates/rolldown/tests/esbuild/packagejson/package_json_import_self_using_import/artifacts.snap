@@ -1,0 +1,20 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.js
+
+```js
+
+//#region src/foo-import.js
+var foo_import_default = "foo";
+
+//#endregion
+//#region src/index.js
+var src_index_default = "index";
+console.log(src_index_default, foo_import_default);
+
+//#endregion
+export { src_index_default as default };
+```

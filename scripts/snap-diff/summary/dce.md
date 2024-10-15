@@ -1,19 +1,19 @@
 # Failed Cases
 ## [const_value_inlining_no_bundle](../../../crates/rolldown/tests/esbuild/dce/const_value_inlining_no_bundle/diff.md)
   diff
-## [`cross_module_constant_folding_number`](../../../crates/rolldown/tests/esbuild/dce/cross_module_constant_folding_number/diff.md)
+## [cross_module_constant_folding_number](../../../crates/rolldown/tests/esbuild/dce/cross_module_constant_folding_number/diff.md)
   diff
-## [`cross_module_constant_folding_string`](../../../crates/rolldown/tests/esbuild/dce/cross_module_constant_folding_string/diff.md)
+## [cross_module_constant_folding_string](../../../crates/rolldown/tests/esbuild/dce/cross_module_constant_folding_string/diff.md)
   diff
-## [`dce_class_static_blocks`](../../../crates/rolldown/tests/esbuild/dce/dce_class_static_blocks/diff.md)
+## [dce_class_static_blocks](../../../crates/rolldown/tests/esbuild/dce/dce_class_static_blocks/diff.md)
   diff
-## [`dce_class_static_blocks_minify_syntax`](../../../crates/rolldown/tests/esbuild/dce/dce_class_static_blocks_minify_syntax/diff.md)
+## [dce_class_static_blocks_minify_syntax](../../../crates/rolldown/tests/esbuild/dce/dce_class_static_blocks_minify_syntax/diff.md)
   diff
-## [`dce_of_decorators`](../../../crates/rolldown/tests/esbuild/dce/dce_of_decorators/diff.md)
+## [dce_of_decorators](../../../crates/rolldown/tests/esbuild/dce/dce_of_decorators/diff.md)
   diff
-## [`dce_of_destructuring`](../../../crates/rolldown/tests/esbuild/dce/dce_of_destructuring/diff.md)
+## [dce_of_destructuring](../../../crates/rolldown/tests/esbuild/dce/dce_of_destructuring/diff.md)
   diff
-## [`dce_of_experimental_decorators`](../../../crates/rolldown/tests/esbuild/dce/dce_of_experimental_decorators/diff.md)
+## [dce_of_experimental_decorators](../../../crates/rolldown/tests/esbuild/dce/dce_of_experimental_decorators/diff.md)
   diff
 ## [dce_of_iife](../../../crates/rolldown/tests/esbuild/dce/dce_of_iife/diff.md)
   diff
@@ -23,15 +23,15 @@
   diff
 ## [dead_code_following_jump](../../../crates/rolldown/tests/esbuild/dce/dead_code_following_jump/diff.md)
   diff
-## [`disable_tree_shaking`](../../../crates/rolldown/tests/esbuild/dce/disable_tree_shaking/diff.md)
+## [disable_tree_shaking](../../../crates/rolldown/tests/esbuild/dce/disable_tree_shaking/diff.md)
   diff
-## [`drop_label_tree_shaking_bug_issue3311`](../../../crates/rolldown/tests/esbuild/dce/drop_label_tree_shaking_bug_issue3311/diff.md)
+## [drop_label_tree_shaking_bug_issue3311](../../../crates/rolldown/tests/esbuild/dce/drop_label_tree_shaking_bug_issue3311/diff.md)
   diff
-## [`drop_labels`](../../../crates/rolldown/tests/esbuild/dce/drop_labels/diff.md)
+## [drop_labels](../../../crates/rolldown/tests/esbuild/dce/drop_labels/diff.md)
   diff
 ## [inline_function_call_behavior_changes](../../../crates/rolldown/tests/esbuild/dce/inline_function_call_behavior_changes/diff.md)
   diff
-## [`inline_function_call_for_init_decl`](../../../crates/rolldown/tests/esbuild/dce/inline_function_call_for_init_decl/diff.md)
+## [inline_function_call_for_init_decl](../../../crates/rolldown/tests/esbuild/dce/inline_function_call_for_init_decl/diff.md)
   diff
 ## [multiple_declaration_tree_shaking_minify_syntax](../../../crates/rolldown/tests/esbuild/dce/multiple_declaration_tree_shaking_minify_syntax/diff.md)
   diff
@@ -41,29 +41,29 @@
   missing
 ## no_side_effects_comment_minify_whitespace
   missing
-## [`no_side_effects_comment_type_script_declare`](../../../crates/rolldown/tests/esbuild/dce/no_side_effects_comment_type_script_declare/diff.md)
+## [no_side_effects_comment_type_script_declare](../../../crates/rolldown/tests/esbuild/dce/no_side_effects_comment_type_script_declare/diff.md)
   diff
-## [`no_side_effects_comment_unused_calls`](../../../crates/rolldown/tests/esbuild/dce/no_side_effects_comment_unused_calls/diff.md)
+## [no_side_effects_comment_unused_calls](../../../crates/rolldown/tests/esbuild/dce/no_side_effects_comment_unused_calls/diff.md)
   diff
-## [`package_json_side_effects_array_keep_main_implicit_main`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_main_implicit_main/diff.md)
+## [package_json_side_effects_array_keep_main_implicit_main](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_main_implicit_main/diff.md)
   diff
-## [`package_json_side_effects_array_keep_main_use_main`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_main_use_main/diff.md)
+## [package_json_side_effects_array_keep_main_use_main](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_main_use_main/diff.md)
   diff
-## [`package_json_side_effects_array_keep_module_implicit_main`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_module_implicit_main/diff.md)
+## [package_json_side_effects_array_keep_module_implicit_main](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_module_implicit_main/diff.md)
   diff
-## [`package_json_side_effects_array_keep_module_use_main`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_module_use_main/diff.md)
+## [package_json_side_effects_array_keep_module_use_main](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_module_use_main/diff.md)
   diff
-## [`package_json_side_effects_false_all_fork`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_all_fork/diff.md)
+## [package_json_side_effects_false_all_fork](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_all_fork/diff.md)
   diff
-## [`package_json_side_effects_false_cross_platform_slash`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_cross_platform_slash/diff.md)
+## [package_json_side_effects_false_cross_platform_slash](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_cross_platform_slash/diff.md)
   diff
-## [`package_json_side_effects_false_intermediate_files_chain_all`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_chain_all/diff.md)
+## [package_json_side_effects_false_intermediate_files_chain_all](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_chain_all/diff.md)
   diff
-## [`package_json_side_effects_false_intermediate_files_chain_one`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_chain_one/diff.md)
+## [package_json_side_effects_false_intermediate_files_chain_one](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_chain_one/diff.md)
   diff
-## [`package_json_side_effects_false_intermediate_files_diamond`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_diamond/diff.md)
+## [package_json_side_effects_false_intermediate_files_diamond](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_diamond/diff.md)
   diff
-## [`package_json_side_effects_false_intermediate_files_used`](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_used/diff.md)
+## [package_json_side_effects_false_intermediate_files_used](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_used/diff.md)
   diff
 ## [package_json_side_effects_false_keep_bare_import_and_require_es6](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_keep_bare_import_and_require_es6/diff.md)
   diff
@@ -75,39 +75,39 @@
   diff
 ## [tree_shaking_binary_operators](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_binary_operators/diff.md)
   diff
-## [`tree_shaking_class_property`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_class_property/diff.md)
+## [tree_shaking_class_property](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_class_property/diff.md)
   diff
-## [`tree_shaking_class_static_property`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_class_static_property/diff.md)
+## [tree_shaking_class_static_property](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_class_static_property/diff.md)
   diff
-## [`tree_shaking_import_identifier`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_import_identifier/diff.md)
+## [tree_shaking_import_identifier](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_import_identifier/diff.md)
   diff
-## [`tree_shaking_in_esm_wrapper`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_in_esm_wrapper/diff.md)
+## [tree_shaking_in_esm_wrapper](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_in_esm_wrapper/diff.md)
   diff
-## [`tree_shaking_js_with_associated_css`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css/diff.md)
+## [tree_shaking_js_with_associated_css](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css/diff.md)
   diff
-## [`tree_shaking_js_with_associated_css_export_star_side_effects_false`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_export_star_side_effects_false/diff.md)
+## [tree_shaking_js_with_associated_css_export_star_side_effects_false](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_export_star_side_effects_false/diff.md)
   diff
-## [`tree_shaking_js_with_associated_css_export_star_side_effects_false_only_js`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_export_star_side_effects_false_only_js/diff.md)
+## [tree_shaking_js_with_associated_css_export_star_side_effects_false_only_js](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_export_star_side_effects_false_only_js/diff.md)
   diff
-## [`tree_shaking_js_with_associated_css_re_export_side_effects_false`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_re_export_side_effects_false/diff.md)
+## [tree_shaking_js_with_associated_css_re_export_side_effects_false](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_re_export_side_effects_false/diff.md)
   diff
-## [`tree_shaking_js_with_associated_css_re_export_side_effects_false_only_js`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_re_export_side_effects_false_only_js/diff.md)
+## [tree_shaking_js_with_associated_css_re_export_side_effects_false_only_js](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_re_export_side_effects_false_only_js/diff.md)
   diff
-## [`tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false/diff.md)
+## [tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false/diff.md)
   diff
-## [`tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false_only_js`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false_only_js/diff.md)
+## [tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false_only_js](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false_only_js/diff.md)
   diff
-## [`tree_shaking_lowered_class_static_field`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field/diff.md)
+## [tree_shaking_lowered_class_static_field](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field/diff.md)
   diff
-## [`tree_shaking_lowered_class_static_field_assignment`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field_assignment/diff.md)
+## [tree_shaking_lowered_class_static_field_assignment](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field_assignment/diff.md)
   diff
-## [`tree_shaking_lowered_class_static_field_minified`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field_minified/diff.md)
+## [tree_shaking_lowered_class_static_field_minified](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field_minified/diff.md)
   diff
 ## [tree_shaking_object_property](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_object_property/diff.md)
   diff
-## [`tree_shaking_react_elements`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_react_elements/diff.md)
+## [tree_shaking_react_elements](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_react_elements/diff.md)
   diff
-## [`tree_shaking_unary_operators`](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_unary_operators/diff.md)
+## [tree_shaking_unary_operators](../../../crates/rolldown/tests/esbuild/dce/tree_shaking_unary_operators/diff.md)
   diff
 # Passed Cases
 ## [base64_loader_remove_unused](../../../crates/rolldown/tests/esbuild/dce/base64_loader_remove_unused)

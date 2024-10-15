@@ -1,0 +1,120 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.js
+
+```js
+
+
+//#region a.js
+var abc;
+var init_a = __esm({ "a.js"() {
+	abc = undefined;
+} });
+
+//#endregion
+//#region b.js
+var b_exports, xyz;
+var init_b = __esm({ "b.js"() {
+	b_exports = {};
+	__export(b_exports, { xyz: () => xyz });
+	xyz = null;
+} });
+
+//#endregion
+//#region commonjs.js
+function Fn() {}
+var commonjs_exports, commonjs_default, v, l, c, Class;
+var init_commonjs = __esm({ "commonjs.js"() {
+	commonjs_exports = {};
+	__export(commonjs_exports, {
+		C: () => Class,
+		Class: () => Class,
+		Fn: () => Fn,
+		abc: () => abc,
+		b: () => b_exports,
+		c: () => c,
+		default: () => commonjs_default,
+		l: () => l,
+		v: () => v
+	});
+	init_a();
+	init_b();
+	commonjs_default = 123;
+	v = 234;
+	l = 234;
+	c = 234;
+	Class = class {};
+} });
+
+//#endregion
+//#region c.js
+var c_exports, c_default;
+var init_c = __esm({ "c.js"() {
+	c_exports = {};
+	__export(c_exports, { default: () => c_default });
+	c_default = class {};
+} });
+
+//#endregion
+//#region d.js
+var d_exports, Foo;
+var init_d = __esm({ "d.js"() {
+	d_exports = {};
+	__export(d_exports, { default: () => Foo });
+	Foo = class {};
+	Foo.prop = 123;
+} });
+
+//#endregion
+//#region e.js
+function e_default() {}
+var e_exports;
+var init_e = __esm({ "e.js"() {
+	e_exports = {};
+	__export(e_exports, { default: () => e_default });
+} });
+
+//#endregion
+//#region f.js
+function foo$1() {}
+var f_exports;
+var init_f = __esm({ "f.js"() {
+	f_exports = {};
+	__export(f_exports, { default: () => foo$1 });
+	foo$1.prop = 123;
+} });
+
+//#endregion
+//#region g.js
+async function g_default() {}
+var g_exports;
+var init_g = __esm({ "g.js"() {
+	g_exports = {};
+	__export(g_exports, { default: () => g_default });
+} });
+
+//#endregion
+//#region h.js
+async function foo() {}
+var h_exports;
+var init_h = __esm({ "h.js"() {
+	h_exports = {};
+	__export(h_exports, { default: () => foo });
+	foo.prop = 123;
+} });
+
+//#endregion
+//#region entry.js
+init_commonjs(), __toCommonJS(commonjs_exports);
+init_c(), __toCommonJS(c_exports);
+init_d(), __toCommonJS(d_exports);
+init_e(), __toCommonJS(e_exports);
+init_f(), __toCommonJS(f_exports);
+init_g(), __toCommonJS(g_exports);
+init_h(), __toCommonJS(h_exports);
+
+//#endregion
+```

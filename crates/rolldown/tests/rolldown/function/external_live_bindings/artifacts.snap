@@ -1,0 +1,22 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.js
+
+```js
+"use strict";
+
+const { read, readFile, readFileSync, readSync } = __toESM(require("node:fs"));
+
+//#region main.js
+const nonExternal = "nonExternal";
+
+//#endregion
+exports.nonExternal = nonExternal
+exports.read = read
+exports.readFile = readFile
+exports.readFileSync = readFileSync
+exports.readSync = readSync
+```

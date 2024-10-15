@@ -1,0 +1,17 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.js
+
+```js
+"use strict";
+
+const ns = __toESM(require("ext"));
+
+//#region entry.js
+console.log(ns.mustBeUnquoted, ns["mustBeQuoted"]);
+
+//#endregion
+```

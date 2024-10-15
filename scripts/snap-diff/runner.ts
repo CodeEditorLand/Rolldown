@@ -5,30 +5,27 @@ import { diffCase } from './diff'
 import { DebugConfig } from './types'
 import { aggregateReason } from './aggregate-reason.js'
 const esbuildTestDir = path.join(
-	import.meta.dirname,
-	"../../crates/rolldown/tests/esbuild",
-);
+  import.meta.dirname,
+  '../../crates/rolldown/tests/esbuild',
+)
 
 export function getEsbuildSnapFile(
-	includeList: string[],
+  includeList: string[],
 ): Array<{ normalizedName: string; content: string }> {
-	let dirname = path.resolve(import.meta.dirname, "./esbuild-snapshots/");
-	let fileList = fs.readdirSync(dirname);
-	let ret = fileList
-		.filter((filename) => {
-			return includeList.length === 0 || includeList.includes(filename);
-		})
-		.map((filename) => {
-			let name = path.parse(filename).name;
-			let [_, ...rest] = name.split("_");
-			let normalizedName = rest.join("_");
-			let content = fs.readFileSync(
-				path.join(dirname, filename),
-				"utf-8",
-			);
-			return { normalizedName, content };
-		});
-	return ret;
+  let dirname = path.resolve(import.meta.dirname, './esbuild-snapshots/')
+  let fileList = fs.readdirSync(dirname)
+  let ret = fileList
+    .filter((filename) => {
+      return includeList.length === 0 || includeList.includes(filename)
+    })
+    .map((filename) => {
+      let name = path.parse(filename).name
+      let [_, ...rest] = name.split('_')
+      let normalizedName = rest.join('_')
+      let content = fs.readFileSync(path.join(dirname, filename), 'utf-8')
+      return { normalizedName, content }
+    })
+  return ret
 }
 type AggregateStats = {
   stats: Stats
@@ -136,24 +133,24 @@ function generateAggregateMarkdown() {
 }
 
 function getRolldownSnap(caseDir: string) {
-	let artifactsPath = path.join(caseDir, "artifacts.snap");
-	if (fs.existsSync(artifactsPath)) {
-		return fs.readFileSync(artifactsPath, "utf-8");
-	}
+  let artifactsPath = path.join(caseDir, 'artifacts.snap')
+  if (fs.existsSync(artifactsPath)) {
+    return fs.readFileSync(artifactsPath, 'utf-8')
+  }
 }
 
 function getDiffMarkdown(diffResult: ReturnType<typeof diffCase>) {
-	if (typeof diffResult === "string") {
-		throw new Error("diffResult should not be string");
-	}
-	let markdown = "";
-	for (let d of diffResult) {
-		markdown += `## ${d.esbuildName}\n`;
-		markdown += `### esbuild\n\`\`\`js\n${d.esbuild}\n\`\`\`\n`;
-		markdown += `### rolldown\n\`\`\`js\n${d.rolldown}\n\`\`\`\n`;
-		markdown += `### diff\n\`\`\`diff\n${d.diff}\n\`\`\`\n`;
-	}
-	return markdown;
+  if (typeof diffResult === 'string') {
+    throw new Error('diffResult should not be string')
+  }
+  let markdown = ''
+  for (let d of diffResult) {
+    markdown += `## ${d.esbuildName}\n`
+    markdown += `### esbuild\n\`\`\`js\n${d.esbuild}\n\`\`\`\n`
+    markdown += `### rolldown\n\`\`\`js\n${d.rolldown}\n\`\`\`\n`
+    markdown += `### diff\n\`\`\`diff\n${d.diff}\n\`\`\`\n`
+  }
+  return markdown
 }
 
 function generateStatsMarkdown(aggregateStats: AggregateStats) {
@@ -218,27 +215,27 @@ function getSummaryMarkdownAndStats(
     }
   }
 
-	markdown += `# Passed Cases\n`;
-	for (let diff of passList) {
-		let testDir = path.join(esbuildTestDir, snapshotCategory, diff.name);
-		let relativePath = path.relative(
-			path.join(import.meta.dirname, "summary"),
-			testDir,
-		);
-		const posixPath = relativePath.replaceAll("\\", "/");
-		markdown += `## [${diff.name}](${posixPath})\n`;
-	}
+  markdown += `# Passed Cases\n`
+  for (let diff of passList) {
+    let testDir = path.join(esbuildTestDir, snapshotCategory, diff.name)
+    let relativePath = path.relative(
+      path.join(import.meta.dirname, 'summary'),
+      testDir,
+    )
+    const posixPath = relativePath.replaceAll('\\', '/')
+    markdown += `## [${diff.name}](${posixPath})\n`
+  }
 
-	markdown += `# Bypassed Cases\n`;
-	for (let diff of bypassList) {
-		let testDir = path.join(esbuildTestDir, snapshotCategory, diff.name);
-		let relativePath = path.relative(
-			path.join(import.meta.dirname, "summary"),
-			testDir,
-		);
-		const posixPath = relativePath.replaceAll("\\", "/");
-		markdown += `## [${diff.name}](${posixPath}/bypass.md)\n`;
-	}
+  markdown += `# Bypassed Cases\n`
+  for (let diff of bypassList) {
+    let testDir = path.join(esbuildTestDir, snapshotCategory, diff.name)
+    let relativePath = path.relative(
+      path.join(import.meta.dirname, 'summary'),
+      testDir,
+    )
+    const posixPath = relativePath.replaceAll('\\', '/')
+    markdown += `## [${diff.name}](${posixPath}/bypass.md)\n`
+  }
 
   return {
     markdown,
@@ -252,21 +249,21 @@ function getSummaryMarkdownAndStats(
 }
 
 function updateBypassOrDiffMarkdown(
-	markdownPath: string,
-	diffResult: ReturnType<typeof diffCase>,
+  markdownPath: string,
+  diffResult: ReturnType<typeof diffCase>,
 ) {
-	let bypassContent = "";
-	if (fs.existsSync(markdownPath)) {
-		bypassContent = fs.readFileSync(markdownPath, "utf-8");
-	}
+  let bypassContent = ''
+  if (fs.existsSync(markdownPath)) {
+    bypassContent = fs.readFileSync(markdownPath, 'utf-8')
+  }
 
-	let res = /# Diff/.exec(bypassContent);
-	if (res) {
-		bypassContent = bypassContent.slice(0, res.index);
-	}
-	let diffMarkdown = getDiffMarkdown(diffResult);
-	bypassContent = bypassContent.trimEnd();
-	bypassContent += "\n# Diff\n";
-	bypassContent += diffMarkdown;
-	fs.writeFileSync(markdownPath, bypassContent.trim());
+  let res = /# Diff/.exec(bypassContent)
+  if (res) {
+    bypassContent = bypassContent.slice(0, res.index)
+  }
+  let diffMarkdown = getDiffMarkdown(diffResult)
+  bypassContent = bypassContent.trimEnd()
+  bypassContent += '\n# Diff\n'
+  bypassContent += diffMarkdown
+  fs.writeFileSync(markdownPath, bypassContent.trim())
 }

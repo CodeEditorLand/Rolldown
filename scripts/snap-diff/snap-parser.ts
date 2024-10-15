@@ -2,45 +2,44 @@ import { snakeCase } from 'change-case'
 import remarkParse from 'remark-parse'
 import { unified } from 'unified'
 export function parseEsbuildSnap(source: string) {
-	let cases = source.split(
-		"================================================================================",
-	);
-	return cases.map(parseEsbuildCase);
+  let cases = source.split(
+    '================================================================================',
+  )
+  return cases.map(parseEsbuildCase)
 }
 
 function parseEsbuildCase(source: string): {
-	name: string;
-	sourceList: { name: string; content: string }[];
+  name: string
+  sourceList: { name: string; content: string }[]
 } {
-	let lines = source.trimStart().split("\n");
-	let [name, ...rest] = lines;
-	let trimmedName = name.slice(4);
-	let normalizedName = snakeCase(trimmedName);
-	let content = rest.join("\n");
-	return { name: normalizedName, sourceList: parseContent(content) };
+  let lines = source.trimStart().split('\n')
+  let [name, ...rest] = lines
+  let trimmedName = name.slice(4)
+  let normalizedName = snakeCase(trimmedName)
+  let content = rest.join('\n')
+  return { name: normalizedName, sourceList: parseContent(content) }
 }
 
 function parseContent(content: string) {
-	// Define a regex pattern to match the filename and its content
-	const regex =
-		/----------\s*(.+?)\s*----------\s*([\s\S]*?)(?=----------|$)/g;
+  // Define a regex pattern to match the filename and its content
+  const regex = /----------\s*(.+?)\s*----------\s*([\s\S]*?)(?=----------|$)/g
 
-	const result = [];
-	let match;
+  const result = []
+  let match
 
-	// Use regex to find all matches in the input
-	while ((match = regex.exec(content)) !== null) {
-		const filename = match[1].trim(); // Extract the filename
-		const content = match[2].trim(); // Extract the content
+  // Use regex to find all matches in the input
+  while ((match = regex.exec(content)) !== null) {
+    const filename = match[1].trim() // Extract the filename
+    const content = match[2].trim() // Extract the content
 
-		// Push an object with filename and content into the result array
-		result.push({
-			name: filename,
-			content: content,
-		});
-	}
+    // Push an object with filename and content into the result array
+    result.push({
+      name: filename,
+      content: content,
+    })
+  }
 
-	return result;
+  return result
 }
 
 export function parseRolldownSnap(source: string | undefined) {
