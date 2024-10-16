@@ -1,50 +1,28 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
+	"name": "monorepo",
+	"version": "0.0.1",
+	"private": false,
 	"description": "Rollup in Rust",
-	"devDependencies": {
-		"@ls-lint/ls-lint": "2.2.3",
-		"@playform/build": "0.1.7",
-		"@taplo/cli": "0.7.0",
-		"@types/node": "22.7.5",
-		"cjs-module-lexer": "1.4.1",
-		"conventional-changelog-cli": "5.0.0",
-		"cspell": "8.15.2",
-		"lint-staged": "15.2.10",
-		"npm-rolldown": "npm:rolldown@0.13.2",
-		"npm-run-all": "4.1.5",
-		"oxlint": "0.9.10",
-		"rolldown": "workspace:*"
-	},
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [
 		"codeeditorland",
 		"land",
 		"playform"
 	],
-	"license": "SEE LICENSE IN LICENSE",
-	"lint-staged": {
-		"*.toml": "taplo format",
-		"*.{js,ts,json,md,yml,yaml,vue}": [
-			"prettier --write",
-			"pnpm lint-code -- --fix"
-		]
-	},
-	"name": "monorepo",
-	"private": false,
-	"publishConfig": {
-		"access": "public"
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
 	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
+	},
+	"type": "module",
 	"scripts": {
 		"build": "echo \"Use just build\"",
 		"build:release": "echo \"Use just build native release\"",
@@ -66,6 +44,28 @@
 		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"type-check": "pnpm --recursive run type-check"
 	},
-	"type": "module",
-	"version": "0.0.1"
+	"lint-staged": {
+		"*.toml": "taplo format",
+		"*.{js,ts,json,md,yml,yaml,vue}": [
+			"prettier --write",
+			"pnpm lint-code -- --fix"
+		]
+	},
+	"devDependencies": {
+		"@ls-lint/ls-lint": "2.2.3",
+		"@playform/build": "0.1.7",
+		"@taplo/cli": "0.7.0",
+		"@types/node": "22.7.5",
+		"cjs-module-lexer": "1.4.1",
+		"conventional-changelog-cli": "5.0.0",
+		"cspell": "8.15.2",
+		"lint-staged": "15.2.10",
+		"npm-rolldown": "npm:rolldown@0.13.2",
+		"npm-run-all": "4.1.5",
+		"oxlint": "0.9.10",
+		"rolldown": "workspace:*"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
 }
