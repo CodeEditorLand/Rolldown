@@ -13,6 +13,7 @@
 		"misc/**/*.js",
 		"misc/**/*.d.ts",
 		"snap-diff/**/*.ts",
+		"src",
 		"src"
 	]
 }

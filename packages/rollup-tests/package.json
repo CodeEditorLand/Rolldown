@@ -1,4 +1,12 @@
 {
+	"author": {
+		"email": "Source/Open@Editor.Land",
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"url": "HTTPS://Editor.Land"
+	},
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
 	"dependencies": {
 		"fixturify": "3.0.0",
 		"fs-extra": "11.2.0",
@@ -12,10 +20,27 @@
 		"source-map": "0.7.4",
 		"terser": "5.34.1"
 	},
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"license": "SEE LICENSE IN LICENSE",
 	"name": "rollup-tests",
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
 	"scripts": {
 		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"test--update": "mocha --jobs 1 --file ./src/intercept/update-test-status.js test/test.js",
 		"type-check": "tsc --noEmit"
-	}
+	},
+	"type": "module",
+	"version": "0.0.1"
 }
