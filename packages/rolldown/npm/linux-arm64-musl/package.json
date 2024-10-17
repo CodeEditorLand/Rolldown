@@ -1,48 +1,48 @@
 {
-	"name": "@rolldown/binding-linux-arm64-musl",
-	"version": "0.0.1",
-	"private": false,
+	"author": {
+		"email": "Source/Open@Editor.Land",
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"url": "HTTPS://Editor.Land"
+	},
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"cpu": [
+		"arm64"
+	],
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"devDependencies": {
+		"@playform/build": "0.1.7"
+	},
+	"files": [
+		"rolldown-binding.linux-arm64-musl.node"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [
 		"codeeditorland",
 		"land",
 		"playform"
 	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	"libc": [
+		"musl"
+	],
+	"license": "SEE LICENSE IN LICENSE",
+	"main": "rolldown-binding.linux-arm64-musl.node",
+	"name": "@rolldown/binding-linux-arm64-musl",
+	"os": [
+		"linux"
+	],
+	"private": false,
+	"publishConfig": {
+		"access": "public"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
 	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
-	"main": "rolldown-binding.linux-arm64-musl.node",
-	"files": [
-		"rolldown-binding.linux-arm64-musl.node"
-	],
 	"scripts": {
 		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
-	"devDependencies": {
-		"@playform/build": "0.1.7"
-	},
-	"os": [
-		"linux"
-	],
-	"cpu": [
-		"arm64"
-	],
-	"publishConfig": {
-		"access": "public"
-	},
-	"libc": [
-		"musl"
-	]
+	"type": "module",
+	"version": "0.0.1"
 }
