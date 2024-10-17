@@ -2,9 +2,10 @@ use std::ops::{Deref, DerefMut};
 
 use oxc::index::IndexVec;
 use oxc::semantic::{NodeId, ScopeId, SymbolFlags, SymbolTable};
-use oxc::span::Span;
+use oxc::span::SPAN;
 use oxc::{semantic::SymbolId, span::CompactStr as CompactString};
 use rolldown_rstr::Rstr;
+use rolldown_std_utils::OptionExt;
 use rustc_hash::FxHashMap;
 
 use crate::{ChunkIdx, ModuleIdx, SymbolRef};
@@ -17,7 +18,6 @@ pub struct SymbolRefDataClassic {
   /// So we will transform the code into `console.log(foo_ns.a)`. `foo_ns` is the namespace symbol of `foo.cjs and `a` is the property name.
   /// We use `namespace_alias` to represent this situation. If `namespace_alias` is not `None`, then this symbol must be rewritten to a property access.
   pub namespace_alias: Option<NamespaceAlias>,
-  pub name: CompactString,
   /// The symbol that this symbol is linked to.
   pub link: Option<SymbolRef>,
   /// The chunk that this symbol is defined in.
@@ -33,8 +33,10 @@ bitflags::bitflags! {
   }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct SymbolRefDbForModule {
+  owner_idx: ModuleIdx,
+  root_scope_id: ScopeId,
   pub symbol_table: SymbolTable,
   // Only some symbols would be cared about, so we use a hashmap to store the flags.
   pub flags: FxHashMap<SymbolId, SymbolRefFlags>,
@@ -42,38 +44,43 @@ pub struct SymbolRefDbForModule {
 }
 
 impl SymbolRefDbForModule {
-  pub fn new(symbol_table: SymbolTable) -> Self {
+  pub fn new(symbol_table: SymbolTable, owner_idx: ModuleIdx, top_level_scope_id: ScopeId) -> Self {
     Self {
+      owner_idx,
+      root_scope_id: top_level_scope_id,
       classic_data: symbol_table
         .names
         .iter()
-        .map(|name| SymbolRefDataClassic {
-          name: name.clone(),
-          link: None,
-          chunk_id: None,
-          namespace_alias: None,
-        })
+        .map(|_name| SymbolRefDataClassic { link: None, chunk_id: None, namespace_alias: None })
         .collect(),
       symbol_table,
-      ..Default::default()
+      flags: FxHashMap::default(),
     }
   }
 
-  pub fn create_symbol(
-    &mut self,
-    span: Span,
-    name: CompactString,
-    flags: SymbolFlags,
-    scope_id: ScopeId,
-    node_id: NodeId,
-  ) -> SymbolId {
+  // The `facade` means the symbol is actually not exist in the AST.
+  pub fn create_facade_root_symbol_ref(&mut self, name: CompactString) -> SymbolRef {
     self.classic_data.push(SymbolRefDataClassic {
-      name: name.clone(),
       link: None,
       chunk_id: None,
       namespace_alias: None,
     });
-    self.symbol_table.create_symbol(span, name, flags, scope_id, node_id)
+    let symbol_id = self.symbol_table.create_symbol(
+      SPAN,
+      name,
+      SymbolFlags::empty(),
+      self.root_scope_id,
+      NodeId::DUMMY,
+    );
+
+    SymbolRef::from((self.owner_idx, symbol_id))
+  }
+
+  /// This method is used to hide the `SymbolTable::create_symbol` method since
+  /// `SymbolRefDbForModule` impl `Deref` for `SymbolTable`.
+  #[deprecated = "Use `create_facade_root_symbol_ref` instead"]
+  pub fn create_symbol(&mut self) {
+    panic!("Use `create_facade_root_symbol_ref` instead");
   }
 }
 
@@ -94,32 +101,30 @@ impl DerefMut for SymbolRefDbForModule {
 // Information about symbols for all modules
 #[derive(Debug, Default)]
 pub struct SymbolRefDb {
-  inner: IndexVec<ModuleIdx, SymbolRefDbForModule>,
+  pub(crate) inner: IndexVec<ModuleIdx, Option<SymbolRefDbForModule>>,
 }
 
 impl SymbolRefDb {
   fn ensure_exact_capacity(&mut self, module_idx: ModuleIdx) {
     let new_len = module_idx.index() + 1;
     if self.inner.len() < new_len {
-      self.inner.resize_with(new_len, SymbolRefDbForModule::default);
+      self.inner.resize_with(new_len, || None);
     }
   }
 
   pub fn store_local_db(&mut self, module_id: ModuleIdx, local_db: SymbolRefDbForModule) {
     self.ensure_exact_capacity(module_id);
 
-    self.inner[module_id] = local_db;
+    self.inner[module_id] = Some(local_db);
   }
 
-  pub fn create_symbol(&mut self, owner: ModuleIdx, name: CompactString) -> SymbolRef {
+  pub fn create_facade_root_symbol_ref(
+    &mut self,
+    owner: ModuleIdx,
+    name: CompactString,
+  ) -> SymbolRef {
     self.ensure_exact_capacity(owner);
-    let symbol_id = self.inner[owner].classic_data.push(SymbolRefDataClassic {
-      name,
-      link: None,
-      chunk_id: None,
-      namespace_alias: None,
-    });
-    SymbolRef { owner, symbol: symbol_id }
+    self.inner[owner].unpack_ref_mut().create_facade_root_symbol_ref(name)
   }
 
   /// Make `base` point to `target`
@@ -148,11 +153,11 @@ impl SymbolRefDb {
   }
 
   pub fn get(&self, refer: SymbolRef) -> &SymbolRefDataClassic {
-    &self.inner[refer.owner].classic_data[refer.symbol]
+    &self.inner[refer.owner].unpack_ref().classic_data[refer.symbol]
   }
 
   pub fn get_mut(&mut self, refer: SymbolRef) -> &mut SymbolRefDataClassic {
-    &mut self.inner[refer.owner].classic_data[refer.symbol]
+    &mut self.inner[refer.owner].unpack_ref_mut().classic_data[refer.symbol]
   }
 
   /// https://en.wikipedia.org/wiki/Disjoint-set_data_structure
@@ -178,6 +183,11 @@ impl SymbolRefDb {
   }
 
   pub(crate) fn get_flags(&self, refer: SymbolRef) -> Option<&SymbolRefFlags> {
-    self.inner[refer.owner].flags.get(&refer.symbol)
+    self.inner[refer.owner].unpack_ref().flags.get(&refer.symbol)
+  }
+
+  pub fn is_declared_in_root_scope(&self, refer: SymbolRef) -> bool {
+    let local_db = self.inner[refer.owner].unpack_ref();
+    local_db.get_scope_id(refer.symbol) == local_db.root_scope_id
   }
 }
