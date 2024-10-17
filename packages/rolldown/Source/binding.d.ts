@@ -233,6 +233,7 @@ export interface BindingInputOptions {
   inject?: Array<BindingInjectImportNamed | BindingInjectImportNamespace>
   experimental?: BindingExperimentalOptions
   profilerNames?: boolean
+  jsx?: JsxOptions
 }
 
 export interface BindingJsonPluginConfig {
@@ -348,6 +349,8 @@ export interface BindingPluginOptions {
   closeBundleMeta?: BindingPluginHookMeta
   watchChange?: (ctx: BindingPluginContext, path: string, event: string) => MaybePromise<VoidNullable>
   watchChangeMeta?: BindingPluginHookMeta
+  closeWatcher?: (ctx: BindingPluginContext) => MaybePromise<VoidNullable>
+  closeWatcherMeta?: BindingPluginHookMeta
   banner?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void
   bannerMeta?: BindingPluginHookMeta
   footer?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void
@@ -758,3 +761,4 @@ export interface TypeScriptOptions {
    */
   rewriteImportExtensions?: 'rewrite' | 'remove' | boolean
 }
+
