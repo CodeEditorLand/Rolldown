@@ -53,11 +53,7 @@
   diff
 ## [define_this](../../../crates/rolldown/tests/esbuild/default/define_this/diff.md)
   diff
-## [duplicate_property_warning](../../../crates/rolldown/tests/esbuild/default/duplicate_property_warning/diff.md)
-  diff
 ## [dynamic_import_with_expression_cjs](../../../crates/rolldown/tests/esbuild/default/dynamic_import_with_expression_cjs/diff.md)
-  diff
-## [entry_names_chunk_names_ext_placeholder](../../../crates/rolldown/tests/esbuild/default/entry_names_chunk_names_ext_placeholder/diff.md)
   diff
 ## entry_names_no_slash_after_dir
   missing
@@ -139,10 +135,6 @@
   diff
 ## [jsx_import_meta_value](../../../crates/rolldown/tests/esbuild/default/jsx_import_meta_value/diff.md)
   diff
-## [jsx_imports_common_js](../../../crates/rolldown/tests/esbuild/default/jsx_imports_common_js/diff.md)
-  diff
-## [jsx_imports_es6](../../../crates/rolldown/tests/esbuild/default/jsx_imports_es6/diff.md)
-  diff
 ## [jsx_this_property_common_js](../../../crates/rolldown/tests/esbuild/default/jsx_this_property_common_js/diff.md)
   diff
 ## [jsx_this_property_esm](../../../crates/rolldown/tests/esbuild/default/jsx_this_property_esm/diff.md)
@@ -217,10 +209,6 @@
   diff
 ## [non_determinism_issue2537](../../../crates/rolldown/tests/esbuild/default/non_determinism_issue2537/diff.md)
   diff
-## [outbase](../../../crates/rolldown/tests/esbuild/default/outbase/diff.md)
-  diff
-## [output_extension_remapping_dir](../../../crates/rolldown/tests/esbuild/default/output_extension_remapping_dir/diff.md)
-  diff
 ## [output_for_assert_type_json](../../../crates/rolldown/tests/esbuild/default/output_for_assert_type_json/diff.md)
   diff
 ## [package_alias](../../../crates/rolldown/tests/esbuild/default/package_alias/diff.md)
@@ -245,13 +233,9 @@
   diff
 ## [require_with_call_inside_try](../../../crates/rolldown/tests/esbuild/default/require_with_call_inside_try/diff.md)
   diff
-## [require_with_template](../../../crates/rolldown/tests/esbuild/default/require_with_template/diff.md)
-  diff
 ## [require_without_call](../../../crates/rolldown/tests/esbuild/default/require_without_call/diff.md)
   diff
 ## [require_without_call_inside_try](../../../crates/rolldown/tests/esbuild/default/require_without_call_inside_try/diff.md)
-  diff
-## [scoped_external_module_exclusion](../../../crates/rolldown/tests/esbuild/default/scoped_external_module_exclusion/diff.md)
   diff
 ## [string_export_names_common_js](../../../crates/rolldown/tests/esbuild/default/string_export_names_common_js/diff.md)
   diff
@@ -304,6 +288,7 @@
 ## [auto_external](../../../crates/rolldown/tests/esbuild/default/auto_external)
 ## [await_import_inside_try](../../../crates/rolldown/tests/esbuild/default/await_import_inside_try)
 ## [define_infinite_loop_issue2407](../../../crates/rolldown/tests/esbuild/default/define_infinite_loop_issue2407)
+## [duplicate_property_warning](../../../crates/rolldown/tests/esbuild/default/duplicate_property_warning)
 ## [empty_export_clause_bundle_as_common_js_issue910](../../../crates/rolldown/tests/esbuild/default/empty_export_clause_bundle_as_common_js_issue910)
 ## [es6_from_common_js](../../../crates/rolldown/tests/esbuild/default/es6_from_common_js)
 ## [export_chain](../../../crates/rolldown/tests/esbuild/default/export_chain)
@@ -317,7 +302,11 @@
 ## [import_missing_common_js](../../../crates/rolldown/tests/esbuild/default/import_missing_common_js)
 ## [import_then_catch](../../../crates/rolldown/tests/esbuild/default/import_then_catch)
 ## [import_with_hash_in_path](../../../crates/rolldown/tests/esbuild/default/import_with_hash_in_path)
+## [jsx_imports_common_js](../../../crates/rolldown/tests/esbuild/default/jsx_imports_common_js)
+## [jsx_imports_es6](../../../crates/rolldown/tests/esbuild/default/jsx_imports_es6)
 ## [nested_scope_bug](../../../crates/rolldown/tests/esbuild/default/nested_scope_bug)
+## [outbase](../../../crates/rolldown/tests/esbuild/default/outbase)
+## [output_extension_remapping_dir](../../../crates/rolldown/tests/esbuild/default/output_extension_remapping_dir)
 ## [output_extension_remapping_file](../../../crates/rolldown/tests/esbuild/default/output_extension_remapping_file)
 ## [preserve_key_comment](../../../crates/rolldown/tests/esbuild/default/preserve_key_comment)
 ## [quoted_property](../../../crates/rolldown/tests/esbuild/default/quoted_property)
@@ -327,7 +316,9 @@
 ## [require_fs_node](../../../crates/rolldown/tests/esbuild/default/require_fs_node)
 ## [require_fs_node_minify](../../../crates/rolldown/tests/esbuild/default/require_fs_node_minify)
 ## [require_property_access_common_js](../../../crates/rolldown/tests/esbuild/default/require_property_access_common_js)
+## [require_with_template](../../../crates/rolldown/tests/esbuild/default/require_with_template)
 ## [runtime_name_collision_no_bundle](../../../crates/rolldown/tests/esbuild/default/runtime_name_collision_no_bundle)
+## [scoped_external_module_exclusion](../../../crates/rolldown/tests/esbuild/default/scoped_external_module_exclusion)
 ## [simple_common_js](../../../crates/rolldown/tests/esbuild/default/simple_common_js)
 ## [simple_es6](../../../crates/rolldown/tests/esbuild/default/simple_es6)
 ## [top_level_await_esm](../../../crates/rolldown/tests/esbuild/default/top_level_await_esm)
@@ -345,6 +336,7 @@
 ## [dot_import](../../../crates/rolldown/tests/esbuild/default/dot_import/bypass.md)
 ## [duplicate_entry_point](../../../crates/rolldown/tests/esbuild/default/duplicate_entry_point/bypass.md)
 ## [dynamic_import_with_template_iife](../../../crates/rolldown/tests/esbuild/default/dynamic_import_with_template_iife/bypass.md)
+## [entry_names_chunk_names_ext_placeholder](../../../crates/rolldown/tests/esbuild/default/entry_names_chunk_names_ext_placeholder/bypass.md)
 ## [exports_and_module_format_common_js](../../../crates/rolldown/tests/esbuild/default/exports_and_module_format_common_js/bypass.md)
 ## [external_module_exclusion_relative_path](../../../crates/rolldown/tests/esbuild/default/external_module_exclusion_relative_path/bypass.md)
 ## [hashbang_no_bundle](../../../crates/rolldown/tests/esbuild/default/hashbang_no_bundle/bypass.md)

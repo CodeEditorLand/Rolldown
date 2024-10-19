@@ -43,11 +43,7 @@
   diff
 ## [loader_data_url_base64_invalid_utf8](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_base64_invalid_utf8/diff.md)
   diff
-## [loader_data_url_base64_vs_percent_encoding](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_base64_vs_percent_encoding/diff.md)
-  diff
 ## [loader_data_url_common_js_and_es6](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_common_js_and_es6/diff.md)
-  diff
-## [loader_data_url_extension_based_mime](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_extension_based_mime/diff.md)
   diff
 ## [loader_data_url_text_css](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_text_css/diff.md)
   diff
@@ -91,10 +87,6 @@
   diff
 ## [loader_json_no_bundle_common_js](../../../crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_common_js/diff.md)
   diff
-## [loader_json_no_bundle_es6](../../../crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_es6/diff.md)
-  diff
-## [loader_json_no_bundle_es6_arbitrary_module_namespace_names](../../../crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_es6_arbitrary_module_namespace_names/diff.md)
-  diff
 ## [loader_json_no_bundle_iife](../../../crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_iife/diff.md)
   diff
 ## [loader_json_prototype](../../../crates/rolldown/tests/esbuild/loader/loader_json_prototype/diff.md)
@@ -119,6 +111,7 @@
   missing
 # Passed Cases
 ## [extensionless_loader_js](../../../crates/rolldown/tests/esbuild/loader/extensionless_loader_js)
+## [loader_data_url_base64_vs_percent_encoding](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_base64_vs_percent_encoding)
 ## [loader_data_url_escape_percents](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_escape_percents)
 ## [loader_data_url_text_java_script](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_text_java_script)
 ## [loader_data_url_unknown_mime](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_unknown_mime)
@@ -126,4 +119,7 @@
 ## [jsx_preserve_capital_letter_minify](../../../crates/rolldown/tests/esbuild/loader/jsx_preserve_capital_letter_minify/bypass.md)
 ## [jsx_preserve_capital_letter_minify_nested](../../../crates/rolldown/tests/esbuild/loader/jsx_preserve_capital_letter_minify_nested/bypass.md)
 ## [loader_data_url_application_json](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_application_json/bypass.md)
+## [loader_data_url_extension_based_mime](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_extension_based_mime/bypass.md)
 ## [loader_data_url_text_java_script_plus_character](../../../crates/rolldown/tests/esbuild/loader/loader_data_url_text_java_script_plus_character/bypass.md)
+## [loader_json_no_bundle_es6](../../../crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_es6/bypass.md)
+## [loader_json_no_bundle_es6_arbitrary_module_namespace_names](../../../crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_es6_arbitrary_module_namespace_names/bypass.md)
