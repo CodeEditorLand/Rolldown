@@ -65,6 +65,18 @@ const jsxOptionsSchema = z.strictObject({
   // The rollup preset is not supported at now
 })
 
+const watchOptionsSchema = z.strictObject({
+  skipWrite: z.boolean().describe('Skip the bundle.write() step').optional(),
+  notify: z
+    .strictObject({
+      pollInterval: z.number().optional(),
+      compareContents: z.boolean().optional(),
+    })
+    .describe('Notify options')
+    .optional(),
+  chokidar: z.any().optional(),
+})
+
 export const inputOptionsSchema = z.strictObject({
   input: inputOptionSchema.optional(),
   plugins: zodExt.phantom<RolldownPluginRec>().array().optional(),
@@ -134,6 +146,7 @@ export const inputOptionsSchema = z.strictObject({
   inject: z.record(z.string().or(z.tuple([z.string(), z.string()]))).optional(),
   profilerNames: z.boolean().optional(),
   jsx: jsxOptionsSchema.optional(),
+  watch: watchOptionsSchema.optional(),
 })
 
 export const inputCliOptionsSchema = inputOptionsSchema
@@ -162,6 +175,7 @@ export const inputCliOptionsSchema = inputOptionsSchema
     resolve: true,
     experimental: true,
     profilerNames: true,
+    watch: true,
   })
 
 type RawInputOptions = z.infer<typeof inputOptionsSchema>

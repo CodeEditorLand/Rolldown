@@ -2,10 +2,11 @@ import { BindingInputOptions, BindingLogLevel } from '../binding'
 import type {
   BindingInjectImportNamed,
   BindingInjectImportNamespace,
+  BindingWatchOption,
 } from '../binding'
 import { bindingifyPlugin } from '../plugin/bindingify-plugin'
 import type { NormalizedInputOptions } from './normalized-input-options'
-import { arraify } from '../utils/misc'
+import { arraify, unsupported } from '../utils/misc'
 import type { NormalizedOutputOptions } from './normalized-output-options'
 import type { LogLevelOption } from '../log/logging'
 import {
@@ -130,6 +131,7 @@ export function bindingifyInputOptions(
     },
     profilerNames: options?.profilerNames,
     jsx: bindingifyJsx(options.jsx),
+    watch: bindingifyWatch(options.watch),
   }
 }
 
@@ -185,5 +187,27 @@ function bindingifyJsx(
       development: input.development,
       refresh: input.refresh,
     }
+  }
+}
+
+function bindingifyWatch(
+  watch: NormalizedInputOptions['watch'],
+): BindingInputOptions['watch'] {
+  if (watch) {
+    let value = {
+      skipWrite: watch.skipWrite,
+    } as BindingWatchOption
+    if (watch.notify) {
+      value.notify = {
+        pollInterval: watch.notify.pollInterval,
+        compareContents: watch.notify.compareContents,
+      }
+    }
+    if (watch.chokidar) {
+      unsupported(
+        'The watch chokidar option is deprecated, please use notify options instead of it.',
+      )
+    }
+    return value
   }
 }

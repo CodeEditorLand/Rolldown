@@ -51,6 +51,7 @@ export declare class BindingPluginContext {
   getFileName(referenceId: string): string
   getModuleInfo(moduleId: string): BindingModuleInfo | null
   getModuleIds(): Array<string> | null
+  addWatchFile(file: string): void
 }
 
 export declare class BindingTransformPluginContext {
@@ -235,6 +236,7 @@ export interface BindingInputOptions {
   experimental?: BindingExperimentalOptions
   profilerNames?: boolean
   jsx?: JsxOptions
+  watch?: BindingWatchOption
 }
 
 export interface BindingJsonPluginConfig {
@@ -273,6 +275,11 @@ export interface BindingMatchGroup {
 
 export interface BindingModulePreloadPolyfillPluginConfig {
   skip?: boolean
+}
+
+export interface BindingNotifyOption {
+  pollInterval?: number
+  compareContents?: boolean
 }
 
 export interface BindingOutputOptions {
@@ -441,6 +448,11 @@ export declare enum BindingWatcherEvent {
   Event = 1,
   ReStart = 2,
   Change = 3
+}
+
+export interface BindingWatchOption {
+  skipWrite?: boolean
+  notify?: BindingNotifyOption
 }
 
 export interface Es2015Options {
@@ -769,4 +781,3 @@ export interface TypeScriptOptions {
    */
   rewriteImportExtensions?: 'rewrite' | 'remove' | boolean
 }
-
