@@ -294,7 +294,7 @@ export interface BindingOutputOptions {
   extend?: boolean
   externalLiveBindings?: boolean
   footer?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
-  format?: 'es' | 'cjs' | 'iife'
+  format?: 'es' | 'cjs' | 'iife' | 'umd'
   globals?: Record<string, string>
   inlineDynamicImports?: boolean
   intro?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
@@ -453,6 +453,8 @@ export declare enum BindingWatcherEvent {
 export interface BindingWatchOption {
   skipWrite?: boolean
   notify?: BindingNotifyOption
+  include?: Array<BindingStringOrRegex>
+  exclude?: Array<BindingStringOrRegex>
 }
 
 export interface Es2015Options {

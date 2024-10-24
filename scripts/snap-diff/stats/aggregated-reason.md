@@ -50,7 +50,6 @@
 - crates/rolldown/tests/esbuild/default/quoted_property_mangle
 - crates/rolldown/tests/esbuild/default/this_outside_function
 - crates/rolldown/tests/esbuild/default/top_level_await_allowed_import_without_splitting
-- crates/rolldown/tests/esbuild/default/warn_common_js_exports_in_esm_bundle
 ## not support copy loader
 - crates/rolldown/tests/esbuild/default/metafile_various_cases
 - crates/rolldown/tests/esbuild/default/metafile_very_long_external_paths
@@ -114,10 +113,6 @@
 - crates/rolldown/tests/esbuild/default/require_with_call_inside_try
 - crates/rolldown/tests/esbuild/default/require_without_call
 - crates/rolldown/tests/esbuild/default/require_without_call_inside_try
-## side effects detect
-- crates/rolldown/tests/esbuild/dce/dce_of_destructuring
-- crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_main_use_main
-- crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_cross_platform_slash
 ## double module initialization
 - crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_main_implicit_main
 - crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_module_implicit_main
@@ -138,10 +133,6 @@
 - crates/rolldown/tests/esbuild/importstar/re_export_star_common_js_no_bundle
 - crates/rolldown/tests/esbuild/importstar/re_export_star_entry_point_and_inner_file
 - crates/rolldown/tests/esbuild/importstar/re_export_star_external_common_js
-## `.custom` should be treated as cjs
-- crates/rolldown/tests/esbuild/loader/require_custom_extension_base64
-- crates/rolldown/tests/esbuild/loader/require_custom_extension_data_url
-- crates/rolldown/tests/esbuild/loader/require_custom_extension_string
 ## cross module constant folding
 - crates/rolldown/tests/esbuild/dce/cross_module_constant_folding_number
 - crates/rolldown/tests/esbuild/dce/cross_module_constant_folding_string
@@ -157,9 +148,6 @@
 ## cjs module lexer can't recognize esbuild interop pattern
 - crates/rolldown/tests/esbuild/default/export_forms_iife
 - crates/rolldown/tests/esbuild/default/export_wildcard_fs_node_common_js
-## should not rewrite `fs` to `node:fs`
-- crates/rolldown/tests/esbuild/default/export_wildcard_fs_node_es6
-- crates/rolldown/tests/esbuild/default/import_fs_node_common_js
 ## hashban not align
 - crates/rolldown/tests/esbuild/default/hashbang_banner_use_strict_order
 - crates/rolldown/tests/esbuild/default/hashbang_bundle
@@ -169,9 +157,6 @@
 ## should not appear `await`
 - crates/rolldown/tests/esbuild/default/top_level_await_iife_dead_branch
 - crates/rolldown/tests/esbuild/default/top_level_await_no_bundle_common_js_dead_branch
-## sub optimal
-- crates/rolldown/tests/esbuild/importstar/import_star_common_js_unused
-- crates/rolldown/tests/esbuild/ts/ts_common_js_variable_in_esm_type_module
 ## rolldown has redundant `import "external"`
 - crates/rolldown/tests/esbuild/importstar/re_export_star_es6_no_bundle
 - crates/rolldown/tests/esbuild/importstar/re_export_star_external_es6
@@ -181,14 +166,13 @@
 ## should inline variable
 - crates/rolldown/tests/esbuild/loader/loader_json_prototype
 - crates/rolldown/tests/esbuild/loader/loader_json_prototype_es5
-## `.txt` should be treated as cjs
-- crates/rolldown/tests/esbuild/loader/loader_text_common_js_and_es6
-- crates/rolldown/tests/esbuild/loader/require_custom_extension_prefer_longest
 ## lowering decorator
 - crates/rolldown/tests/esbuild/ts/ts_experimental_decorator_scope_issue2147
 - crates/rolldown/tests/esbuild/ts/ts_experimental_decorators
 ## dce decorator
 - crates/rolldown/tests/esbuild/dce/dce_of_decorators
+## side effects detect
+- crates/rolldown/tests/esbuild/dce/dce_of_destructuring
 ## lower decorator
 - crates/rolldown/tests/esbuild/dce/dce_of_experimental_decorators
 ## don't support dce iife
@@ -223,10 +207,6 @@
 - crates/rolldown/tests/esbuild/default/auto_external_node
 ## `node:path` is side effects free
 - crates/rolldown/tests/esbuild/default/auto_external_node
-## It seems rolldown rewrite `fs` to `node:fs`
-- crates/rolldown/tests/esbuild/default/built_in_node_module_precedence
-## needs custom resolver
-- crates/rolldown/tests/esbuild/default/bundling_files_outside_of_outbase
 ## not support `jsx.preserve`
 - crates/rolldown/tests/esbuild/default/comment_preservation_preserve_jsx
 ## not support conditional import
@@ -237,8 +217,6 @@
 - crates/rolldown/tests/esbuild/default/conditional_require_resolve
 ## inline could be done in minifier
 - crates/rolldown/tests/esbuild/default/const_with_let_no_bundle
-## oxc dead branch remove
-- crates/rolldown/tests/esbuild/default/const_with_let_no_mangle
 ## oxc define not support computed member expr
 - crates/rolldown/tests/esbuild/default/define_assign_warning
 ## not support member expr with write
@@ -301,8 +279,6 @@
 - crates/rolldown/tests/esbuild/default/require_json
 ## require `.json`, the json file should not wrapped in `__esm`
 - crates/rolldown/tests/esbuild/default/require_shim_substitution
-## `.txt` module should be treated as cjs
-- crates/rolldown/tests/esbuild/default/require_txt
 ## obviously, the output is incorrect
 - crates/rolldown/tests/esbuild/default/string_export_names_common_js
 ## string export name not correct
@@ -327,32 +303,20 @@
 - crates/rolldown/tests/esbuild/importstar/import_default_namespace_combo_issue446
 ## Format cjs should not appear `export`
 - crates/rolldown/tests/esbuild/importstar/import_self_common_js
-## esbuild will reuse `ns` variable
-- crates/rolldown/tests/esbuild/importstar/import_star_common_js_unused
-## esbuild treated svg as commonjs module, rolldown treated it as esm
-- crates/rolldown/tests/esbuild/loader/auto_detect_mime_type_from_extension
-## esbuild will wrap `empty` module as a cjs module, rolldown did not
-- crates/rolldown/tests/esbuild/loader/empty_loader_js
 ## esbuild did not needs `__toESM`
 - crates/rolldown/tests/esbuild/loader/jsx_automatic_no_name_collision
 ## rolldown don't have `jsx.Preserve` and `jsx.Parse` option
 - crates/rolldown/tests/esbuild/loader/jsx_preserve_capital_letter
 ## lowering jsx
 - crates/rolldown/tests/esbuild/loader/jsx_syntax_in_js_with_jsx_loader
-## esbuild treated x.b64 as cjs, rolldown treated it as esm
-- crates/rolldown/tests/esbuild/loader/loader_base64_common_js_and_es6
 ## import record with attributes
 - crates/rolldown/tests/esbuild/loader/loader_bundle_with_import_attributes
-## esbuild treated `.txt` as cjs, rolldown treated it as esm
-- crates/rolldown/tests/esbuild/loader/loader_data_url_common_js_and_es6
 ## Wrong wrapkind, when json is imported by `require`
 - crates/rolldown/tests/esbuild/loader/loader_json_common_js_and_es6
 ## json tree shaking
 - crates/rolldown/tests/esbuild/loader/loader_json_invalid_identifier_es6
 ## should treated it as cjs module
 - crates/rolldown/tests/esbuild/loader/loader_json_no_bundle
-## the base64 result is also wrong
-- crates/rolldown/tests/esbuild/loader/require_custom_extension_base64
 ## Not support json attributes
 - crates/rolldown/tests/esbuild/loader/with_type_json_override_loader
 ## dynamic import with cycle reference
@@ -361,6 +325,8 @@
 - crates/rolldown/tests/esbuild/splitting/splitting_missing_lazy_export
 ## rolldown is not ts aware after ts transformation, We can't aware that `Test` is just a type
 - crates/rolldown/tests/esbuild/ts/export_type_issue379
+## sub optimal
+- crates/rolldown/tests/esbuild/ts/ts_common_js_variable_in_esm_type_module
 ## redundant wrap function
 - crates/rolldown/tests/esbuild/ts/ts_common_js_variable_in_esm_type_module
 ## enum side effects

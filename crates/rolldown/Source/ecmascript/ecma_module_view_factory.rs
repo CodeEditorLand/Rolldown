@@ -43,7 +43,7 @@ fn scan_ast(
     module_def_format,
     ast.source(),
     &module_id,
-    &ast.trivias,
+    ast.comments(),
   );
   let namespace_object_ref = scanner.namespace_object_ref;
   let scan_result = scanner.scan(ast.program())?;
@@ -75,12 +75,13 @@ pub async fn create_ecma_view<'any>(
     ctx.replace_global_define_config.as_ref(),
   )?;
 
-  let ParseToEcmaAstResult { mut ast, symbol_table, scope_tree } = match parse_result {
-    Ok(parse_result) => parse_result,
-    Err(errs) => {
-      return Ok(Err(errs));
-    }
-  };
+  let ParseToEcmaAstResult { mut ast, symbol_table, scope_tree, has_lazy_export } =
+    match parse_result {
+      Ok(parse_result) => parse_result,
+      Err(errs) => {
+        return Ok(Err(errs));
+      }
+    };
 
   let (scope, scan_result, namespace_object_ref) = scan_ast(
     ctx.module_index,
@@ -129,7 +130,13 @@ pub async fn create_ecma_view<'any>(
       .resolved_id
       .package_json
       .as_ref()
-      .and_then(|p| p.check_side_effects_for(&stable_id).map(DeterminedSideEffects::UserDefined))
+      .and_then(|p| {
+        // the glob expr is based on parent path of package.json, which is package path
+        // so we should use the relative path of the module to package path
+        let module_path_relative_to_package = id.as_path().relative(p.path.parent()?);
+        p.check_side_effects_for(&module_path_relative_to_package.to_string_lossy())
+          .map(DeterminedSideEffects::UserDefined)
+      })
       .unwrap_or_else(|| {
         let analyzed_side_effects = stmt_infos.iter().any(|stmt_info| stmt_info.side_effect);
         DeterminedSideEffects::Analyzed(analyzed_side_effects)
@@ -181,6 +188,7 @@ pub async fn create_ecma_view<'any>(
     has_eval,
     ast_usage,
     self_referenced_class_decl_symbol_ids,
+    has_lazy_export,
   };
 
   Ok(Ok(CreateEcmaViewReturn {

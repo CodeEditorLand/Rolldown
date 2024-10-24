@@ -1,0 +1,41 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# warnings
+
+## UNRESOLVED_IMPORT
+
+```text
+[UNRESOLVED_IMPORT] Warning: Could not resolve "@remix-run/react" in entry.jsx
+   ╭─[entry.jsx:1:22]
+   │
+ 1 │ import { Link } from "@remix-run/react"
+   │                      ─────────┬────────  
+   │                               ╰────────── Module not found, treating it as an external dependency
+───╯
+
+```
+## UNRESOLVED_IMPORT
+
+```text
+[UNRESOLVED_IMPORT] Warning: Could not resolve react in entry.jsx
+
+```
+# Assets
+
+## entry.js
+
+```js
+"use strict";
+
+const { Link } = __toESM(require("@remix-run/react"));
+const { createElement: _createElement } = __toESM(require("react"));
+
+//#region entry.jsx
+const x = _createElement(Link, {
+	...y,
+	key: z
+});
+
+//#endregion
+```

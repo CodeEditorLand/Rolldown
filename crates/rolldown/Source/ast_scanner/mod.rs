@@ -11,7 +11,7 @@ use oxc::{
       ExportAllDeclaration, ExportDefaultDeclaration, ExportNamedDeclaration, IdentifierReference,
       ImportDeclaration, ModuleDeclaration, Program,
     },
-    Trivias, Visit,
+    Comment, Visit,
   },
   semantic::SymbolId,
   span::{CompactStr, GetSpan, Span},
@@ -57,7 +57,7 @@ pub struct AstScanner<'me> {
   module_type: ModuleDefFormat,
   file_path: &'me ModuleId,
   scopes: &'me AstScopes,
-  trivias: &'me Trivias,
+  comments: &'me oxc::allocator::Vec<'me, Comment>,
   current_stmt_info: StmtInfo,
   result: ScanResult,
   esm_export_keyword: Option<Span>,
@@ -86,7 +86,7 @@ impl<'me> AstScanner<'me> {
     module_type: ModuleDefFormat,
     source: &'me ArcStr,
     file_path: &'me ModuleId,
-    trivias: &'me Trivias,
+    comments: &'me oxc::allocator::Vec<'me, Comment>,
   ) -> Self {
     let mut symbol_ref_db = SymbolRefDbForModule::new(symbol_table, idx, scope.root_scope_id());
     // This is used for converting "export default foo;" => "var default_symbol = foo;"
@@ -132,7 +132,7 @@ impl<'me> AstScanner<'me> {
       cjs_exports_ident: None,
       source,
       file_path,
-      trivias,
+      comments,
       ast_usage: EcmaModuleAstUsage::empty(),
       cur_class_decl_and_symbol_referenced_ids: None,
     }
@@ -228,11 +228,13 @@ impl<'me> AstScanner<'me> {
     self.scopes.get_root_binding(name)
   }
 
+  /// `is_dummy` means if it the import record is created during ast transformation.
   fn add_import_record(
     &mut self,
     module_request: &str,
     kind: ImportKind,
     module_request_start: u32,
+    is_dummy: bool,
   ) -> ImportRecordIdx {
     // If 'foo' in `import ... from 'foo'` is finally a commonjs module, we will convert the import statement
     // to `var import_foo = __toESM(require_foo())`, so we create a symbol for `import_foo` here. Notice that we
@@ -244,8 +246,12 @@ impl<'me> AstScanner<'me> {
       )
       .into(),
     );
-    let rec =
+    let mut rec =
       RawImportRecord::new(Rstr::from(module_request), kind, namespace_ref, module_request_start);
+
+    if is_dummy {
+      rec.meta.insert(ImportRecordMeta::IS_UNSPANNED_IMPORT);
+    }
 
     let id = self.result.import_records.push(rec);
     self.current_stmt_info.import_records.push(id);
@@ -399,6 +405,7 @@ impl<'me> AstScanner<'me> {
       decl.source.value.as_str(),
       ImportKind::Import,
       decl.source.span().start,
+      decl.source.span().is_empty(),
     );
     if let Some(exported) = &decl.exported {
       // export * as ns from '...'
@@ -412,8 +419,12 @@ impl<'me> AstScanner<'me> {
 
   fn scan_export_named_decl(&mut self, decl: &ExportNamedDeclaration) {
     if let Some(source) = &decl.source {
-      let record_id =
-        self.add_import_record(source.value.as_str(), ImportKind::Import, source.span().start);
+      let record_id = self.add_import_record(
+        source.value.as_str(),
+        ImportKind::Import,
+        source.span().start,
+        source.span().is_empty(),
+      );
       decl.specifiers.iter().for_each(|spec| {
         self.add_re_export(
           spec.exported.name().as_str(),
@@ -500,6 +511,7 @@ impl<'me> AstScanner<'me> {
       decl.source.value.as_str(),
       ImportKind::Import,
       decl.source.span().start,
+      decl.source.span().is_empty(),
     );
     self.result.imports.insert(decl.span, rec_id);
     // // `import '...'` or `import {} from '...'`
