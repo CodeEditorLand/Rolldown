@@ -1,0 +1,24 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.js
+
+```js
+
+
+//#region foo.js
+const foo = 1;
+
+//#endregion
+//#region export-star.js
+var export_star_exports = {};
+__export(export_star_exports, { foo: () => foo });
+
+//#endregion
+//#region main.js
+console.log(export_star_exports);
+
+//#endregion
+```

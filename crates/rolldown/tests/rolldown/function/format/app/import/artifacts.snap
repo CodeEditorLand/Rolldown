@@ -1,0 +1,26 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## main.js
+
+```js
+
+//#region cjs.js
+module.exports = 1;
+
+//#endregion
+//#region commonjs.mjs
+module.exports = 1;
+
+//#endregion
+//#region main.js
+__toCommonJS(exports);
+var external = require("external");
+var cjs_exports = __toESM(require("cjs.js"));
+var commonjs_exports = __toESM(require("commonjs.mjs"), 1);
+console.log(external.external, cjs_exports.foo, cjs_exports.bar);
+
+//#endregion
+```
