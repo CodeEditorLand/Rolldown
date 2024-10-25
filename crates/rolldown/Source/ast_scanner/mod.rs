@@ -22,7 +22,7 @@ use rolldown_common::{
   Specifier, StmtInfo, StmtInfos, SymbolRef, SymbolRefDbForModule, SymbolRefFlags,
 };
 use rolldown_ecmascript::{BindingIdentifierExt, BindingPatternExt};
-use rolldown_error::{BuildDiagnostic, CjsExportSpan, UnhandleableResult};
+use rolldown_error::{BuildDiagnostic, BuildResult, CjsExportSpan};
 use rolldown_rstr::Rstr;
 use rolldown_utils::ecma_script::legitimize_identifier_name;
 use rolldown_utils::path_ext::PathExt;
@@ -35,7 +35,6 @@ pub struct ScanResult {
   pub named_exports: FxHashMap<Rstr, LocalExport>,
   pub stmt_infos: StmtInfos,
   pub import_records: IndexVec<ImportRecordIdx, RawImportRecord>,
-  pub star_exports: Vec<ImportRecordIdx>,
   pub default_export_ref: SymbolRef,
   pub imports: FxHashMap<Span, ImportRecordIdx>,
   pub exports_kind: ExportsKind,
@@ -49,6 +48,7 @@ pub struct ScanResult {
   /// We needs to record the info in ast scanner since after that the ast maybe touched, etc
   /// (naming deconflict)
   pub self_referenced_class_decl_symbol_ids: FxHashSet<SymbolId>,
+  pub has_star_exports: bool,
 }
 
 pub struct AstScanner<'me> {
@@ -107,7 +107,6 @@ impl<'me> AstScanner<'me> {
         stmt_infos
       },
       import_records: IndexVec::new(),
-      star_exports: Vec::new(),
       default_export_ref,
       imports: FxHashMap::default(),
       exports_kind: ExportsKind::None,
@@ -117,6 +116,7 @@ impl<'me> AstScanner<'me> {
       ast_usage: EcmaModuleAstUsage::empty(),
       symbol_ref_db,
       self_referenced_class_decl_symbol_ids: FxHashSet::default(),
+      has_star_exports: false,
     };
 
     Self {
@@ -138,7 +138,7 @@ impl<'me> AstScanner<'me> {
     }
   }
 
-  pub fn scan(mut self, program: &Program<'_>) -> UnhandleableResult<ScanResult> {
+  pub fn scan(mut self, program: &Program<'_>) -> BuildResult<ScanResult> {
     self.visit_program(program);
     let mut exports_kind = ExportsKind::None;
 
@@ -203,7 +203,7 @@ impl<'me> AstScanner<'me> {
         if !scanned_symbols_in_root_scope.remove(&symbol_ref) {
           return Err(anyhow::format_err!(
             "Symbol ({name:?}, {symbol_id:?}, {scope_id:?}) is declared in the top-level scope but doesn't get scanned by the scanner",
-          ));
+          ))?;
         }
       }
       // if !scanned_top_level_symbols.is_empty() {
@@ -412,7 +412,8 @@ impl<'me> AstScanner<'me> {
       self.add_star_re_export(exported.name().as_str(), id, decl.span);
     } else {
       // export * from '...'
-      self.result.star_exports.push(id);
+      self.result.import_records[id].meta.insert(ImportRecordMeta::IS_EXPORT_START);
+      self.result.has_star_exports = true;
     }
     self.result.imports.insert(decl.span, id);
   }

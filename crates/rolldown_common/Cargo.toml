@@ -17,15 +17,16 @@ doctest = false
 workspace = true
 
 [dependencies]
-anyhow = { workspace = true }
-arcstr = { workspace = true }
-bitflags = { workspace = true }
-dashmap = { workspace = true }
-glob-match = { workspace = true }
-lightningcss = { workspace = true }
-oxc = { workspace = true, features = ["semantic"] }
-rolldown_fs = { workspace = true }
-rolldown_rstr = { workspace = true }
+anyhow             = { workspace = true }
+arcstr             = { workspace = true }
+bitflags           = { workspace = true }
+dashmap            = { workspace = true }
+glob-match         = { workspace = true }
+itertools          = { workspace = true }
+lightningcss       = { workspace = true }
+oxc                = { workspace = true, features = ["semantic"] }
+rolldown_fs        = { workspace = true }
+rolldown_rstr      = { workspace = true }
 rolldown_sourcemap = { workspace = true }
 rolldown_std_utils = { workspace = true }
 rolldown_utils = { workspace = true }

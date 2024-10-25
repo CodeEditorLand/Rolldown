@@ -5,11 +5,11 @@ use oxc::{
 };
 use rolldown_common::{
   side_effects::{DeterminedSideEffects, HookSideEffects},
-  AstScopes, EcmaView, ImportRecordIdx, ModuleDefFormat, ModuleId, ModuleIdx, ModuleType,
-  RawImportRecord, SymbolRef, SymbolRefDbForModule, TreeshakeOptions,
+  AstScopes, EcmaView, EcmaViewMeta, ImportRecordIdx, ModuleDefFormat, ModuleId, ModuleIdx,
+  ModuleType, RawImportRecord, SymbolRef, SymbolRefDbForModule, TreeshakeOptions,
 };
 use rolldown_ecmascript::EcmaAst;
-use rolldown_error::{DiagnosableResult, UnhandleableResult};
+use rolldown_error::BuildResult;
 use rolldown_utils::{ecma_script::legitimize_identifier_name, path_ext::PathExt};
 use sugar_path::SugarPath;
 
@@ -29,7 +29,7 @@ fn scan_ast(
   symbols: SymbolTable,
   scopes: ScopeTree,
   module_def_format: ModuleDefFormat,
-) -> UnhandleableResult<(AstScopes, ScanResult, SymbolRef)> {
+) -> BuildResult<(AstScopes, ScanResult, SymbolRef)> {
   let (symbol_table, ast_scopes) = make_ast_scopes_and_symbols(symbols, scopes);
   let module_id = ModuleId::new(ArcStr::clone(id));
   let repr_name = module_id.as_path().representative_file_name();
@@ -61,7 +61,7 @@ pub struct CreateEcmaViewReturn {
 pub async fn create_ecma_view<'any>(
   ctx: &mut CreateModuleContext<'any>,
   args: CreateModuleViewArgs,
-) -> UnhandleableResult<DiagnosableResult<CreateEcmaViewReturn>> {
+) -> BuildResult<CreateEcmaViewReturn> {
   let id = ModuleId::new(ArcStr::clone(&ctx.resolved_id.id));
   let stable_id = id.stabilize(&ctx.options.cwd);
 
@@ -75,13 +75,10 @@ pub async fn create_ecma_view<'any>(
     ctx.replace_global_define_config.as_ref(),
   )?;
 
-  let ParseToEcmaAstResult { mut ast, symbol_table, scope_tree, has_lazy_export } =
-    match parse_result {
-      Ok(parse_result) => parse_result,
-      Err(errs) => {
-        return Ok(Err(errs));
-      }
-    };
+  let ParseToEcmaAstResult { mut ast, symbol_table, scope_tree, has_lazy_export, warning } =
+    parse_result;
+
+  ctx.warnings.extend(warning);
 
   let (scope, scan_result, namespace_object_ref) = scan_ast(
     ctx.module_index,
@@ -97,7 +94,6 @@ pub async fn create_ecma_view<'any>(
     named_exports,
     stmt_infos,
     import_records,
-    star_exports,
     default_export_ref,
     imports,
     exports_kind,
@@ -107,9 +103,10 @@ pub async fn create_ecma_view<'any>(
     ast_usage,
     symbol_ref_db,
     self_referenced_class_decl_symbol_ids,
+    has_star_exports,
   } = scan_result;
   if !errors.is_empty() {
-    return Ok(Err(errors));
+    return Err(errors.into());
   }
   ctx.warnings.extend(scan_warnings);
 
@@ -171,7 +168,6 @@ pub async fn create_ecma_view<'any>(
     named_exports,
     stmt_infos,
     imports,
-    star_exports,
     default_export_ref,
     scope,
     exports_kind,
@@ -179,22 +175,22 @@ pub async fn create_ecma_view<'any>(
     def_format: ctx.resolved_id.module_def_format,
     sourcemap_chain: args.sourcemap_chain,
     import_records: IndexVec::default(),
-    is_included: false,
     importers: vec![],
     dynamic_importers: vec![],
     imported_ids,
     dynamically_imported_ids,
     side_effects,
-    has_eval,
     ast_usage,
     self_referenced_class_decl_symbol_ids,
-    has_lazy_export,
+    meta: {
+      let mut meta = EcmaViewMeta::default();
+      meta.set_included(false);
+      meta.set_eval(has_eval);
+      meta.set_has_lazy_export(has_lazy_export);
+      meta.set_has_star_exports(has_star_exports);
+      meta
+    },
   };
 
-  Ok(Ok(CreateEcmaViewReturn {
-    view,
-    raw_import_records: import_records,
-    ast,
-    symbols: symbol_ref_db,
-  }))
+  Ok(CreateEcmaViewReturn { view, raw_import_records: import_records, ast, symbols: symbol_ref_db })
 }
