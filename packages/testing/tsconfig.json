@@ -1,4 +1,13 @@
 {
-  "extends": "../../tsconfig.pure-js.json",
-  "include": ["src/**/*.js", "index.d.ts"]
+	"compilerOptions": {
+		"baseUrl": "./",
+		"outDir": "Target",
+		"rootDir": "src"
+	},
+	"extends": "@playform/build/tsconfig",
+	"include": [
+		"src/**/*.js",
+		"index.d.ts",
+		"src"
+	]
 }
