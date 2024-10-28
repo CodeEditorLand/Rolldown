@@ -15,10 +15,10 @@
 	},
 	"devDependencies": {
 		"@playform/build": "0.1.8",
-		"@types/node": "22.5.2",
+		"@types/node": "22.8.1",
 		"buble": "0.20.0",
 		"source-map": "0.7.4",
-		"terser": "5.31.1"
+		"terser": "5.36.0"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [
