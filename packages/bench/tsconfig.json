@@ -16,6 +16,7 @@
 		"benches/**/*.d.ts",
 		"src",
 		"src",
+		"src",
 		"src"
 	]
 }
