@@ -12,7 +12,7 @@
 		"@ls-lint/ls-lint": "2.2.3",
 		"@playform/build": "0.1.8",
 		"@taplo/cli": "0.7.0",
-		"@types/node": "22.8.1",
+		"@types/node": "22.8.2",
 		"cjs-module-lexer": "1.4.1",
 		"conventional-changelog-cli": "5.0.0",
 		"cspell": "8.15.4",
