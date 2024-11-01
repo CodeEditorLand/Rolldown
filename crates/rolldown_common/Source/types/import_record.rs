@@ -37,6 +37,8 @@ bitflags::bitflags! {
     const IS_UNSPANNED_IMPORT = 1 << 3;
     /// `export * from 'mod'` only
     const IS_EXPORT_START = 1 << 4;
+    ///  Tell the finalizer to use the runtime "__require()" instead of "require()"
+    const CALL_RUNTIME_REQUIRE = 1 << 5;
   }
 }
 
@@ -88,6 +90,11 @@ impl RawImportRecord {
       meta: ImportRecordMeta::empty(),
       state: ImportRecordStateStart { module_request_start },
     }
+  }
+
+  pub fn with_meta(mut self, meta: ImportRecordMeta) -> Self {
+    self.meta = meta;
+    self
   }
 
   #[allow(clippy::cast_possible_truncation)]

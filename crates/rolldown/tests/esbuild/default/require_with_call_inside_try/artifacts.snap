@@ -1,0 +1,23 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# Assets
+
+## entry.js
+
+```js
+
+
+//#region entry.js
+var require_entry = __commonJS({ "entry.js"(exports) {
+	try {
+		const supportsColor = __require("supports-color");
+		if (supportsColor && (supportsColor.stderr || supportsColor).level >= 2) exports.colors = [];
+	} catch (error) {}
+} });
+
+//#endregion
+export default require_entry();
+
+```

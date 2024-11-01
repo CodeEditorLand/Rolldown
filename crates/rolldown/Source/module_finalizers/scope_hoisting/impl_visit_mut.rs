@@ -9,7 +9,9 @@ use oxc::{
   },
   span::{GetSpan, Span, SPAN},
 };
-use rolldown_common::{ExportsKind, Module, ModuleType, StmtInfoIdx, SymbolRef, WrapKind};
+use rolldown_common::{
+  ExportsKind, ImportRecordMeta, Module, ModuleType, StmtInfoIdx, SymbolRef, WrapKind,
+};
 use rolldown_ecmascript::{AllocatorExt, ExpressionExt, StatementExt, TakeIn};
 
 use crate::utils::call_expression_ext::CallExpressionExt;
@@ -37,14 +39,14 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
 
         if let Some(import_decl) = top_stmt.as_import_declaration() {
           let rec_id = self.ctx.module.imports[&import_decl.span];
-          if self.should_remove_import_export_stmt(&mut top_stmt, rec_id) {
+          if self.transform_or_remove_import_export_stmt(&mut top_stmt, rec_id) {
             return;
           }
         } else if let Some(export_all_decl) = top_stmt.as_export_all_declaration() {
           let rec_id = self.ctx.module.imports[&export_all_decl.span];
           // "export * as ns from 'path'"
           if let Some(_alias) = &export_all_decl.exported {
-            if self.should_remove_import_export_stmt(&mut top_stmt, rec_id) {
+            if self.transform_or_remove_import_export_stmt(&mut top_stmt, rec_id) {
               return;
             }
           } else {
@@ -173,7 +175,7 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
           } else {
             // `export { foo } from 'path'`
             let rec_id = self.ctx.module.imports[&named_decl.span];
-            if self.should_remove_import_export_stmt(&mut top_stmt, rec_id) {
+            if self.transform_or_remove_import_export_stmt(&mut top_stmt, rec_id) {
               return;
             }
           }
@@ -363,11 +365,16 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
   #[allow(clippy::collapsible_else_if, clippy::too_many_lines)]
   fn visit_expression(&mut self, expr: &mut ast::Expression<'ast>) {
     if let Some(call_expr) = expr.as_call_expression_mut() {
-      if call_expr.is_global_require_call(self.scope) && !call_expr.span.is_empty() {
+      if call_expr.is_global_require_call(self.scope) && !call_expr.span.is_unspanned() {
         //  `require` calls that can't be recognized by rolldown are ignored in scanning, so they were not stored in `NomralModule#imports`.
         //  we just keep these `require` calls as it is
         if let Some(rec_id) = self.ctx.module.imports.get(&call_expr.span).copied() {
           let rec = &self.ctx.module.import_records[rec_id];
+          // use `__require` instead of `require`
+          if rec.meta.contains(ImportRecordMeta::CALL_RUNTIME_REQUIRE) {
+            *call_expr.callee.get_inner_expression_mut() =
+              self.snippet.builder.expression_identifier_reference(SPAN, "__require");
+          }
           match &self.ctx.modules[rec.resolved_module] {
             Module::Normal(importee) => {
               match importee.module_type {
