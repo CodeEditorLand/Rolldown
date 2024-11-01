@@ -1,31 +1,45 @@
 {
-  "name": "bench",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "bench": "node ./benches/compare.js",
-    "bench-ci": "node ./benches/ci.js",
-    "type-check": "tsc"
-  },
-  "dependencies": {
-    "@babel/core": "^7.26.0",
-    "@babel/preset-env": "^7.26.0",
-    "@babel/preset-typescript": "^7.26.0",
-    "@rollup/plugin-commonjs": "^28.0.1",
-    "@rollup/plugin-node-resolve": "^15.3.0",
-    "@types/lodash": "^4.17.13",
-    "chalk": "^5.3.0",
-    "esbuild": "^0.24.0",
-    "lodash": "^4.17.21",
-    "rolldown": "workspace:*",
-    "rollup": "^4.24.3",
-    "tinybench": "^3.0.3"
-  },
-  "devDependencies": {
-    "@types/babel__core": "7.20.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "vue": "^3.5.12",
-    "vue-router": "^4.4.5"
-  }
+	"author": {
+		"email": "Source/Open@Editor.Land",
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"url": "HTTPS://Editor.Land"
+	},
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"dependencies": {
+		"@types/lodash": "^4.17.13",
+		"chalk": "^5.3.0",
+		"esbuild": "^0.24.0",
+		"lodash": "^4.17.21",
+		"rolldown": "workspace:*",
+		"tinybench": "^3.0.3"
+	},
+	"devDependencies": {
+		"@playform/build": "0.1.8"
+	},
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"license": "SEE LICENSE IN LICENSE",
+	"name": "bench",
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"scripts": {
+		"bench": "node ./benches/compare.js",
+		"bench-ci": "node ./benches/ci.js",
+		"prepublishOnly": "Build 'Source/**/*.ts'",
+		"type-check": "tsc"
+	},
+	"type": "module",
+	"version": "0.0.1"
 }
