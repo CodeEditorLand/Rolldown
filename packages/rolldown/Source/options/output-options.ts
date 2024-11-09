@@ -1,7 +1,18 @@
-import type { PreRenderedChunk, RenderedChunk } from '../binding'
 import { z } from 'zod'
 import * as zodExt from '../utils/zod-ext'
 import { bold, underline } from '../cli/colors'
+import type { RenderedChunk, PreRenderedChunk } from '../binding'
+import type {
+  SourcemapIgnoreListOption,
+  SourcemapPathTransformOption,
+} from '../rollup'
+import type {
+  AddonFunction,
+  ChunkFileNamesFunction,
+  ModuleFormat,
+  OutputCliOptions,
+  OutputOptions,
+} from '../types/output-options'
 
 const ModuleFormatSchema = z
   .literal('es')
@@ -13,21 +24,26 @@ const ModuleFormatSchema = z
   .or(z.literal('umd'))
   .describe(
     `output format of the generated bundle (supports ${underline('esm')}, cjs, and iife).`,
-  )
-  .optional()
+  ) satisfies z.ZodType<ModuleFormat>
 
 const addonFunctionSchema = z
   .function()
   .args(zodExt.phantom<RenderedChunk>())
-  .returns(z.string().or(z.promise(z.string())))
+  .returns(
+    z.string().or(z.promise(z.string())),
+  ) satisfies z.ZodType<AddonFunction>
 
 const chunkFileNamesFunctionSchema = z
   .function()
   .args(zodExt.phantom<PreRenderedChunk>())
-  .returns(z.string())
+  .returns(z.string()) satisfies z.ZodType<ChunkFileNamesFunction>
 
 const outputOptionsSchema = z.strictObject({
-  dir: z.string().describe('Output directory, defaults to `dist`.').optional(),
+  dir: z
+    .string()
+    .describe('Output directory, defaults to `dist` if `file` is not set.')
+    .optional(),
+  file: z.string().describe('Single output file').optional(),
   exports: z
     .literal('auto')
     .or(z.literal('named'))
@@ -37,7 +53,12 @@ const outputOptionsSchema = z.strictObject({
       `specify a export mode (${underline('auto')}, named, default, none)`,
     )
     .optional(),
-  format: ModuleFormatSchema,
+  hashCharacters: z
+    .literal('base64')
+    .or(z.literal('base36'))
+    .or(z.literal('hex'))
+    .optional(),
+  format: ModuleFormatSchema.optional(),
   sourcemap: z
     .boolean()
     .or(z.literal('inline'))
@@ -62,9 +83,11 @@ const outputOptionsSchema = z.strictObject({
     .describe('extend global variable defined by name in IIFE / UMD formats')
     .optional(),
   esModule: z.literal('if-default-prop').or(z.boolean()).optional(),
+  assetFileNames: z.string().optional(),
   entryFileNames: z.string().or(chunkFileNamesFunctionSchema).optional(),
   chunkFileNames: z.string().or(chunkFileNamesFunctionSchema).optional(),
-  assetFileNames: z.string().optional(),
+  cssEntryFileNames: z.string().or(chunkFileNamesFunctionSchema).optional(),
+  cssChunkFileNames: z.string().or(chunkFileNamesFunctionSchema).optional(),
   minify: z.boolean().describe('minify the bundled file.').optional(),
   name: z.string().describe('name for UMD / IIFE format outputs').optional(),
   globals: z
@@ -100,7 +123,8 @@ const outputOptionsSchema = z.strictObject({
         .optional(),
     })
     .optional(),
-})
+  comments: z.enum(['none', 'preserve-legal']).optional(),
+}) satisfies z.ZodType<OutputOptions>
 
 const getAddonDescription = (
   placement: 'bottom' | 'top',
@@ -145,18 +169,4 @@ export const outputCliOptionsSchema = outputOptionsSchema
   .omit({
     sourcemapPathTransform: true,
     sourcemapIgnoreList: true,
-  })
-
-export type OutputOptions = z.infer<typeof outputOptionsSchema>
-
-export type SourcemapIgnoreListOption = (
-  relativeSourcePath: string,
-  sourcemapPath: string,
-) => boolean
-
-export type SourcemapPathTransformOption = (
-  relativeSourcePath: string,
-  sourcemapPath: string,
-) => string
-
-export type ModuleFormat = z.infer<typeof ModuleFormatSchema>
+  }) satisfies z.ZodType<OutputCliOptions>

@@ -3,8 +3,8 @@ use oxc::ast::visit::walk_mut;
 use oxc::ast::VisitMut;
 use oxc::span::{CompactStr, Span, SPAN};
 use rolldown_common::{Interop, Module};
-use rolldown_ecmascript::TakeIn;
-use rolldown_utils::ecma_script::legitimize_identifier_name;
+use rolldown_ecmascript_utils::TakeIn;
+use rolldown_utils::ecmascript::legitimize_identifier_name;
 
 use crate::utils::call_expression_ext::CallExpressionExt;
 
@@ -12,6 +12,10 @@ use super::IsolatingModuleFinalizer;
 
 impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
   fn visit_program(&mut self, program: &mut ast::Program<'ast>) {
+    // Drop the hashbang since we already store them in ast_scan phase and
+    // we don't want oxc to generate hashbang statement in module level since we already handle
+    // them in chunk level
+    program.hashbang.take();
     let mut stmts = self.snippet.builder.vec();
 
     for mut stmt in program.body.take_in(self.alloc) {
@@ -206,8 +210,8 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
                   self.snippet.builder.alloc_computed_member_expression(
                     SPAN,
                     self.snippet.id_ref_expr(&namespace_object_ref, SPAN),
-                    self.snippet.builder.expression_from_string_literal(
-                      self.snippet.builder.string_literal(SPAN, str.value.as_str()),
+                    self.snippet.builder.expression_string_literal(
+                      SPAN, str.value.as_str()
                     ),
                     false,
                   ),
@@ -238,14 +242,12 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
                 })
               }));
 
-              return Some(self.snippet.builder.statement_declaration(
-                self.snippet.builder.declaration_from_variable(
-                  self.snippet.builder.variable_declaration(
-                    SPAN,
-                    var_decl.kind,
-                    var_decl.declarations.take_in(self.alloc),
-                    false,
-                  ),
+              return Some(ast::Statement::VariableDeclaration(
+                self.snippet.builder.alloc_variable_declaration(
+                  SPAN,
+                  var_decl.kind,
+                  var_decl.declarations.take_in(self.alloc),
+                  false,
                 ),
               ));
             }

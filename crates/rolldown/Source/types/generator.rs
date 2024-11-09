@@ -1,5 +1,6 @@
-use oxc::codegen::CodegenReturn;
-use rolldown_common::{Chunk, ChunkIdx, InstantiatedChunk, NormalizedBundlerOptions};
+use rolldown_common::{
+  Chunk, ChunkIdx, InstantiatedChunk, ModuleRenderOutput, NormalizedBundlerOptions,
+};
 use rolldown_error::{BuildDiagnostic, BuildResult};
 use rolldown_plugin::SharedPluginDriver;
 
@@ -13,7 +14,7 @@ pub struct GenerateContext<'a> {
   pub chunk_graph: &'a ChunkGraph,
   pub plugin_driver: &'a SharedPluginDriver,
   pub warnings: Vec<BuildDiagnostic>,
-  pub module_id_to_codegen_ret: Vec<Option<CodegenReturn>>,
+  pub module_id_to_codegen_ret: Vec<Option<ModuleRenderOutput>>,
 }
 
 pub struct GenerateOutput {

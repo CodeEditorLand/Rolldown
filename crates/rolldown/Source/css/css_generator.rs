@@ -55,9 +55,9 @@ impl Generator for CssGenerator {
     Ok(Ok(GenerateOutput {
       chunks: vec![InstantiatedChunk {
         origin_chunk: ctx.chunk_idx,
-        content,
+        content: content.into(),
         map: None,
-        meta: InstantiationKind::None,
+        kind: InstantiationKind::None,
         augment_chunk_hash: None,
         file_dir: file_dir.to_path_buf(),
         preliminary_filename: ctx

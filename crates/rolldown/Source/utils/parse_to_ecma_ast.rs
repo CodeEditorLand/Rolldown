@@ -35,6 +35,7 @@ pub struct ParseToEcmaAstResult {
   pub warning: Vec<BuildDiagnostic>,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn parse_to_ecma_ast(
   plugin_driver: &PluginDriver,
   path: &Path,
@@ -43,6 +44,7 @@ pub fn parse_to_ecma_ast(
   module_type: &ModuleType,
   source: StrOrBytes,
   replace_global_define_config: Option<&ReplaceGlobalDefinesConfig>,
+  is_user_defined_entry: bool,
 ) -> BuildResult<ParseToEcmaAstResult> {
   let mut has_lazy_export = false;
   // 1. Transform the source to the type that rolldown supported.
@@ -52,8 +54,12 @@ pub fn parse_to_ecma_ast(
     ModuleType::Ts => (source.try_into_string()?, OxcParseType::Ts),
     ModuleType::Tsx => (source.try_into_string()?, OxcParseType::Tsx),
     ModuleType::Css => {
-      let content = "export {}".to_string();
-      (content, OxcParseType::Js)
+      if is_user_defined_entry {
+        ("export {}".to_owned(), OxcParseType::Js)
+      } else {
+        has_lazy_export = true;
+        ("({})".to_owned(), OxcParseType::Js)
+      }
     }
     ModuleType::Json => {
       let content = json_to_esm(&source.try_into_string()?)?;
@@ -65,22 +71,27 @@ pub fn parse_to_ecma_ast(
       (content, OxcParseType::Js)
     }
     ModuleType::Base64 => {
-      let source = source.try_into_bytes()?;
+      let source = source.into_bytes();
       let encoded = rolldown_utils::base64::to_standard_base64(source);
       has_lazy_export = true;
       (text_to_string_literal(&encoded)?, OxcParseType::Js)
     }
     ModuleType::Dataurl => {
-      let data = source.try_into_bytes()?;
+      let data = source.into_bytes();
       let guessed_mime = guess_mime(path, &data)?;
       let dataurl = rolldown_utils::dataurl::encode_as_shortest_dataurl(&guessed_mime, &data);
       has_lazy_export = true;
       (text_to_string_literal(&dataurl)?, OxcParseType::Js)
     }
     ModuleType::Binary => {
-      let source = source.try_into_bytes()?;
+      let source = source.into_bytes();
       let encoded = rolldown_utils::base64::to_standard_base64(source);
       (binary_to_esm(&encoded, options.platform, RUNTIME_MODULE_ID), OxcParseType::Js)
+    }
+    ModuleType::Asset => {
+      let content = "import.meta.__ROLLDOWN_ASSET_FILENAME".to_string();
+      has_lazy_export = true;
+      (content, OxcParseType::Js)
     }
     ModuleType::Empty => (String::new(), OxcParseType::Js),
     ModuleType::Custom(custom_type) => {

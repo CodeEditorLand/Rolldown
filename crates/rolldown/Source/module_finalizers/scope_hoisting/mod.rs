@@ -6,13 +6,13 @@ use oxc::{
 use rolldown_common::{
   AstScopes, ImportRecordIdx, ImportRecordMeta, Module, OutputFormat, SymbolRef, WrapKind,
 };
-use rolldown_ecmascript::{AstSnippet, BindingPatternExt, TakeIn};
+use rolldown_ecmascript_utils::{AstSnippet, BindingPatternExt, TakeIn};
 
 mod finalizer_context;
 mod impl_visit_mut;
 pub use finalizer_context::ScopeHoistingFinalizerContext;
 use rolldown_rstr::Rstr;
-use rolldown_utils::ecma_script::is_validate_identifier_name;
+use rolldown_utils::ecmascript::is_validate_identifier_name;
 
 mod rename;
 

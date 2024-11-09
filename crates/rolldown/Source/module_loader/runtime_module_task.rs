@@ -73,6 +73,7 @@ impl RuntimeModuleTask {
       ast_usage,
       symbol_ref_db,
       self_referenced_class_decl_symbol_ids: _,
+      hashbang_range: _,
       has_star_exports,
     } = scan_result;
 
@@ -110,6 +111,7 @@ impl RuntimeModuleTask {
         def_format: ModuleDefFormat::EsmMjs,
         ast_usage,
         self_referenced_class_decl_symbol_ids: FxHashSet::default(),
+        hashbang_range: None,
         meta: {
           let mut meta = EcmaViewMeta::default();
           meta.set_included(false);
@@ -118,8 +120,10 @@ impl RuntimeModuleTask {
           meta.set_has_star_exports(has_star_exports);
           meta
         },
+        mutations: vec![],
       },
       css_view: None,
+      asset_view: None,
     };
 
     if let Err(_err) = self.tx.try_send(Msg::RuntimeNormalModuleDone(RuntimeModuleTaskResult {
@@ -141,7 +145,7 @@ impl RuntimeModuleTask {
     let mut ast = EcmaCompiler::parse(filename, source, source_type)?;
 
     ast.program.with_mut(|fields| {
-      let mut pre_processor = PreProcessor::new(fields.allocator, false);
+      let mut pre_processor = PreProcessor::new(fields.allocator);
       pre_processor.visit_program(fields.program);
       ast.contains_use_strict = pre_processor.contains_use_strict;
     });
@@ -162,6 +166,7 @@ impl RuntimeModuleTask {
       source,
       &facade_path,
       ast.comments(),
+      None,
     );
     let namespace_object_ref = scanner.namespace_object_ref;
     let scan_result = scanner.scan(ast.program())?;

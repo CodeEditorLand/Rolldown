@@ -1,0 +1,33 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# Assets
+
+## test.css
+
+```css
+button { color: red }
+
+```
+## test.js
+
+```js
+
+
+//#region node_modules/pkg/button.css
+var require_button = __commonJS({ "node_modules/pkg/button.css"(exports, module) {
+	module.exports = {};
+} });
+
+//#endregion
+//#region node_modules/pkg/components.jsx
+require_button();
+const Button = () => React.createElement("button", null);
+
+//#endregion
+//#region test.jsx
+render(React.createElement(Button, null));
+
+//#endregion
+```

@@ -31,6 +31,11 @@
       "default": true,
       "type": "boolean"
     },
+    "snapshotBytes": {
+      "description": "If `true`, bytes source will be snapshot.",
+      "default": false,
+      "type": "boolean"
+    },
     "snapshotOutputStats": {
       "description": "If `true`, the fixture output stats will be snapshot.",
       "default": false,
@@ -120,6 +125,16 @@
             "null"
           ]
         },
+        "comments": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Comments"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "cssChunkFilenames": {
           "type": [
             "string",
@@ -152,6 +167,15 @@
             "string",
             "null"
           ]
+        },
+        "dropLabels": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
         },
         "entryFilenames": {
           "type": [
@@ -210,6 +234,12 @@
             "null"
           ]
         },
+        "file": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "footer": {
           "type": [
             "string",
@@ -234,6 +264,16 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "hashCharacters": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/HashCharacters"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "inject": {
           "type": [
@@ -378,6 +418,31 @@
       },
       "additionalProperties": false
     },
+    "Comments": {
+      "oneOf": [
+        {
+          "description": "Don't preserve any comment",
+          "type": "string",
+          "enum": [
+            "none"
+          ]
+        },
+        {
+          "description": "Keep comments as much as possible",
+          "type": "string",
+          "enum": [
+            "preserve"
+          ]
+        },
+        {
+          "description": "Keep legal comments only",
+          "type": "string",
+          "enum": [
+            "preserve-legal"
+          ]
+        }
+      ]
+    },
     "Duration": {
       "type": "object",
       "required": [
@@ -440,6 +505,14 @@
         }
       },
       "additionalProperties": false
+    },
+    "HashCharacters": {
+      "type": "string",
+      "enum": [
+        "base64",
+        "base36",
+        "hex"
+      ]
     },
     "InjectImport": {
       "title": "Usage",
@@ -584,7 +657,8 @@
             "dataurl",
             "binary",
             "empty",
-            "css"
+            "css",
+            "asset"
           ]
         },
         {

@@ -1,3 +1,4 @@
+mod asset;
 mod chunk;
 mod css;
 mod ecmascript;
@@ -14,9 +15,11 @@ pub mod bundler_options {
   pub use crate::inner_bundler_options::{
     types::{
       advanced_chunks_options::{AdvancedChunksOptions, MatchGroup},
+      comments::Comments,
       es_module_flag::EsModuleFlag,
       experimental_options::ExperimentalOptions,
       filename_template::{FileNameRenderOptions, FilenameTemplate},
+      hash_characters::HashCharacters,
       inject_import::InjectImport,
       input_item::InputItem,
       is_external::IsExternal,
@@ -39,6 +42,7 @@ pub mod bundler_options {
 
 // We don't want internal position adjustment of files affect users, so all items are exported in the root.
 pub use crate::{
+  asset::asset_view::AssetView,
   chunk::{
     chunk_table::ChunkTable,
     types::{
@@ -49,19 +53,23 @@ pub use crate::{
   css::{
     css_module::CssModule,
     css_module_idx::CssModuleIdx,
-    css_view::{CssRenderer, CssView},
+    css_view::{CssAssetNameReplacer, CssRenderer, CssView},
   },
   ecmascript::{
     ecma_asset_meta::EcmaAssetMeta,
-    ecma_view::{EcmaModuleAstUsage, EcmaView, EcmaViewMeta},
+    ecma_view::{EcmaModuleAstUsage, EcmaView, EcmaViewMeta, ImportMetaRolldownAssetReplacer},
     module_idx::ModuleIdx,
+    node_builtin_modules::is_builtin_modules,
   },
   file_emitter::{EmittedAsset, FileEmitter, SharedFileEmitter},
-  module::{external_module::ExternalModule, normal_module::NormalModule, Module},
+  module::{
+    external_module::ExternalModule,
+    normal_module::{ModuleRenderArgs, NormalModule},
+    Module,
+  },
   types::asset::Asset,
   types::asset_idx::AssetIdx,
   types::asset_meta::InstantiationKind,
-  types::asset_source::AssetSource,
   types::ast_scopes::AstScopes,
   types::bundler_file_system::BundlerFileSystem,
   types::chunk_idx::ChunkIdx,
@@ -82,6 +90,7 @@ pub use crate::{
   types::module_id::ModuleId,
   types::module_idx::LegacyModuleIdx,
   types::module_info::ModuleInfo,
+  types::module_render_output::ModuleRenderOutput,
   types::module_table::{IndexExternalModules, IndexModules, ModuleTable},
   types::module_view::ModuleView,
   types::named_export::LocalExport,

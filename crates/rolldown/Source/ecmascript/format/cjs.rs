@@ -14,28 +14,33 @@ use crate::{
 };
 use rolldown_common::{ChunkKind, ExportsKind, Module, OutputExports, WrapKind};
 use rolldown_error::BuildResult;
-use rolldown_sourcemap::{ConcatSource, RawSource};
+use rolldown_sourcemap::SourceJoiner;
 
-pub fn render_cjs(
+#[allow(clippy::too_many_lines)]
+pub fn render_cjs<'code>(
   ctx: &mut GenerateContext<'_>,
-  module_sources: RenderedModuleSources,
-  banner: Option<String>,
-  footer: Option<String>,
-  intro: Option<String>,
-  outro: Option<String>,
-) -> BuildResult<ConcatSource> {
-  let mut concat_source = ConcatSource::default();
+  module_sources: &'code RenderedModuleSources,
+  banner: Option<&'code str>,
+  footer: Option<&'code str>,
+  intro: Option<&'code str>,
+  outro: Option<&'code str>,
+  hashbang: Option<&'code str>,
+) -> BuildResult<SourceJoiner<'code>> {
+  let mut source_joiner = SourceJoiner::default();
 
+  if let Some(hashbang) = hashbang {
+    source_joiner.append_source(hashbang);
+  }
   if let Some(banner) = banner {
-    concat_source.add_source(Box::new(RawSource::new(banner)));
+    source_joiner.append_source(banner);
   }
 
   if determine_use_strict(ctx) {
-    concat_source.add_source(Box::new(RawSource::new("\"use strict\";".to_string())));
+    source_joiner.append_source("\"use strict\";");
   }
 
   if let Some(intro) = intro {
-    concat_source.add_source(Box::new(RawSource::new(intro)));
+    source_joiner.append_source(intro);
   }
 
   // Note that the determined `export_mode` should be used in `render_chunk_exports` to render exports.
@@ -52,7 +57,7 @@ pub fn render_cjs(
           if let Some(marker) =
             render_namespace_markers(&ctx.options.es_module, has_default_export, false)
           {
-            concat_source.add_source(Box::new(RawSource::new(marker.into())));
+            source_joiner.append_source(marker.to_string());
           }
         }
         let meta = &ctx.link_output.metas[entry_id];
@@ -68,8 +73,8 @@ pub fn render_cjs(
   });
 });".replace("$NAME", binding_ref_name);
 
-          concat_source.add_source(Box::new(RawSource::new(format!("var {} = require(\"{}\");", binding_ref_name,&importee.stable_id()))));
-          concat_source.add_source(Box::new(RawSource::new(import_stmt)));
+          source_joiner.append_source(format!("var {} = require(\"{}\");", binding_ref_name,&importee.stable_id()));
+          source_joiner.append_source(import_stmt);
         });
         Some(export_mode)
       } else {
@@ -86,27 +91,27 @@ pub fn render_cjs(
 
   // Runtime module should be placed before the generated `requires` in CJS format.
   // Because, we might need to generate `__toESM(require(...))` that relies on the runtime module.
-  let mut module_sources_peekable = module_sources.into_iter().peekable();
+  let mut module_sources_peekable = module_sources.iter().peekable();
   match module_sources_peekable.peek() {
     Some((id, _, _)) if *id == ctx.link_output.runtime.id() => {
       if let (_, _module_id, Some(emitted_sources)) =
         module_sources_peekable.next().expect("Must have module")
       {
         for source in emitted_sources {
-          concat_source.add_source(source);
+          source_joiner.append_source(source);
         }
       }
     }
     _ => {}
   }
 
-  concat_source.add_source(Box::new(RawSource::new(render_cjs_chunk_imports(ctx))));
+  source_joiner.append_source(render_cjs_chunk_imports(ctx));
 
   // chunk content
   module_sources_peekable.for_each(|(_, _, module_render_output)| {
     if let Some(emitted_sources) = module_render_output {
       for source in emitted_sources {
-        concat_source.add_source(source);
+        source_joiner.append_source(source);
       }
     }
   });
@@ -119,15 +124,14 @@ pub fn render_cjs(
         let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
         let wrapper_ref_name =
           ctx.link_output.symbol_db.canonical_name_for(*wrapper_ref, &ctx.chunk.canonical_names);
-        concat_source.add_source(Box::new(RawSource::new(format!("{wrapper_ref_name}();",))));
+        source_joiner.append_source(format!("{wrapper_ref_name}();",));
       }
       WrapKind::Cjs => {
         // "export default require_xxx();"
         let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
         let wrapper_ref_name =
           ctx.link_output.symbol_db.canonical_name_for(*wrapper_ref, &ctx.chunk.canonical_names);
-        concat_source
-          .add_source(Box::new(RawSource::new(format!("export default {wrapper_ref_name}();\n"))));
+        source_joiner.append_source(format!("export default {wrapper_ref_name}();\n"));
       }
       WrapKind::None => {}
     }
@@ -136,18 +140,18 @@ pub fn render_cjs(
   let export_mode = export_mode.unwrap_or(OutputExports::Auto);
 
   if let Some(exports) = render_chunk_exports(ctx, Some(&export_mode)) {
-    concat_source.add_source(Box::new(RawSource::new(exports)));
+    source_joiner.append_source(exports);
   }
 
   if let Some(outro) = outro {
-    concat_source.add_source(Box::new(RawSource::new(outro)));
+    source_joiner.append_source(outro);
   }
 
   if let Some(footer) = footer {
-    concat_source.add_source(Box::new(RawSource::new(footer)));
+    source_joiner.append_source(footer);
   }
 
-  Ok(concat_source)
+  Ok(source_joiner)
 }
 
 fn render_cjs_chunk_imports(ctx: &GenerateContext<'_>) -> String {

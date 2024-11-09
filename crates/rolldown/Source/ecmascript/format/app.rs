@@ -1,41 +1,45 @@
-use rolldown_sourcemap::{ConcatSource, RawSource};
+use rolldown_sourcemap::SourceJoiner;
 
 use crate::{ecmascript::ecma_generator::RenderedModuleSources, types::generator::GenerateContext};
 
-pub fn render_app(
+pub fn render_app<'code>(
   _ctx: &GenerateContext<'_>,
-  module_sources: RenderedModuleSources,
-  banner: Option<String>,
-  footer: Option<String>,
-  intro: Option<String>,
-  outro: Option<String>,
-) -> ConcatSource {
-  let mut concat_source = ConcatSource::default();
+  module_sources: &'code RenderedModuleSources,
+  banner: Option<&'code str>,
+  footer: Option<&'code str>,
+  intro: Option<&'code str>,
+  outro: Option<&'code str>,
+  hashbang: Option<&'code str>,
+) -> SourceJoiner<'code> {
+  let mut source_joiner = SourceJoiner::default();
 
+  if let Some(hashbang) = hashbang {
+    source_joiner.append_source(hashbang);
+  }
   if let Some(banner) = banner {
-    concat_source.add_source(Box::new(RawSource::new(banner)));
+    source_joiner.append_source(banner);
   }
 
   if let Some(intro) = intro {
-    concat_source.add_source(Box::new(RawSource::new(intro)));
+    source_joiner.append_source(intro);
   }
 
   // chunk content
-  module_sources.into_iter().for_each(|(_, _, module_render_output)| {
+  module_sources.iter().for_each(|(_, _, module_render_output)| {
     if let Some(emitted_sources) = module_render_output {
       for source in emitted_sources {
-        concat_source.add_source(source);
+        source_joiner.append_source(source);
       }
     }
   });
 
   if let Some(outro) = outro {
-    concat_source.add_source(Box::new(RawSource::new(outro)));
+    source_joiner.append_source(outro);
   }
 
   if let Some(footer) = footer {
-    concat_source.add_source(Box::new(RawSource::new(footer)));
+    source_joiner.append_source(footer);
   }
 
-  concat_source
+  source_joiner
 }

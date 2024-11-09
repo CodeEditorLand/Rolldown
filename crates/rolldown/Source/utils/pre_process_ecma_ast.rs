@@ -103,8 +103,13 @@ impl PreProcessEcmaAst {
         scopes = ret.scopes;
         self.ast_changed = true;
       }
-
       if !bundle_options.inject.is_empty() {
+        // if the define replace something, we need to recreate the semantic data.
+        // to correct the `root_unresolved_references`
+        // https://github.com/oxc-project/oxc/blob/0136431b31a1d4cc20147eb085d9314b224cc092/crates/oxc_transformer/src/plugins/inject_global_variables.rs#L184-L184
+        // TODO: real ast_changed hint https://github.com/oxc-project/oxc/pull/7205
+        let semantic_ret = SemanticBuilder::new().with_stats(self.stats).build(program);
+        (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
         let ret = InjectGlobalVariables::new(
           allocator,
           bundle_options.oxc_inject_global_variables_config.clone(),
@@ -115,7 +120,8 @@ impl PreProcessEcmaAst {
         self.ast_changed = true;
       }
 
-      if bundle_options.treeshake.enabled() {
+      // avoid DCE for lazy export
+      if bundle_options.treeshake.enabled() && !has_lazy_export {
         // Perform dead code elimination.
         // NOTE: `CompressOptions::dead_code_elimination` will remove `ParenthesizedExpression`s from the AST.
         let compressor = Compressor::new(allocator, CompressOptions::dead_code_elimination());
@@ -130,7 +136,7 @@ impl PreProcessEcmaAst {
     })?;
 
     ast.program.with_mut(|fields| {
-      let mut pre_processor = PreProcessor::new(fields.allocator, has_lazy_export);
+      let mut pre_processor = PreProcessor::new(fields.allocator);
       pre_processor.visit_program(fields.program);
       ast.contains_use_strict = pre_processor.contains_use_strict;
     });

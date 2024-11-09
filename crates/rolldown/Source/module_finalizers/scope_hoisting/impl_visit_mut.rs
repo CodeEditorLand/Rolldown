@@ -12,7 +12,7 @@ use oxc::{
 use rolldown_common::{
   ExportsKind, ImportRecordMeta, Module, ModuleType, StmtInfoIdx, SymbolRef, WrapKind,
 };
-use rolldown_ecmascript::{AllocatorExt, ExpressionExt, StatementExt, TakeIn};
+use rolldown_ecmascript_utils::{AllocatorExt, ExpressionExt, StatementExt, TakeIn};
 
 use crate::utils::call_expression_ext::CallExpressionExt;
 
@@ -21,6 +21,10 @@ use super::ScopeHoistingFinalizer;
 impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
   #[allow(clippy::too_many_lines)]
   fn visit_program(&mut self, program: &mut ast::Program<'ast>) {
+    // Drop the hashbang since we already store them in ast_scan phase and
+    // we don't want oxc to generate hashbang statement in module level since we already handle
+    // them in chunk level
+    program.hashbang.take();
     let old_body = self.alloc.take(&mut program.body);
 
     let is_namespace_referenced = matches!(self.ctx.module.exports_kind, ExportsKind::Esm)
@@ -346,6 +350,20 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
     }
   }
 
+  fn visit_statement(&mut self, it: &mut ast::Statement<'ast>) {
+    if !self.ctx.options.drop_labels.is_empty() {
+      match it {
+        ast::Statement::LabeledStatement(stmt)
+          if self.ctx.options.drop_labels.contains(stmt.label.name.as_str()) =>
+        {
+          self.snippet.builder.move_statement(it);
+        }
+        _ => {}
+      }
+    }
+    walk_mut::walk_statement(self, it);
+  }
+
   fn visit_identifier_reference(&mut self, ident: &mut ast::IdentifierReference) {
     // This ensure all `IdentifierReference`s are processed
     debug_assert!(
@@ -414,12 +432,16 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
                   if matches!(importee.exports_kind, ExportsKind::CommonJs) {
                     *expr = self.snippet.call_expr_expr(wrap_ref_name);
                   } else {
-                    let ns_name = self.canonical_name_for(importee.namespace_object_ref);
-                    let to_commonjs_ref_name = self.canonical_name_for_runtime("__toCommonJS");
-                    *expr = self.snippet.seq2_in_paren_expr(
-                      self.snippet.call_expr_expr(wrap_ref_name),
-                      self.snippet.call_expr_with_arg_expr(to_commonjs_ref_name, ns_name),
-                    );
+                    if rec.meta.contains(ImportRecordMeta::IS_REQUIRE_UNUSED) {
+                      *expr = self.snippet.call_expr_expr(wrap_ref_name);
+                    } else {
+                      let ns_name = self.canonical_name_for(importee.namespace_object_ref);
+                      let to_commonjs_ref_name = self.canonical_name_for_runtime("__toCommonJS");
+                      *expr = self.snippet.seq2_in_paren_expr(
+                        self.snippet.call_expr_expr(wrap_ref_name),
+                        self.snippet.call_expr_with_arg_expr(to_commonjs_ref_name, ns_name),
+                      );
+                    }
                   }
                 }
               }

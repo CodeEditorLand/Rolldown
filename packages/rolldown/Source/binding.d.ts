@@ -52,7 +52,7 @@ export declare class BindingPluginContext {
   emitFile(file: BindingEmittedAsset): string
   getFileName(referenceId: string): string
   getModuleInfo(moduleId: string): BindingModuleInfo | null
-  getModuleIds(): Array<string> | null
+  getModuleIds(): Array<string>
   addWatchFile(file: string): void
 }
 
@@ -234,6 +234,7 @@ export interface BindingInputOptions {
   treeshake?: BindingTreeshake
   moduleTypes?: Record<string, string>
   define?: Array<[string, string]>
+  dropLabels?: Array<string>
   inject?: Array<BindingInjectImportNamed | BindingInjectImportNamespace>
   experimental?: BindingExperimentalOptions
   profilerNames?: boolean
@@ -286,11 +287,14 @@ export interface BindingNotifyOption {
 
 export interface BindingOutputOptions {
   name?: string
+  assetFileNames?: string
   entryFileNames?: string | ((chunk: PreRenderedChunk) => string)
   chunkFileNames?: string | ((chunk: PreRenderedChunk) => string)
-  assetFileNames?: string
+  cssEntryFileNames?: string | ((chunk: PreRenderedChunk) => string)
+  cssChunkFileNames?: string | ((chunk: PreRenderedChunk) => string)
   banner?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
   dir?: string
+  file?: string
   esModule?: boolean | 'if-default-prop'
   exports?: 'default' | 'named' | 'none' | 'auto'
   extend?: boolean
@@ -298,6 +302,7 @@ export interface BindingOutputOptions {
   footer?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
   format?: 'es' | 'cjs' | 'iife' | 'umd'
   globals?: Record<string, string>
+  hashCharacters?: 'base64' | 'base36' | 'hex'
   inlineDynamicImports?: boolean
   intro?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
   outro?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
@@ -308,6 +313,7 @@ export interface BindingOutputOptions {
   sourcemapPathTransform?: (source: string, sourcemapPath: string) => string
   minify?: boolean
   advancedChunks?: BindingAdvancedChunksOptions
+  comments?: 'none' | 'preserve-legal'
 }
 
 export interface BindingPluginContextResolvedId {
@@ -391,6 +397,7 @@ export interface BindingReplacePluginConfig {
   delimiters?: [string, string]
   preventAssignment?: boolean
   objectGuards?: boolean
+  sourcemap?: boolean
 }
 
 export interface BindingResolveOptions {
@@ -696,8 +703,6 @@ export interface TransformOptions {
   typescript?: TypeScriptOptions
   /** Configure how TSX and JSX are transformed. */
   jsx?: JsxOptions
-  /** Enable ES2015 transformations. */
-  es2015?: Es2015Options
   /** Define Plugin */
   define?: Record<string, string>
   /** Inject Plugin */

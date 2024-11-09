@@ -8,7 +8,8 @@ use rolldown_common::{
 };
 use rolldown_error::BuildDiagnostic;
 use rolldown_utils::{
-  ecma_script::legitimize_identifier_name,
+  ecmascript::legitimize_identifier_name,
+  index_vec_ext::IndexVecExt,
   rayon::{IntoParallelRefIterator, ParallelIterator},
 };
 use rustc_hash::FxHashSet;
@@ -226,6 +227,9 @@ impl<'a> LinkStage<'a> {
           ImportKind::AtImport => {
             unreachable!("A Js module would never import a CSS module via `@import`");
           }
+          ImportKind::UrlImport => {
+            unreachable!("A Js module would never import a CSS module via `url()`");
+          }
         }
       });
 
@@ -287,7 +291,7 @@ impl<'a> LinkStage<'a> {
             || is_external_dynamic_import(&self.module_table, rec, importer_idx)
           {
             if matches!(rec.kind, ImportKind::Require)
-              || !self.options.format.keep_esm_import_export()
+              || !self.options.format.keep_esm_import_export_syntax()
             {
               if self.options.format.should_call_runtime_require() {
                 stmt_info.referenced_symbols.push(self.runtime.resolve_symbol("__require").into());
@@ -347,6 +351,7 @@ impl<'a> LinkStage<'a> {
                             .referenced_symbols
                             .push(self.runtime.resolve_symbol("__reExport").into());
                           stmt_info.referenced_symbols.push(importer.namespace_object_ref.into());
+                          stmt_info.referenced_symbols.push(importee.namespace_object_ref.into());
                         }
                       }
                     }
@@ -413,15 +418,18 @@ impl<'a> LinkStage<'a> {
                       .push(importee_linking_info.wrapper_ref.unwrap().into());
                   }
                   WrapKind::Esm => {
-                    // something like `(init_foo(), toCommonJS(foo_exports))`
-                    // Reference to `init_foo`
+                    // convert require record into `(init_foo(), __toCommonJS(foo_exports))` if
+                    // `require('xxx)` is used, else convert it to `init_foo()`
                     stmt_info
                       .referenced_symbols
                       .push(importee_linking_info.wrapper_ref.unwrap().into());
-                    stmt_info
-                      .referenced_symbols
-                      .push(self.runtime.resolve_symbol("__toCommonJS").into());
                     stmt_info.referenced_symbols.push(importee.namespace_object_ref.into());
+
+                    if !rec.meta.contains(ImportRecordMeta::IS_REQUIRE_UNUSED) {
+                      stmt_info
+                        .referenced_symbols
+                        .push(self.runtime.resolve_symbol("__toCommonJS").into());
+                    }
                   }
                 },
                 ImportKind::DynamicImport => {
@@ -449,6 +457,9 @@ impl<'a> LinkStage<'a> {
                 }
                 ImportKind::AtImport => {
                   unreachable!("A Js module would never import a CSS module via `@import`");
+                }
+                ImportKind::UrlImport => {
+                  unreachable!("A Js module would never import a CSS module via `url()`");
                 }
               }
             }
@@ -543,7 +554,7 @@ impl<'a> LinkStage<'a> {
   }
 
   fn patch_module_dependencies(&mut self) {
-    self.metas.iter_mut_enumerated().for_each(|(module_idx, meta)| {
+    self.metas.par_iter_mut_enumerated().for_each(|(module_idx, meta)| {
       // Symbols from runtime are referenced by bundler not import statements.
       meta.referenced_symbols_by_entry_point_chunk.iter().for_each(|symbol_ref| {
         let canonical_ref = self.symbols.canonical_ref_for(*symbol_ref);
@@ -554,11 +565,7 @@ impl<'a> LinkStage<'a> {
         return;
       };
 
-      module.stmt_infos.iter().for_each(|stmt_info| {
-        if !stmt_info.is_included {
-          return;
-        }
-
+      module.stmt_infos.iter().filter(|stmt_info| stmt_info.is_included).for_each(|stmt_info| {
         // We need this step to include the runtime module, if there are symbols of it.
         // TODO: Maybe we should push runtime module to `LinkingMetadata::dependencies` while pushing the runtime symbols.
         stmt_info.referenced_symbols.iter().for_each(|reference_ref| {

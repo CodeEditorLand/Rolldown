@@ -3,13 +3,16 @@ use std::path::Path;
 use futures::future::try_join_all;
 use indexmap::IndexSet;
 use oxc::index::{index_vec, IndexVec};
-use rolldown_common::{Asset, InstantiationKind, Output, OutputAsset, OutputChunk, SourceMapType};
-use rolldown_ecmascript::EcmaCompiler;
+use rolldown_common::{
+  Asset, InstantiationKind, ModuleRenderArgs, ModuleRenderOutput, Output, OutputAsset, OutputChunk,
+  SourceMapType,
+};
 use rolldown_error::BuildDiagnostic;
 use rolldown_utils::rayon::{IntoParallelRefIterator, ParallelIterator};
 use sugar_path::SugarPath;
 
 use crate::{
+  asset::asset_generator::AssetGenerator,
   chunk_graph::ChunkGraph,
   css::css_generator::CssGenerator,
   ecmascript::ecma_generator::EcmaGenerator,
@@ -39,7 +42,12 @@ impl<'a> GenerateStage<'a> {
 
     augment_chunk_hash(self.plugin_driver, &mut instantiated_chunks).await?;
 
-    let mut assets = finalize_assets(chunk_graph, instantiated_chunks, &index_chunk_to_assets);
+    let mut assets = finalize_assets(
+      chunk_graph,
+      instantiated_chunks,
+      &index_chunk_to_assets,
+      self.options.hash_characters,
+    );
 
     self.minify_assets(&mut assets)?;
 
@@ -48,7 +56,7 @@ impl<'a> GenerateStage<'a> {
     for Asset {
       mut map,
       meta: rendered_chunk,
-      content: mut code,
+      content: code,
       file_dir,
       preliminary_filename,
       filename,
@@ -56,9 +64,12 @@ impl<'a> GenerateStage<'a> {
     } in assets
     {
       if let InstantiationKind::Ecma(ecma_meta) = rendered_chunk {
+        let mut code = code.try_into_string()?;
         let rendered_chunk = ecma_meta.rendered_chunk;
         if let Some(map) = map.as_mut() {
-          map.set_file(&rendered_chunk.filename);
+          let file_base_name =
+            Path::new(rendered_chunk.filename.as_str()).file_name().expect("should have file name");
+          map.set_file(file_base_name.to_string_lossy().as_ref());
 
           let map_filename = format!("{}.map", rendered_chunk.filename.as_str());
           let map_path = file_dir.join(&map_filename);
@@ -150,7 +161,7 @@ impl<'a> GenerateStage<'a> {
       } else {
         output.push(Output::Asset(Box::new(OutputAsset {
           filename: filename.clone().into(),
-          source: code.into(),
+          source: code,
           original_file_name: None,
           name: None,
         })));
@@ -162,15 +173,13 @@ impl<'a> GenerateStage<'a> {
     output_assets.sort_unstable_by(|a, b| a.filename().cmp(b.filename()));
 
     // The chunks order make sure the entry chunk at first, the assets at last, see https://github.com/rollup/rollup/blob/master/src/rollup/rollup.ts#L266
-    output.sort_unstable_by(|a, b| match (a, b) {
-      (Output::Chunk(a), Output::Chunk(b)) => {
-        if a.is_entry || b.is_entry {
-          std::cmp::Ordering::Greater
-        } else {
-          a.filename.cmp(&b.filename)
-        }
+    output.sort_unstable_by(|a, b| {
+      let a_type = get_sorting_file_type(a) as u8;
+      let b_type = get_sorting_file_type(b) as u8;
+      if a_type == b_type {
+        return a.filename().cmp(b.filename());
       }
-      _ => std::cmp::Ordering::Equal,
+      a_type.cmp(&b_type)
     });
 
     output.extend(output_assets);
@@ -218,7 +227,24 @@ impl<'a> GenerateStage<'a> {
           };
           let css_chunks = CssGenerator::instantiate_chunk(&mut ctx).await;
 
-          ecma_chunks.and_then(|ecma_chunks| css_chunks.map(|css_chunks| [ecma_chunks, css_chunks]))
+          let mut ctx = GenerateContext {
+            chunk_idx,
+            chunk,
+            options: self.options,
+            link_output: self.link_output,
+            chunk_graph,
+            plugin_driver: self.plugin_driver,
+            warnings: vec![],
+            // FIXME: module_id_to_codegen_ret is currently not used in AssetGenerator. But we need to pass it to satisfy the args.
+            module_id_to_codegen_ret: vec![],
+          };
+          let asset_chunks = AssetGenerator::instantiate_chunk(&mut ctx).await;
+
+          ecma_chunks.and_then(|ecma_chunks| {
+            css_chunks.and_then(|css_chunks| {
+              asset_chunks.map(|asset_chunks| [ecma_chunks, css_chunks, asset_chunks])
+            })
+          })
         },
       ),
     )
@@ -257,7 +283,7 @@ impl<'a> GenerateStage<'a> {
   fn create_chunk_to_codegen_ret_map(
     &self,
     chunk_graph: &ChunkGraph,
-  ) -> Vec<Vec<Option<oxc::codegen::CodegenReturn>>> {
+  ) -> Vec<Vec<Option<ModuleRenderOutput>>> {
     let chunk_to_codegen_ret = chunk_graph
       .chunk_table
       .par_iter()
@@ -267,17 +293,8 @@ impl<'a> GenerateStage<'a> {
           .par_iter()
           .map(|&module_idx| {
             if let Some(module) = self.link_output.module_table.modules[module_idx].as_normal() {
-              let enable_sourcemap = self.options.sourcemap.is_some() && !module.is_virtual();
-
-              // Because oxc codegen sourcemap is last of sourcemap chain,
-              // If here no extra sourcemap need remapping, we using it as final module sourcemap.
-              // So here make sure using correct `source_name` and `source_content.
-              let render_output = EcmaCompiler::print(
-                &self.link_output.ast_table[module.ecma_ast_idx()].0,
-                &module.id,
-                enable_sourcemap,
-              );
-              Some(render_output)
+              let ast = &self.link_output.ast_table[module.ecma_ast_idx()].0;
+              module.render(self.options, &ModuleRenderArgs::Ecma { ast })
             } else {
               None
             }
@@ -286,5 +303,25 @@ impl<'a> GenerateStage<'a> {
       })
       .collect::<Vec<_>>();
     chunk_to_codegen_ret
+  }
+}
+
+enum SortingFileType {
+  EntryChunk = 0,
+  SecondaryChunk = 1,
+  Asset = 2,
+}
+
+#[inline]
+fn get_sorting_file_type(output: &Output) -> SortingFileType {
+  match output {
+    Output::Asset(_) => SortingFileType::Asset,
+    Output::Chunk(chunk) => {
+      if chunk.is_entry {
+        SortingFileType::EntryChunk
+      } else {
+        SortingFileType::SecondaryChunk
+      }
+    }
   }
 }

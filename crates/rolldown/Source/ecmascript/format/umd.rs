@@ -1,8 +1,8 @@
 use arcstr::ArcStr;
 use rolldown_common::{ChunkKind, OutputExports};
 use rolldown_error::{BuildDiagnostic, BuildResult};
-use rolldown_sourcemap::{ConcatSource, RawSource};
-use rolldown_utils::ecma_script::legitimize_identifier_name;
+use rolldown_sourcemap::SourceJoiner;
+use rolldown_utils::ecmascript::legitimize_identifier_name;
 
 use crate::{
   ecmascript::{
@@ -22,18 +22,18 @@ use super::utils::{
   namespace::render_property_access, render_chunk_external_imports, render_factory_parameters,
 };
 
-pub fn render_umd(
+pub fn render_umd<'code>(
   ctx: &mut GenerateContext<'_>,
-  module_sources: RenderedModuleSources,
-  banner: Option<String>,
-  footer: Option<String>,
-  intro: Option<String>,
-  outro: Option<String>,
-) -> BuildResult<ConcatSource> {
-  let mut concat_source = ConcatSource::default();
+  module_sources: &'code RenderedModuleSources,
+  banner: Option<&'code str>,
+  footer: Option<&'code str>,
+  intro: Option<&'code str>,
+  outro: Option<&'code str>,
+) -> BuildResult<SourceJoiner<'code>> {
+  let mut source_joiner = SourceJoiner::default();
 
   if let Some(banner) = banner {
-    concat_source.add_source(Box::new(RawSource::new(banner)));
+    source_joiner.append_source(banner);
   }
 
   // umd wrapper start
@@ -78,59 +78,59 @@ pub fn render_umd(
   };
   let iife_end = if need_global { ")" } else { "" };
   let iife_export = render_iife_export(ctx, &externals, has_exports, named_exports)?;
-  concat_source.add_source(Box::new(RawSource::new(format!(
+  source_joiner.append_source(format!(
     "(function({wrapper_parameters}) {{
   {cjs_intro}
   typeof define === 'function' && define.amd ? define([{amd_dependencies}], factory) :
   {iife_start}{iife_export}{iife_end};
 }})({global_argument}function({factory_parameters}) {{",
-  ))));
+  ));
 
   if determine_use_strict(ctx) {
-    concat_source.add_source(Box::new(RawSource::new("\"use strict\";".to_string())));
+    source_joiner.append_source("\"use strict\";");
   }
 
   if let Some(intro) = intro {
-    concat_source.add_source(Box::new(RawSource::new(intro)));
+    source_joiner.append_source(intro);
   }
 
   if named_exports {
     if let Some(marker) =
       render_namespace_markers(&ctx.options.es_module, has_default_export, false)
     {
-      concat_source.add_source(Box::new(RawSource::new(marker.into())));
+      source_joiner.append_source(marker.to_string());
     }
   }
 
-  concat_source.add_source(Box::new(RawSource::new(import_code)));
+  source_joiner.append_source(import_code);
 
   // chunk content
   // TODO indent chunk content
-  module_sources.into_iter().for_each(|(_, _, module_render_output)| {
+  module_sources.iter().for_each(|(_, _, module_render_output)| {
     if let Some(emitted_sources) = module_render_output {
       for source in emitted_sources {
-        concat_source.add_source(source);
+        source_joiner.append_source(source);
       }
     }
   });
 
   //  exports
   if let Some(exports) = render_chunk_exports(ctx, Some(&export_mode)) {
-    concat_source.add_source(Box::new(RawSource::new(exports)));
+    source_joiner.append_source(exports);
   }
 
   if let Some(outro) = outro {
-    concat_source.add_source(Box::new(RawSource::new(outro)));
+    source_joiner.append_source(outro);
   }
 
   // umd wrapper end
-  concat_source.add_source(Box::new(RawSource::new("});".to_string())));
+  source_joiner.append_source("});");
 
   if let Some(footer) = footer {
-    concat_source.add_source(Box::new(RawSource::new(footer)));
+    source_joiner.append_source(footer);
   }
 
-  Ok(concat_source)
+  Ok(source_joiner)
 }
 
 fn render_amd_dependencies(externals: &[ExternalRenderImportStmt], has_exports: bool) -> String {

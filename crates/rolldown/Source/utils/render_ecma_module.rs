@@ -1,20 +1,17 @@
-use oxc::codegen::CodegenReturn;
-use rolldown_common::{NormalModule, NormalizedBundlerOptions};
-use rolldown_sourcemap::{collapse_sourcemaps, lines_count, RawSource, Source, SourceMapSource};
+use rolldown_common::{ModuleRenderOutput, NormalModule, NormalizedBundlerOptions};
+use rolldown_sourcemap::{collapse_sourcemaps, Source, SourceMapSource};
 
 pub fn render_ecma_module(
   module: &NormalModule,
   options: &NormalizedBundlerOptions,
-  render_output: CodegenReturn,
+  render_output: ModuleRenderOutput,
 ) -> Option<Vec<Box<dyn Source + Send>>> {
   if render_output.code.is_empty() {
     None
   } else {
     let mut sources: Vec<Box<dyn rolldown_sourcemap::Source + Send>> = vec![];
-    sources.push(Box::new(RawSource::new(format!(
-      "//#region {debug_module_id}",
-      debug_module_id = module.debug_id
-    ))));
+    sources
+      .push(Box::new(format!("//#region {debug_module_id}", debug_module_id = module.debug_id)));
 
     let enable_sourcemap = options.sourcemap.is_some() && !module.is_virtual();
 
@@ -34,16 +31,18 @@ pub fn render_ecma_module(
       };
 
       if let Some(sourcemap) = sourcemap {
-        let lines_count = lines_count(&render_output.code);
-        sources.push(Box::new(SourceMapSource::new(render_output.code, sourcemap, lines_count)));
+        sources.push(Box::new(
+          SourceMapSource::new(render_output.code, sourcemap)
+            .with_pre_compute_sourcemap_data(options.is_sourcemap_enabled()),
+        ));
       } else {
-        sources.push(Box::new(RawSource::new(render_output.code)));
+        sources.push(Box::new(render_output.code));
       }
     } else {
-      sources.push(Box::new(RawSource::new(render_output.code)));
+      sources.push(Box::new(render_output.code));
     }
 
-    sources.push(Box::new(RawSource::new("//#endregion".to_string())));
+    sources.push(Box::new("//#endregion"));
 
     Some(sources)
   }

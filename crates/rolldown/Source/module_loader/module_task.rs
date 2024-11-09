@@ -4,7 +4,7 @@ use oxc::{index::IndexVec, span::Span};
 use rolldown_plugin::{SharedPluginDriver, __inner::resolve_id_check_external};
 use rolldown_resolver::ResolveError;
 use rolldown_rstr::Rstr;
-use rolldown_utils::{ecma_script::legitimize_identifier_name, path_ext::PathExt};
+use rolldown_utils::{ecmascript::legitimize_identifier_name, path_ext::PathExt};
 use std::sync::Arc;
 use sugar_path::SugarPath;
 
@@ -18,6 +18,7 @@ use rolldown_error::{
 
 use super::{task_context::TaskContext, Msg};
 use crate::{
+  asset::create_asset_view,
   css::create_css_view,
   ecmascript::ecma_module_view_factory::{create_ecma_view, CreateEcmaViewReturn},
   module_loader::NormalModuleTaskResult,
@@ -141,6 +142,14 @@ impl ModuleTask {
 
     let mut raw_import_records = IndexVec::default();
 
+    let asset_view = if matches!(module_type, ModuleType::Asset) {
+      let asset_source = source.into_bytes();
+      source = StrOrBytes::Str(String::new());
+      Some(create_asset_view(asset_source.into()))
+    } else {
+      None
+    };
+
     let css_view = if matches!(module_type, ModuleType::Css) {
       let css_source: ArcStr = source.try_into_string()?.into();
       // FIXME: This makes creating `EcmaView` rely on creating `CssView` first, while they should be done in parallel.
@@ -161,6 +170,7 @@ impl ModuleTask {
         warnings: &mut warnings,
         module_type: module_type.clone(),
         replace_global_define_config: self.ctx.meta.replace_global_define_config.clone(),
+        is_user_defined_entry: self.is_user_defined_entry,
       },
       CreateModuleViewArgs { source, sourcemap_chain, hook_side_effects },
     )
@@ -191,13 +201,17 @@ impl ModuleTask {
         return Ok(());
       }
     };
-
     if !matches!(module_type, ModuleType::Css) {
       for (record, info) in raw_import_records.iter().zip(&resolved_deps) {
-        if record.kind.is_static() {
-          ecma_view.imported_ids.push(ArcStr::clone(&info.id).into());
-        } else {
-          ecma_view.dynamically_imported_ids.push(ArcStr::clone(&info.id).into());
+        match record.kind {
+          ImportKind::Import | ImportKind::Require => {
+            ecma_view.imported_ids.push(ArcStr::clone(&info.id).into());
+          }
+          ImportKind::DynamicImport => {
+            ecma_view.dynamically_imported_ids.push(ArcStr::clone(&info.id).into());
+          }
+          // for a none css module, we should not have `at-import` or `url-import`
+          ImportKind::AtImport | ImportKind::UrlImport => unreachable!(),
         }
       }
     }
@@ -212,9 +226,12 @@ impl ModuleTask {
       module_type: module_type.clone(),
       ecma_view,
       css_view,
+      asset_view,
     };
 
-    self.ctx.plugin_driver.module_parsed(Arc::new(module.to_module_info())).await?;
+    let module_info = Arc::new(module.to_module_info());
+    self.ctx.plugin_driver.set_module_info(&module.id, Arc::clone(&module_info));
+    self.ctx.plugin_driver.module_parsed(module_info).await?;
 
     if let Err(_err) = self
       .ctx
@@ -252,6 +269,7 @@ impl ModuleTask {
         is_external: false,
         package_json: None,
         side_effects: None,
+        is_external_without_side_effects: false,
       }));
     }
 
@@ -316,10 +334,7 @@ impl ModuleTask {
                   if dep.is_unspanned() || is_css_module {
                     DiagnosableArcstr::String(specifier.as_str().into())
                   } else {
-                    DiagnosableArcstr::Span(Span::new(
-                      dep.module_request_start,
-                      dep.module_request_end(),
-                    ))
+                    DiagnosableArcstr::Span(dep.state.span)
                   },
                   "Module not found, treating it as an external dependency".into(),
                   Some("UNRESOLVED_IMPORT"),
@@ -333,6 +348,7 @@ impl ModuleTask {
                 is_external: true,
                 package_json: None,
                 side_effects: None,
+                is_external_without_side_effects: false,
               });
             }
             e => {
@@ -343,10 +359,7 @@ impl ModuleTask {
                 if dep.is_unspanned() || is_css_module {
                   DiagnosableArcstr::String(specifier.as_str().into())
                 } else {
-                  DiagnosableArcstr::Span(Span::new(
-                    dep.module_request_start,
-                    dep.module_request_end(),
-                  ))
+                  DiagnosableArcstr::Span(dep.state.span)
                 },
                 reason,
                 None,

@@ -1,7 +1,6 @@
 pub mod asset;
 pub mod asset_idx;
 pub mod asset_meta;
-pub mod asset_source;
 pub mod ast_scopes;
 pub mod bundler_file_system;
 pub mod chunk_idx;
@@ -20,6 +19,8 @@ pub mod module_def_format;
 pub mod module_id;
 pub mod module_idx;
 pub mod module_info;
+pub mod module_render_output;
+pub mod module_render_type;
 pub mod module_table;
 pub mod module_view;
 pub mod named_export;

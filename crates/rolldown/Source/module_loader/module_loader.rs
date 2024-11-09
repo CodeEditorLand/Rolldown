@@ -9,17 +9,16 @@ use crate::runtime::{RuntimeModuleBrief, RUNTIME_MODULE_ID};
 use crate::type_alias::IndexEcmaAst;
 use arcstr::ArcStr;
 use oxc::index::IndexVec;
-use oxc::span::Span;
 use oxc::transformer::ReplaceGlobalDefinesConfig;
 use rolldown_common::side_effects::{DeterminedSideEffects, HookSideEffects};
 use rolldown_common::{
   EntryPoint, EntryPointKind, ExternalModule, ImportKind, ImportRecordIdx, ImporterRecord, Module,
-  ModuleIdx, ModuleTable, ResolvedId, SymbolNameRefToken, SymbolRefDb,
+  ModuleId, ModuleIdx, ModuleTable, ResolvedId, SymbolNameRefToken, SymbolRefDb,
 };
 use rolldown_error::{BuildDiagnostic, BuildResult};
 use rolldown_fs::OsFileSystem;
 use rolldown_plugin::SharedPluginDriver;
-use rolldown_utils::ecma_script::legitimize_identifier_name;
+use rolldown_utils::ecmascript::legitimize_identifier_name;
 use rolldown_utils::rustc_hash::FxHashSetExt;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::sync::Arc;
@@ -167,7 +166,13 @@ impl ModuleLoader {
                 rolldown_common::ModuleSideEffects::Boolean(false) => {
                   DeterminedSideEffects::UserDefined(false)
                 }
-                _ => DeterminedSideEffects::NoTreeshake,
+                _ => {
+                  if resolved_id.is_external_without_side_effects {
+                    DeterminedSideEffects::UserDefined(false)
+                  } else {
+                    DeterminedSideEffects::NoTreeshake
+                  }
+                }
               },
             }
           };
@@ -261,13 +266,13 @@ impl ModuleLoader {
                 let owner = ModuleTaskOwner::new(
                   normal_module.source.clone(),
                   normal_module.stable_id.as_str().into(),
-                  Span::new(raw_rec.module_request_start, raw_rec.module_request_end()),
+                  raw_rec.span,
                 );
                 let id = self.try_spawn_new_task(info, Some(owner));
                 // Dynamic imported module will be considered as an entry
                 self.intermediate_normal_modules.importers[id].push(ImporterRecord {
                   kind: raw_rec.kind,
-                  importer_path: module.id().to_string().into(),
+                  importer_path: ModuleId::new(module.id()),
                 });
                 if matches!(raw_rec.kind, ImportKind::DynamicImport)
                   && !user_defined_entry_ids.contains(&id)
@@ -318,12 +323,19 @@ impl ModuleLoader {
         if let Some(module) = module.as_normal_mut() {
           // Note: (Compat to rollup)
           // The `dynamic_importers/importers` should be added after `module_parsed` hook.
-          for importer in std::mem::take(&mut self.intermediate_normal_modules.importers[id]) {
+          let importers = std::mem::take(&mut self.intermediate_normal_modules.importers[id]);
+          for importer in &importers {
             if importer.kind.is_static() {
-              module.importers.push(importer.importer_path);
+              module.importers.push(importer.importer_path.clone());
             } else {
-              module.dynamic_importers.push(importer.importer_path);
+              module.dynamic_importers.push(importer.importer_path.clone());
             }
+          }
+          if !importers.is_empty() {
+            self
+              .shared_context
+              .plugin_driver
+              .set_module_info(&module.id, Arc::new(module.to_module_info()));
           }
         }
         module

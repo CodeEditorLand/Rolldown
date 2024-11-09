@@ -8,22 +8,28 @@ export function bindingifyOutputOptions(
     dir,
     format,
     exports,
+    hashCharacters,
     sourcemap,
     sourcemapIgnoreList,
     sourcemapPathTransform,
     name,
+    assetFileNames,
     entryFileNames,
     chunkFileNames,
-    assetFileNames,
+    cssEntryFileNames,
+    cssChunkFileNames,
     banner,
     footer,
     intro,
     outro,
     esModule,
     globals,
+    file,
   } = outputOptions
   return {
     dir,
+    // Handle case: rollup/test/sourcemaps/samples/sourcemap-file-hashed/_config.js
+    file: file == null ? undefined : file,
     format: (function () {
       switch (format) {
         case 'es':
@@ -37,6 +43,7 @@ export function bindingifyOutputOptions(
       }
     })(),
     exports,
+    hashCharacters,
     sourcemap: bindingifySourcemap(sourcemap),
     sourcemapIgnoreList,
     sourcemapPathTransform,
@@ -48,9 +55,11 @@ export function bindingifyOutputOptions(
     globals,
     esModule: bindingifyEsModule(esModule),
     name,
+    assetFileNames,
     entryFileNames,
     chunkFileNames,
-    assetFileNames,
+    cssEntryFileNames,
+    cssChunkFileNames,
     // TODO(sapphi-red): support parallel plugins
     plugins: [],
     minify: outputOptions.minify,

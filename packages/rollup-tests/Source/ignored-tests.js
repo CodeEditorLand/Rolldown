@@ -16,9 +16,6 @@ const ignoreTests = [
   // Need to investigate
   'rollup@function@bundle-facade-order: respects the order of entry points when there are additional facades for chunks',
 
-  // Not supported
-  'rollup@function@enforce-plugin-order: allows to enforce plugin hook order',
- 
   // The test case import test.js from rollup package, it's dependencies can't be resolved.
   "rollup@function@relative-outside-external: correctly resolves relative external imports from outside directories",
   // Ignore skipIfWindows test avoid test status error
@@ -36,11 +33,8 @@ const ignoreTests = [
   "rollup@function@assign-namespace-to-var: allows a namespace to be assigned to a variable",// check chunk why is empty
 
   // The dyanmic import at format cjs is not compatible with rollup
+  // The test passed, but the snapshot is same with rollup
   "rollup@function@transparent-dynamic-inlining: Dynamic import inlining when resolution id is a module in the bundle",
-  "rollup@function@dynamic-import-existing: Dynamic import inlining when resolution id is a module in the bundle",
-  "rollup@function@nested-inlined-dynamic-import-2: deconflicts variables when nested dynamic imports are inlined",
-  'rollup@function@dynamic-import-rewriting: Dynamic import string specifier resolving',
-  "rollup@function@catch-dynamic-import-failure: allows catching failed dynamic imports",
   // output.dynamicImportInCjs is not supported
   "rollup@function@dynamic-import-this-function: uses correct \"this\" in dynamic imports when not using arrow functions",
   "rollup@function@dynamic-import-this-arrow: uses correct \"this\" in dynamic imports when using arrow functions",
@@ -75,9 +69,7 @@ const ignoreTests = [
   "rollup@function@external-live-binding: handles external live-bindings",
   "rollup@function@external-dynamic-import-live-binding-compact: supports external dynamic imports with live bindings in compact mode",
   "rollup@function@external-dynamic-import-live-binding: supports external dynamic imports with live bindings",
-  "rollup@function@external-alias-parent: includes an external module included dynamically by an alias",
   "rollup@function@duplicate-input-entry: handles duplicate entry modules when using the object form",
-  "rollup@function@double-namespace-reexport: handles chained namespace reexports from externals",
   "rollup@function@argument-deoptimization@global-calls: tracks argument mutations of calls to globals",
 
   // deconfilct
@@ -111,6 +103,10 @@ const ignoreTests = [
 
   // The plugin sequential is not supported
   "rollup@function@enforce-sequential-plugin-order: allows to enforce sequential plugin hook order for parallel plugin hooks",
+
+
+  // `renderDynamicImport/resolveFileUrl/resolveImportMeta/shouldTransformCachedModule` hooks not supported
+  'rollup@function@enforce-plugin-order: allows to enforce plugin hook order',
 
   // The output plugins hooks is not working as expected
   "rollup@function@options-in-renderstart: makes input and output options available in renderStart",
@@ -525,6 +521,7 @@ const ignoreTests = [
   "rollup@function@conflicting-reexports@named-import-external: warns when a conflicting binding is imported via a named import from external namespaces",
   "rollup@function@can-import-self: a module importing its own bindings",
   "rollup@function@already-deshadowed-import: handle already module import names correctly if they are have already been deshadowed",
+  "rollup@function@nested-inlined-dynamic-import-2: deconflicts variables when nested dynamic imports are inlined",
 ]
 
 module.exports = {

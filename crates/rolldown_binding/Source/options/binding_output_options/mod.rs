@@ -24,6 +24,8 @@ pub struct BindingOutputOptions {
   // /** @deprecated Use the "renderDynamicImport" plugin hook instead. */
   // dynamicImportFunction: string | undefined;
   pub name: Option<String>,
+  pub asset_file_names: Option<String>,
+
   #[derivative(Debug = "ignore")]
   #[serde(skip_deserializing)]
   #[napi(ts_type = "string | ((chunk: PreRenderedChunk) => string)")]
@@ -32,7 +34,14 @@ pub struct BindingOutputOptions {
   #[serde(skip_deserializing)]
   #[napi(ts_type = "string | ((chunk: PreRenderedChunk) => string)")]
   pub chunk_file_names: Option<ChunkFileNamesOutputOption>,
-  pub asset_file_names: Option<String>,
+  #[derivative(Debug = "ignore")]
+  #[serde(skip_deserializing)]
+  #[napi(ts_type = "string | ((chunk: PreRenderedChunk) => string)")]
+  pub css_entry_file_names: Option<ChunkFileNamesOutputOption>,
+  #[derivative(Debug = "ignore")]
+  #[serde(skip_deserializing)]
+  #[napi(ts_type = "string | ((chunk: PreRenderedChunk) => string)")]
+  pub css_chunk_file_names: Option<ChunkFileNamesOutputOption>,
 
   // amd: NormalizedAmdOptions;
   // assetFileNames: string | ((chunkInfo: PreRenderedAsset) => string);
@@ -43,6 +52,7 @@ pub struct BindingOutputOptions {
   // chunkFileNames: string | ((chunkInfo: PreRenderedChunk) => string);
   // compact: boolean;
   pub dir: Option<String>,
+  pub file: Option<String>,
   // pub entry_file_names: String, // | ((chunkInfo: PreRenderedChunk) => string)
   #[serde(skip_deserializing)]
   #[napi(ts_type = "boolean | 'if-default-prop'")]
@@ -61,6 +71,8 @@ pub struct BindingOutputOptions {
   // freeze: boolean;
   // generatedCode: NormalizedGeneratedCodeOptions;
   pub globals: Option<HashMap<String, String>>,
+  #[napi(ts_type = "'base64' | 'base36' | 'hex'")]
+  pub hash_characters: Option<String>,
   // hoistTransitiveImports: boolean;
   // indent: true | string;
   pub inline_dynamic_imports: Option<bool>,
@@ -105,4 +117,6 @@ pub struct BindingOutputOptions {
   // --- Enhanced options
   pub minify: Option<bool>,
   pub advanced_chunks: Option<BindingAdvancedChunksOptions>,
+  #[napi(ts_type = "'none' | 'preserve-legal'")]
+  pub comments: Option<String>,
 }

@@ -5,7 +5,7 @@ use oxc::{
   parser::Parser,
   span::SourceType,
 };
-use rolldown_sourcemap::{collapse_sourcemaps, ConcatSource, SourceMapSource};
+use rolldown_sourcemap::{collapse_sourcemaps, SourceJoiner, SourceMapSource};
 use rolldown_testing::workspace::root_dir;
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -22,12 +22,12 @@ fn criterion_benchmark(c: &mut Criterion) {
   let options =
     CodegenOptions { source_map_path: Some(filename.into()), ..CodegenOptions::default() };
 
-  let CodegenReturn { map, code } =
+  let CodegenReturn { map, code, .. } =
     CodeGenerator::new().with_options(options.clone()).build(&ret1.program);
   sourcemap_chain.push(map.as_ref().unwrap());
 
   let ret2 = Parser::new(&allocator, &code, source_type).parse();
-  let CodegenReturn { map, code: _ } =
+  let CodegenReturn { map, code: _, .. } =
     CodeGenerator::new().with_options(options.clone()).build(&ret2.program);
   sourcemap_chain.push(map.as_ref().unwrap());
 
@@ -41,24 +41,22 @@ fn criterion_benchmark(c: &mut Criterion) {
 
   // simulate render-chunk-remapping
   let mut sourcemap_chain = vec![];
-  let line = code.matches('\n').count() as u32;
-  let mut concat_source = ConcatSource::default();
+  let mut source_joiner = SourceJoiner::default();
   let mut sources = vec![];
   for i in 0..3 {
     sources.push(format!("{i}.js"));
-    concat_source.add_source(Box::new(SourceMapSource::new(
-      code.clone(),
-      map.as_ref().unwrap().clone(),
-      line,
-    )));
+    source_joiner.append_source(
+      SourceMapSource::new(code.clone(), map.as_ref().unwrap().clone())
+        .with_pre_compute_sourcemap_data(true),
+    );
   }
-  let (source_text, mut source_map) = concat_source.content_and_sourcemap();
+  let (source_text, mut source_map) = source_joiner.join();
   // The sources should be different at common case.
   source_map.as_mut().unwrap().set_sources(sources.iter().map(|s| s.as_str()).collect());
   sourcemap_chain.push(source_map.as_ref().unwrap());
 
   let ret3 = Parser::new(&allocator, &source_text, source_type).parse();
-  let CodegenReturn { map, code: _ } =
+  let CodegenReturn { map, code: _, .. } =
     CodeGenerator::new().with_options(options.clone()).build(&ret3.program);
   sourcemap_chain.push(map.as_ref().unwrap());
 

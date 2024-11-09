@@ -17,10 +17,11 @@ import {
 } from './logging'
 import { error, logPluginError } from './logs'
 import { getLogHandler, normalizeLog } from './logHandler'
-import type { InputOptions } from '../options/input-options'
+import type { InputOptions } from '../types/input-options'
 import type { NormalizedInputOptions } from '../options/normalized-input-options'
 import path from 'node:path'
 import { VERSION } from '..'
+import { getSortedPlugins } from '../plugin/plugin-driver'
 
 export interface PluginContextMeta {
   rollupVersion: string
@@ -86,7 +87,7 @@ export function getLogger(
     if (logPriority < minimalPriority) {
       return
     }
-    for (const plugin of plugins) {
+    for (const plugin of getSortedPlugins('onLog', plugins)) {
       if (skipped.has(plugin)) continue
 
       const { onLog: pluginOnLog } = plugin

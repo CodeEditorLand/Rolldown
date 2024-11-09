@@ -10,7 +10,7 @@ use rolldown_common::{
 };
 use rolldown_ecmascript::EcmaAst;
 use rolldown_error::BuildResult;
-use rolldown_utils::{ecma_script::legitimize_identifier_name, path_ext::PathExt};
+use rolldown_utils::{ecmascript::legitimize_identifier_name, path_ext::PathExt};
 use sugar_path::SugarPath;
 
 use crate::{
@@ -20,6 +20,7 @@ use crate::{
     make_ast_symbol_and_scope::make_ast_scopes_and_symbols,
     parse_to_ecma_ast::{parse_to_ecma_ast, ParseToEcmaAstResult},
   },
+  SharedOptions,
 };
 
 fn scan_ast(
@@ -29,6 +30,7 @@ fn scan_ast(
   symbols: SymbolTable,
   scopes: ScopeTree,
   module_def_format: ModuleDefFormat,
+  options: &SharedOptions,
 ) -> BuildResult<(AstScopes, ScanResult, SymbolRef)> {
   let (symbol_table, ast_scopes) = make_ast_scopes_and_symbols(symbols, scopes);
   let module_id = ModuleId::new(ArcStr::clone(id));
@@ -44,6 +46,7 @@ fn scan_ast(
     ast.source(),
     &module_id,
     ast.comments(),
+    Some(options),
   );
   let namespace_object_ref = scanner.namespace_object_ref;
   let scan_result = scanner.scan(ast.program())?;
@@ -73,6 +76,7 @@ pub async fn create_ecma_view<'any>(
     &ctx.module_type,
     args.source.clone(),
     ctx.replace_global_define_config.as_ref(),
+    ctx.is_user_defined_entry,
   )?;
 
   let ParseToEcmaAstResult { mut ast, symbol_table, scope_tree, has_lazy_export, warning } =
@@ -87,6 +91,7 @@ pub async fn create_ecma_view<'any>(
     symbol_table,
     scope_tree,
     ctx.resolved_id.module_def_format,
+    ctx.options,
   )?;
 
   let ScanResult {
@@ -103,6 +108,7 @@ pub async fn create_ecma_view<'any>(
     ast_usage,
     symbol_ref_db,
     self_referenced_class_decl_symbol_ids,
+    hashbang_range,
     has_star_exports,
   } = scan_result;
   if !errors.is_empty() {
@@ -182,6 +188,7 @@ pub async fn create_ecma_view<'any>(
     side_effects,
     ast_usage,
     self_referenced_class_decl_symbol_ids,
+    hashbang_range,
     meta: {
       let mut meta = EcmaViewMeta::default();
       meta.set_included(false);
@@ -190,6 +197,7 @@ pub async fn create_ecma_view<'any>(
       meta.set_has_star_exports(has_star_exports);
       meta
     },
+    mutations: vec![],
   };
 
   Ok(CreateEcmaViewReturn { view, raw_import_records: import_records, ast, symbols: symbol_ref_db })
