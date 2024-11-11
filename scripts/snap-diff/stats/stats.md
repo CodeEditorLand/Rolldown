@@ -1,7 +1,11 @@
 # Compatibility metric
 - total: 784
-- passed: 448
-- passed ratio: 57.14%
+- passed: 502
+- passed ratio: 64.03%
+# Compatibility metric without not supported case
+- total: 722
+- passed: 502
+- passed ratio: 69.53%
 # Compatibility metric details
 ## dce
 - total: 113
@@ -29,8 +33,8 @@
 - passed ratio: 34.33%
 ## lower
 - total: 79
-- passed: 4
-- passed ratio: 5.06%
+- passed: 58
+- passed ratio: 73.42%
 ## packagejson
 - total: 59
 - passed: 47
