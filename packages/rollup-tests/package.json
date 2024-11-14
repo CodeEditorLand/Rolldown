@@ -12,16 +12,16 @@
   "dependencies": {
     "fixturify": "^3.0.0",
     "fs-extra": "^11.2.0",
-    "mocha": "^10.4.0",
+    "mocha": "^10.8.2",
     "rolldown": "workspace:*",
     "source-map-support": "^0.5.21",
-    "oxc-transform": "0.35.0"
+    "oxc-transform": "0.36.0"
   },
   "devDependencies": {
     "@types/mocha": "10.0.9",
-    "@types/node": "22.8.7",
+    "@types/node": "22.9.0",
     "source-map": "^0.7.4",
     "buble": "^0.20.0",
-    "terser": "^5.31.1"
+    "terser": "^5.36.0"
   }
 }
