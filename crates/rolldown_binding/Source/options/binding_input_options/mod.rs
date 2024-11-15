@@ -7,7 +7,7 @@ use crate::types::{
   binding_log::BindingLog, binding_log_level::BindingLogLevel, js_callback::JsCallback,
 };
 use binding_inject_import::BindingInjectImport;
-use derivative::Derivative;
+use derive_more::Debug;
 use napi_derive::napi;
 use serde::Deserialize;
 
@@ -23,9 +23,8 @@ mod binding_resolve_options;
 mod treeshake;
 
 #[napi(object, object_to_js = false)]
-#[derive(Deserialize, Default, Derivative)]
+#[derive(Deserialize, Default, Debug)]
 #[serde(rename_all = "camelCase")]
-#[derivative(Debug)]
 pub struct BindingInputOptions {
   // Not going to be supported
   // @deprecated Use the "inlineDynamicImports" output option instead.
@@ -36,7 +35,7 @@ pub struct BindingInputOptions {
   // cache?: false | RollupCache;
   // context?: string;
   // experimentalCacheExpiry?: number;
-  #[derivative(Debug = "ignore")]
+  #[debug(skip)]
   #[serde(skip_deserializing)]
   #[napi(
     ts_type = "undefined | ((source: string, importer: string | undefined, isResolved: boolean) => boolean)"
@@ -67,13 +66,14 @@ pub struct BindingInputOptions {
   pub platform: Option<String>,
   #[serde(skip_deserializing)]
   pub log_level: Option<BindingLogLevel>,
-  #[derivative(Debug = "ignore")]
+  #[debug(skip)]
   #[serde(skip_deserializing)]
   #[napi(ts_type = "(logLevel: 'debug' | 'warn' | 'info', log: BindingLog) => void")]
   pub on_log: BindingOnLog,
   // extra
   pub cwd: String,
   // pub builtins: BuiltinsOptions,
+  #[serde(skip_deserializing)]
   pub treeshake: Option<treeshake::BindingTreeshake>,
 
   pub module_types: Option<HashMap<String, String>>,
@@ -85,7 +85,7 @@ pub struct BindingInputOptions {
   pub experimental: Option<binding_experimental_options::BindingExperimentalOptions>,
   pub profiler_names: Option<bool>,
   #[serde(skip_deserializing)]
-  #[derivative(Debug = "ignore")]
+  #[debug(skip)]
   pub jsx: Option<JsxOptions>,
   pub watch: Option<BindingWatchOption>,
 }

@@ -18,7 +18,7 @@ doctest    = false
 anyhow                                  = { workspace = true }
 async-channel                           = { workspace = true }
 dashmap                                 = { workspace = true }
-derivative                              = { workspace = true }
+derive_more                             = { workspace = true }
 futures                                 = { workspace = true }
 napi                                    = { workspace = true }
 napi-derive                             = { workspace = true }
@@ -37,6 +37,7 @@ rolldown_plugin_manifest                = { workspace = true }
 rolldown_plugin_module_preload_polyfill = { workspace = true }
 rolldown_plugin_replace                 = { workspace = true }
 rolldown_plugin_transform               = { workspace = true }
+rolldown_plugin_vite_resolve            = { workspace = true }
 rolldown_plugin_wasm_fallback           = { workspace = true }
 rolldown_plugin_wasm_helper             = { workspace = true }
 rolldown_sourcemap                      = { workspace = true }

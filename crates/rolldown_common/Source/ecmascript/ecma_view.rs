@@ -106,6 +106,8 @@ pub struct EcmaView {
   pub hashbang_range: Option<Span>,
   pub meta: EcmaViewMeta,
   pub mutations: Vec<BoxedSourceMutation>,
+  /// `Span` of `new URL('path', import.meta.url)` -> `ImportRecordIdx`
+  pub new_url_references: FxHashMap<Span, ImportRecordIdx>,
 }
 
 bitflags! {
@@ -124,12 +126,7 @@ pub struct ImportMetaRolldownAssetReplacer {
 
 impl SourceMutation for ImportMetaRolldownAssetReplacer {
   fn apply(&self, magic_string: &mut string_wizard::MagicString<'_>) {
-    // TODO: should use replace method instead of this
-    let code = magic_string.to_string();
-
-    *magic_string = string_wizard::MagicString::new(
-      code
-        .replace("import.meta.__ROLLDOWN_ASSET_FILENAME", &format!("\"{}\"", self.asset_filename)),
-    );
+    magic_string
+      .replace_all("import.meta.__ROLLDOWN_ASSET_FILENAME", format!("\"{}\"", self.asset_filename));
   }
 }

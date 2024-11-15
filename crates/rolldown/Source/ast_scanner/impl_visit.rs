@@ -1,12 +1,14 @@
 use oxc::{
   ast::{
-    ast::{self, Expression, IdentifierReference, MemberExpression},
+    ast::{self, Expression, IdentifierReference},
     visit::walk,
     AstKind, Visit,
   },
   span::{GetSpan, Span},
 };
-use rolldown_common::{ImportKind, ImportRecordMeta};
+use rolldown_common::{
+  dynamic_import_usage::DynamicImportExportsUsage, ImportKind, ImportRecordMeta,
+};
 use rolldown_ecmascript::ToSourceString;
 use rolldown_error::BuildDiagnostic;
 use rolldown_std_utils::OptionExt;
@@ -51,6 +53,14 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
       self.result.stmt_infos.add_stmt_info(std::mem::take(&mut self.current_stmt_info));
     }
     self.result.hashbang_range = program.hashbang.as_ref().map(GetSpan::span);
+    self.result.dynamic_import_rec_exports_usage =
+      std::mem::take(&mut self.dynamic_import_usage_info.dynamic_import_exports_usage);
+    if self.result.has_eval {
+      // if there exists `eval` in current module, assume all dynamic import are completely used;
+      for usage in self.result.dynamic_import_rec_exports_usage.values_mut() {
+        *usage = DynamicImportExportsUsage::Complete;
+      }
+    }
   }
 
   fn visit_binding_identifier(&mut self, ident: &ast::BindingIdentifier) {
@@ -58,48 +68,6 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
     if self.is_root_symbol(symbol_id) {
       self.add_declared_id(symbol_id);
     }
-  }
-
-  fn visit_member_expression(&mut self, expr: &MemberExpression<'ast>) {
-    match expr {
-      MemberExpression::StaticMemberExpression(member_expr) => {
-        // For member expression like `a.b.c.d`, we will first enter the (object: `a.b.c`, property: `d`) expression.
-        // So we add these properties with order `d`, `c`, `b`.
-        let mut props_in_reverse_order = vec![];
-        let mut cur_member_expr = member_expr;
-        let object_symbol_in_root_scope = loop {
-          props_in_reverse_order.push(&cur_member_expr.property);
-          match &cur_member_expr.object {
-            Expression::StaticMemberExpression(expr) => {
-              cur_member_expr = expr;
-            }
-            Expression::Identifier(id) => {
-              break self.resolve_identifier_to_root_symbol(id);
-            }
-            _ => break None,
-          }
-        };
-        match object_symbol_in_root_scope {
-          // - Import statements are hoisted to the top of the module, so in this time being, all imports are scanned.
-          // - Having empty span will also results to bailout since we rely on span to identify ast nodes.
-          Some(sym_ref)
-            if self.result.named_imports.contains_key(&sym_ref) && !expr.span().is_unspanned() =>
-          {
-            let props = props_in_reverse_order
-              .into_iter()
-              .rev()
-              .map(|ident| ident.name.as_str().into())
-              .collect::<Vec<_>>();
-            self.add_member_expr_reference(sym_ref, props, expr.span());
-            // Don't walk again, otherwise we will add the `object_symbol_in_root_scope` again in `visit_identifier_reference`
-            return;
-          }
-          _ => {}
-        }
-      }
-      _ => {}
-    };
-    walk::walk_member_expression(self, expr);
   }
 
   fn visit_for_of_statement(&mut self, it: &ast::ForOfStatement<'ast>) {
@@ -137,13 +105,29 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
 
   fn visit_identifier_reference(&mut self, ident: &IdentifierReference) {
     if let Some(root_symbol_id) = self.resolve_identifier_to_root_symbol(ident) {
-      self.add_referenced_symbol(root_symbol_id);
+      // if the identifier_reference is a NamedImport MemberExpr access, we store it as a `MemberExpr`
+      // use this flag to avoid insert it as `Symbol` at the same time.
+      let mut is_inserted_before = false;
+      if self.result.named_imports.contains_key(&root_symbol_id) {
+        if let Some((span, props)) = self.try_extract_parent_static_member_expr_chain(usize::MAX) {
+          if !span.is_unspanned() {
+            is_inserted_before = true;
+            self.add_member_expr_reference(root_symbol_id, props, span);
+          }
+        }
+      }
+      if !is_inserted_before {
+        self.add_referenced_symbol(root_symbol_id);
+      }
+      self.check_import_assign(ident, root_symbol_id.symbol);
     }
     if let Some((symbol_id, ids)) = self.cur_class_decl_and_symbol_referenced_ids {
       if ids.contains(&ident.reference_id()) {
         self.result.self_referenced_class_decl_symbol_ids.insert(symbol_id);
       }
     }
+    self.try_diagnostic_forbid_const_assign(ident);
+    self.update_dynamic_import_binding_usage_info(ident);
   }
 
   fn visit_statement(&mut self, stmt: &ast::Statement<'ast>) {
@@ -155,7 +139,7 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
 
   fn visit_import_expression(&mut self, expr: &ast::ImportExpression<'ast>) {
     if let ast::Expression::StringLiteral(request) = &expr.source {
-      let id = self.add_import_record(
+      let import_rec_idx = self.add_import_record(
         request.value.as_str(),
         ImportKind::DynamicImport,
         expr.source.span(),
@@ -165,7 +149,8 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
           ImportRecordMeta::empty()
         },
       );
-      self.result.imports.insert(expr.span, id);
+      self.init_dynamic_import_binding_usage_info(import_rec_idx);
+      self.result.imports.insert(expr.span, import_rec_idx);
     }
     walk::walk_import_expression(self, expr);
   }
@@ -179,9 +164,6 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
 
   fn visit_assignment_expression(&mut self, node: &ast::AssignmentExpression<'ast>) {
     match &node.left {
-      ast::AssignmentTarget::AssignmentTargetIdentifier(id_ref) => {
-        self.try_diagnostic_forbid_const_assign(id_ref);
-      }
       // Detect `module.exports` and `exports.ANY`
       ast::AssignmentTarget::StaticMemberExpression(member_expr) => match member_expr.object {
         Expression::Identifier(ref id) => {
@@ -277,6 +259,11 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
     }
 
     walk::walk_call_expression(self, expr);
+  }
+
+  fn visit_new_expression(&mut self, it: &ast::NewExpression<'ast>) {
+    self.handle_new_url_with_string_literal_and_import_meta_url(it);
+    walk::walk_new_expression(self, it);
   }
 }
 

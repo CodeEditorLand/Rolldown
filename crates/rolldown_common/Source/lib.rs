@@ -5,6 +5,7 @@ mod ecmascript;
 mod file_emitter;
 mod inner_bundler_options;
 mod module;
+mod module_loader;
 mod type_aliases;
 mod types;
 
@@ -34,7 +35,7 @@ pub mod bundler_options {
       sourcemap_ignore_list::SourceMapIgnoreList,
       sourcemap_path_transform::SourceMapPathTransform,
       target::ESTarget,
-      treeshake::{InnerOptions, ModuleSideEffects, TreeshakeOptions},
+      treeshake::{InnerOptions, ModuleSideEffects, ModuleSideEffectsRule, TreeshakeOptions},
       watch_option::{NotifyOption, WatchOption},
     },
     BundlerOptions,
@@ -57,16 +58,23 @@ pub use crate::{
     css_view::{CssAssetNameReplacer, CssRenderer, CssView},
   },
   ecmascript::{
+    dynamic_import_usage,
     ecma_asset_meta::EcmaAssetMeta,
     ecma_view::{EcmaModuleAstUsage, EcmaView, EcmaViewMeta, ImportMetaRolldownAssetReplacer},
     module_idx::ModuleIdx,
-    node_builtin_modules::is_builtin_modules,
+    node_builtin_modules::is_existing_node_builtin_modules,
   },
   file_emitter::{EmittedAsset, FileEmitter, SharedFileEmitter},
   module::{
     external_module::ExternalModule,
     normal_module::{ModuleRenderArgs, NormalModule},
     Module,
+  },
+  module_loader::{
+    runtime_module_brief::{RuntimeModuleBrief, RUNTIME_MODULE_ID},
+    runtime_task_result::RuntimeModuleTaskResult,
+    task_result::{EcmaRelated, NormalModuleTaskResult},
+    ModuleLoaderMsg,
   },
   types::asset::Asset,
   types::asset_idx::AssetIdx,

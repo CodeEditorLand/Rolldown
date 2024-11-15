@@ -4,6 +4,7 @@ use oxc::{
   semantic::{ScopeTree, SymbolTable},
 };
 use rolldown_common::{
+  dynamic_import_usage::DynamicImportExportsUsage,
   side_effects::{DeterminedSideEffects, HookSideEffects},
   AstScopes, EcmaView, EcmaViewMeta, ImportRecordIdx, ModuleDefFormat, ModuleId, ModuleIdx,
   ModuleType, RawImportRecord, SymbolRef, SymbolRefDbForModule, TreeshakeOptions,
@@ -11,6 +12,7 @@ use rolldown_common::{
 use rolldown_ecmascript::EcmaAst;
 use rolldown_error::BuildResult;
 use rolldown_utils::{ecmascript::legitimize_identifier_name, path_ext::PathExt};
+use rustc_hash::FxHashMap;
 use sugar_path::SugarPath;
 
 use crate::{
@@ -58,6 +60,7 @@ pub struct CreateEcmaViewReturn {
   pub raw_import_records: IndexVec<ImportRecordIdx, RawImportRecord>,
   pub ast: EcmaAst,
   pub symbols: SymbolRefDbForModule,
+  pub dynamic_import_rec_exports_usage: FxHashMap<ImportRecordIdx, DynamicImportExportsUsage>,
 }
 
 #[allow(clippy::too_many_lines)]
@@ -93,7 +96,6 @@ pub async fn create_ecma_view<'any>(
     ctx.resolved_id.module_def_format,
     ctx.options,
   )?;
-
   let ScanResult {
     named_imports,
     named_exports,
@@ -110,6 +112,8 @@ pub async fn create_ecma_view<'any>(
     self_referenced_class_decl_symbol_ids,
     hashbang_range,
     has_star_exports,
+    dynamic_import_rec_exports_usage: dynamic_import_exports_usage,
+    new_url_references: new_url_imports,
   } = scan_result;
   if !errors.is_empty() {
     return Err(errors.into());
@@ -157,10 +161,9 @@ pub async fn create_ecma_view<'any>(
       TreeshakeOptions::Boolean(false) => DeterminedSideEffects::NoTreeshake,
       TreeshakeOptions::Boolean(true) => unreachable!(),
       TreeshakeOptions::Option(ref opt) => {
-        if opt.module_side_effects.resolve(&stable_id) {
-          lazy_check_side_effects()
-        } else {
-          DeterminedSideEffects::UserDefined(false)
+        match opt.module_side_effects.resolve(&stable_id, ctx.resolved_id.is_external) {
+          Some(value) => DeterminedSideEffects::UserDefined(value),
+          None => lazy_check_side_effects(),
         }
       }
     },
@@ -198,7 +201,14 @@ pub async fn create_ecma_view<'any>(
       meta
     },
     mutations: vec![],
+    new_url_references: new_url_imports,
   };
 
-  Ok(CreateEcmaViewReturn { view, raw_import_records: import_records, ast, symbols: symbol_ref_db })
+  Ok(CreateEcmaViewReturn {
+    view,
+    raw_import_records: import_records,
+    ast,
+    symbols: symbol_ref_db,
+    dynamic_import_rec_exports_usage: dynamic_import_exports_usage,
+  })
 }

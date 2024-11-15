@@ -86,6 +86,7 @@
     "esbuild",
     "evanw",
     "execa",
+    "externalizable",
     "extname",
     "FEFF",
     "Finalizer",
@@ -147,6 +148,7 @@
     "rollupjs",
     "romejs",
     "Rstr",
+    "rsplit",
     "rustc",
     "rustdoc",
     "rustup",
@@ -161,6 +163,7 @@
     "smallvec",
     "snapFile",
     "sourcemaps",
+    "splitn",
     "stackblitz",
     "Stmts",
     "struct",
@@ -199,7 +202,8 @@
     "Yunfei",
     "कुत्तेपरपानी",
     "पतलूनमे",
-    "मेरेशॉर्ट्सखाओ"
+    "मेरेशॉर्ट्सखाओ",
+    "conso" // for watcher error test
   ],
   "ignoreWords": ["Jeqs", "Gwetwem", "bpwli", "mxrh"]
 }

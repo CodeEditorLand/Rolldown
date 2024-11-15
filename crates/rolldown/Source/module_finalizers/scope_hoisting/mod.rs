@@ -1,17 +1,18 @@
 use oxc::{
   allocator::{Allocator, IntoIn},
   ast::ast::{self, IdentifierReference, Statement},
-  span::{Atom, SPAN},
+  span::{Atom, GetSpan, GetSpanMut, SPAN},
 };
 use rolldown_common::{
-  AstScopes, ImportRecordIdx, ImportRecordMeta, Module, OutputFormat, SymbolRef, WrapKind,
+  AstScopes, ImportRecordIdx, ImportRecordMeta, Module, OutputFormat, Platform, SymbolRef, WrapKind,
 };
-use rolldown_ecmascript_utils::{AstSnippet, BindingPatternExt, TakeIn};
+use rolldown_ecmascript_utils::{AstSnippet, BindingPatternExt, ExpressionExt, TakeIn};
 
 mod finalizer_context;
 mod impl_visit_mut;
 pub use finalizer_context::ScopeHoistingFinalizerContext;
 use rolldown_rstr::Rstr;
+use rolldown_std_utils::OptionExt;
 use rolldown_utils::ecmascript::is_validate_identifier_name;
 
 mod rename;
@@ -313,5 +314,131 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     ret.extend(re_export_external_stmts.unwrap_or_default());
 
     ret
+  }
+
+  // Handle `import.meta.xxx` expression
+  pub fn handle_import_meta_prop_expr(&self, expr: &mut ast::Expression<'ast>) {
+    match expr {
+      // Check if the `expr` is `import.meta.xxx`. Doesn't include `import.meta`.
+      ast::Expression::StaticMemberExpression(member_expr)
+        if member_expr.object.is_import_meta() =>
+      {
+        let original_expr_span = member_expr.span;
+        match member_expr.property.name.as_str() {
+          // Try to polyfill `import.meta.url`
+          "url" => {
+            match (self.ctx.options.platform, &self.ctx.options.format) {
+              (Platform::Node, OutputFormat::Cjs) => {
+                // Replace it with `require('url').pathToFileURL(__filename).href`
+
+                // require('url')
+                let require_call = self.snippet.builder.alloc_call_expression(
+                  SPAN,
+                  self.snippet.builder.expression_identifier_reference(SPAN, "require"),
+                  oxc::ast::NONE,
+                  self.snippet.builder.vec1(ast::Argument::StringLiteral(
+                    self.snippet.builder.alloc_string_literal(SPAN, "url"),
+                  )),
+                  false,
+                );
+
+                // require('url').pathToFileURL
+                let require_path_to_file_url = self.snippet.builder.alloc_static_member_expression(
+                  SPAN,
+                  ast::Expression::CallExpression(require_call),
+                  self.snippet.builder.identifier_name(SPAN, "pathToFileURL"),
+                  false,
+                );
+
+                // require('url').pathToFileURL(__filename)
+                let require_path_to_file_url_call = self.snippet.builder.alloc_call_expression(
+                  SPAN,
+                  ast::Expression::StaticMemberExpression(require_path_to_file_url),
+                  oxc::ast::NONE,
+                  self.snippet.builder.vec1(ast::Argument::Identifier(
+                    self.snippet.builder.alloc_identifier_reference(SPAN, "__filename"),
+                  )),
+                  false,
+                );
+
+                // require('url').pathToFileURL(__filename).href
+                let require_path_to_file_url_href =
+                  self.snippet.builder.alloc_static_member_expression(
+                    SPAN,
+                    ast::Expression::CallExpression(require_path_to_file_url_call),
+                    self.snippet.builder.identifier_name(SPAN, "href"),
+                    false,
+                  );
+                *expr = ast::Expression::StaticMemberExpression(require_path_to_file_url_href);
+                *expr.span_mut() = original_expr_span;
+              }
+              _ => {
+                // If we don't support polyfill `import.meta.url` in this platform and format, we just keep it as it is
+                // so users may handle it in their own way.
+              }
+            }
+          }
+          _ => {}
+        }
+      }
+      _ => {}
+    };
+  }
+
+  /// Check if it is exact `new URL('path', import.meta.url)` pattern
+  fn is_new_url_with_string_literal_and_import_meta_url(
+    &self,
+    expr: &ast::Expression<'ast>,
+  ) -> bool {
+    let ast::Expression::NewExpression(expr) = expr else {
+      return false;
+    };
+    let is_callee_global_url = matches!(expr.callee.as_identifier(), Some(ident) if ident.name == "URL" && self.is_global_identifier_reference(ident));
+
+    if !is_callee_global_url {
+      return false;
+    }
+
+    let is_second_arg_import_meta_url = expr
+      .arguments
+      .get(1)
+      .map_or(false, |arg| arg.as_expression().is_some_and(ExpressionExt::is_import_meta_url));
+
+    if !is_second_arg_import_meta_url {
+      return false;
+    }
+
+    let is_first_arg_string_literal = expr
+      .arguments
+      .first()
+      .map_or(false, |arg| arg.as_expression().is_some_and(ast::Expression::is_string_literal));
+
+    is_first_arg_string_literal
+  }
+
+  pub fn handle_new_url_with_string_literal_and_import_meta_url(
+    &self,
+    expr: &mut ast::Expression<'ast>,
+  ) {
+    if self.is_new_url_with_string_literal_and_import_meta_url(expr) {
+      let span = expr.span();
+      let rec = &self.ctx.module.import_records[self.ctx.module.new_url_references[&span]];
+      let Module::Normal(importee) = &self.ctx.modules[rec.resolved_module] else { return };
+      let Some(chunk_idx) = &self.ctx.chunk_graph.module_to_chunk[importee.idx] else {
+        return;
+      };
+      let chunk = &self.ctx.chunk_graph.chunk_table[*chunk_idx];
+      let asset_filename = &chunk.asset_preliminary_filenames[&importee.idx];
+      match expr {
+        ast::Expression::NewExpression(new_expr) => {
+          if let Some(ast::Expression::StringLiteral(string_lit)) =
+            new_expr.arguments.get_mut(0).unpack().as_expression_mut()
+          {
+            string_lit.value = self.snippet.atom(asset_filename);
+          }
+        }
+        _ => {}
+      }
+    }
   }
 }

@@ -48,6 +48,7 @@ export declare class BindingOutputs {
 }
 
 export declare class BindingPluginContext {
+  load(specifier: string, fn: () => void): Promise<void>
   resolve(specifier: string, importer?: string | undefined | null, extraOptions?: BindingPluginContextResolveOptions | undefined | null): Promise<BindingPluginContextResolvedId | null>
   emitFile(file: BindingEmittedAsset): string
   getFileName(referenceId: string): string
@@ -72,6 +73,7 @@ export declare class Bundler {
   scan(): Promise<void>
   close(): Promise<void>
   watch(): Promise<BindingWatcher>
+  get closed(): boolean
 }
 
 export declare class ParallelJsPluginRegistry {
@@ -141,7 +143,8 @@ export declare enum BindingBuiltinPluginName {
   AliasPlugin = 8,
   JsonPlugin = 9,
   BuildImportAnalysisPlugin = 10,
-  ReplacePlugin = 11
+  ReplacePlugin = 11,
+  ViteResolvePlugin = 12
 }
 
 export interface BindingEmittedAsset {
@@ -278,6 +281,12 @@ export interface BindingMatchGroup {
 
 export interface BindingModulePreloadPolyfillPluginConfig {
   skip?: boolean
+}
+
+export interface BindingModuleSideEffectsRule {
+  test?: RegExp | undefined
+  sideEffects: boolean
+  external?: boolean | undefined
 }
 
 export interface BindingNotifyOption {
@@ -436,7 +445,29 @@ export interface BindingTransformPluginConfig {
 }
 
 export interface BindingTreeshake {
-  moduleSideEffects: string
+  moduleSideEffects: boolean | BindingModuleSideEffectsRule[]
+}
+
+export interface BindingViteResolvePluginConfig {
+  resolveOptions: BindingViteResolvePluginResolveOptions
+  environmentConsumer: string
+  external: true | string[]
+  noExternal: true | string[]
+  runtime: string
+}
+
+export interface BindingViteResolvePluginResolveOptions {
+  isProduction: boolean
+  asSrc: boolean
+  preferRelative: boolean
+  root: string
+  mainFields: Array<string>
+  conditions: Array<string>
+  externalConditions: Array<string>
+  extensions: Array<string>
+  tryIndex: boolean
+  tryPrefix?: string
+  preserveSymlinks: boolean
 }
 
 export declare enum BindingWatcherEvent {

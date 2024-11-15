@@ -3,30 +3,23 @@ use oxc::span::SourceType;
 use oxc::{ast::VisitMut, index::IndexVec};
 use rolldown_common::{
   side_effects::DeterminedSideEffects, AstScopes, EcmaView, EcmaViewMeta, ExportsKind,
-  ModuleDefFormat, ModuleId, ModuleIdx, ModuleType, NormalModule, SymbolRef, SymbolRefDbForModule,
+  ModuleDefFormat, ModuleId, ModuleIdx, ModuleType, NormalModule, SymbolRef,
+};
+use rolldown_common::{
+  ModuleLoaderMsg, RuntimeModuleBrief, RuntimeModuleTaskResult, RUNTIME_MODULE_ID,
 };
 use rolldown_ecmascript::{EcmaAst, EcmaCompiler};
 use rolldown_error::{BuildDiagnostic, BuildResult};
 use rustc_hash::FxHashSet;
 
-use super::Msg;
 use crate::{
   ast_scanner::{AstScanner, ScanResult},
-  runtime::{RuntimeModuleBrief, RUNTIME_MODULE_ID},
   utils::tweak_ast_for_scanning::PreProcessor,
 };
 pub struct RuntimeModuleTask {
-  tx: tokio::sync::mpsc::Sender<Msg>,
+  tx: tokio::sync::mpsc::Sender<ModuleLoaderMsg>,
   module_id: ModuleIdx,
   errors: Vec<BuildDiagnostic>,
-}
-
-pub struct RuntimeModuleTaskResult {
-  pub runtime: RuntimeModuleBrief,
-  pub local_symbol_ref_db: SymbolRefDbForModule,
-  pub ast: EcmaAst,
-  // pub warnings: Vec<BuildError>,
-  pub module: NormalModule,
 }
 
 pub struct MakeEcmaAstResult {
@@ -37,7 +30,7 @@ pub struct MakeEcmaAstResult {
 }
 
 impl RuntimeModuleTask {
-  pub fn new(id: ModuleIdx, tx: tokio::sync::mpsc::Sender<Msg>) -> Self {
+  pub fn new(id: ModuleIdx, tx: tokio::sync::mpsc::Sender<ModuleLoaderMsg>) -> Self {
     Self { module_id: id, tx, errors: Vec::new() }
   }
 
@@ -75,6 +68,8 @@ impl RuntimeModuleTask {
       self_referenced_class_decl_symbol_ids: _,
       hashbang_range: _,
       has_star_exports,
+      dynamic_import_rec_exports_usage: _,
+      new_url_references,
     } = scan_result;
 
     let module = NormalModule {
@@ -121,18 +116,21 @@ impl RuntimeModuleTask {
           meta
         },
         mutations: vec![],
+        new_url_references,
       },
       css_view: None,
       asset_view: None,
     };
 
-    if let Err(_err) = self.tx.try_send(Msg::RuntimeNormalModuleDone(RuntimeModuleTaskResult {
-      // warnings: self.warnings,
-      local_symbol_ref_db: symbol_ref_db,
-      module,
-      runtime,
-      ast,
-    })) {
+    if let Err(_err) =
+      self.tx.try_send(ModuleLoaderMsg::RuntimeNormalModuleDone(RuntimeModuleTaskResult {
+        // warnings: self.warnings,
+        local_symbol_ref_db: symbol_ref_db,
+        module,
+        runtime,
+        ast,
+      }))
+    {
       // hyf0: If main thread is dead, we should handle errors of main thread. So we just ignore the error here.
     };
 
