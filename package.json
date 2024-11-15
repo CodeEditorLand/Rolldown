@@ -1,7 +1,16 @@
 {
+	"author": {
+		"email": "Source/Open@Editor.Land",
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"url": "HTTPS://Editor.Land"
+	},
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
 	"description": "Rollup in Rust",
 	"devDependencies": {
 		"@ls-lint/ls-lint": "^2.2.3",
+		"@playform/build": "0.1.8",
 		"@taplo/cli": "^0.7.0",
 		"@types/node": "22.9.0",
 		"cjs-module-lexer": "^1.4.1",
@@ -13,6 +22,13 @@
 		"oxlint": "0.11.1",
 		"rolldown": "workspace:*"
 	},
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"license": "SEE LICENSE IN LICENSE",
 	"lint-staged": {
 		"*": "cspell --no-progress --gitignore --no-must-find-files",
 		"*.toml": "taplo format",
@@ -22,6 +38,14 @@
 		]
 	},
 	"name": "monorepo",
+	"private": false,
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
 	"scripts": {
 		"build": "echo \"Use just build\"",
 		"build:release": "echo \"Use just build native release\"",
@@ -40,6 +64,9 @@
 		"lint-toml": "taplo format --check",
 		"lint-toml:fix": "taplo format",
 		"prepare": "husky install",
+		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"type-check": "pnpm --recursive run type-check"
-	}
+	},
+	"type": "module",
+	"version": "0.0.1"
 }
