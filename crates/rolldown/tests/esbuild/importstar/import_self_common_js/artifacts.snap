@@ -1,0 +1,23 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# Assets
+
+## entry.js
+
+```js
+
+const node_assert = __toESM(require("node:assert"));
+
+//#region entry.js
+var require_entry = __commonJS({ "entry.js"(exports) {
+	var import_entry = __toESM(require_entry());
+	exports.foo = 123;
+	node_assert.default.equal(import_entry.foo, undefined);
+} });
+
+//#endregion
+export default require_entry();
+
+```

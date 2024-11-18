@@ -18,6 +18,8 @@ import {
   transformAssetSource,
 } from './asset-source'
 import { bindingifySourcemap } from '../types/sourcemap'
+import { transformToRenderedModule } from './transform-rendered-module'
+import { RollupError } from '../rollup'
 
 function transformToRollupOutputChunk(
   bindingChunk: BindingOutputChunk,
@@ -32,7 +34,10 @@ function transformToRollupOutputChunk(
     name: bindingChunk.name,
     get modules() {
       return Object.fromEntries(
-        Object.entries(bindingChunk.modules).map(([key, _]) => [key, {}]),
+        Object.entries(bindingChunk.modules).map(([key, value]) => [
+          key,
+          transformToRenderedModule(value),
+        ]),
       )
     },
     get imports() {
@@ -103,6 +108,7 @@ export function transformToRollupOutput(
   output: BindingOutputs,
   changed?: ChangedOutputs,
 ): RolldownOutput {
+  handleOutputErrors(output)
   const { chunks, assets } = output
   return {
     output: [
@@ -110,6 +116,76 @@ export function transformToRollupOutput(
       ...assets.map((asset) => transformToRollupOutputAsset(asset, changed)),
     ],
   } as RolldownOutput
+}
+
+export function handleOutputErrors(output: BindingOutputs) {
+  const rawErrors = output.errors
+  if (rawErrors.length > 0) {
+    const errors = rawErrors.map((e) =>
+      e instanceof Error
+        ? e
+        : // strip stacktrace of errors from native diagnostics
+          Object.assign(new Error(), e, { stack: undefined }),
+    )
+    // based on https://github.com/evanw/esbuild/blob/9eca46464ed5615cb36a3beb3f7a7b9a8ffbe7cf/lib/shared/common.ts#L1673
+    // combine error messages as a top level error
+    let summary = `Build failed with ${errors.length} error${errors.length < 2 ? '' : 's'}:\n`
+    for (let i = 0; i < errors.length; i++) {
+      if (i >= 5) {
+        summary += '\n...'
+        break
+      }
+      summary += getErrorMessage(errors[i]) + '\n'
+    }
+    const wrapper = new Error(summary)
+    // expose individual errors as getters so that
+    // `console.error(wrapper)` doesn't expand unnecessary details
+    // when they are already presented in `wrapper.message`
+    Object.defineProperty(wrapper, 'errors', {
+      configurable: true,
+      enumerable: true,
+      get: () => errors,
+      set: (value) =>
+        Object.defineProperty(wrapper, 'errors', {
+          configurable: true,
+          enumerable: true,
+          value,
+        }),
+    })
+    throw wrapper
+  }
+}
+
+function getErrorMessage(e: RollupError) {
+  let s = ''
+  if (e.plugin) {
+    s += `[plugin ${e.plugin}]`
+  }
+  const id = e.id ?? e.loc?.file
+  if (id) {
+    s += ' ' + id
+    if (e.loc) {
+      s += `:${e.loc.line}:${e.loc.column}`
+    }
+  }
+  if (s) {
+    s += '\n'
+  }
+  const message = `${e.name ?? 'Error'}: ${e.message}`
+  s += message
+  if (e.frame) {
+    s = joinNewLine(s, e.frame)
+  }
+  // copy stack since it's important for js plugin error
+  if (e.stack) {
+    s = joinNewLine(s, e.stack.replace(message, ''))
+  }
+  return s
+}
+
+function joinNewLine(s1: string, s2: string): string {
+  // ensure single new line in between
+  return s1.replace(/\n+$/, '') + '\n' + s2.replace(/^\n+/, '')
 }
 
 export function transformToOutputBundle(
@@ -165,7 +241,7 @@ export function collectChangedBundle(
         isEntry: item.isEntry,
         exports: item.exports,
         modules: Object.fromEntries(
-          Object.entries(item.modules).map(([key, _]) => [key, {}]),
+          Object.entries(item.modules).map(([key, _]) => [key, {} as any]),
         ),
         imports: item.imports,
         dynamicImports: item.dynamicImports,

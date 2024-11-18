@@ -12,11 +12,12 @@ use crate::{
 use anyhow::Result;
 
 use rolldown_common::{NormalizedBundlerOptions, SharedFileEmitter};
-use rolldown_error::{BuildDiagnostic, BuildResult};
+use rolldown_error::BuildResult;
 use rolldown_fs::{FileSystem, OsFileSystem};
 use rolldown_plugin::{
   HookBuildEndArgs, HookRenderErrorArgs, SharedPluginDriver, __inner::SharedPluginable,
 };
+use rolldown_std_utils::OptionExt;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing_chrome::FlushGuard;
@@ -43,7 +44,7 @@ impl Bundler {
 
 impl Bundler {
   #[tracing::instrument(level = "debug", skip_all)]
-  pub async fn write(&mut self) -> Result<BundleOutput> {
+  pub async fn write(&mut self) -> BuildResult<BundleOutput> {
     let dir = self.options.cwd.join(&self.options.dir);
 
     let mut output = self.bundle_up(/* is_write */ true).await?;
@@ -71,7 +72,7 @@ impl Bundler {
   }
 
   #[tracing::instrument(level = "debug", skip_all)]
-  pub async fn generate(&mut self) -> Result<BundleOutput> {
+  pub async fn generate(&mut self) -> BuildResult<BundleOutput> {
     self.bundle_up(/* is_write */ false).await
   }
 
@@ -87,7 +88,7 @@ impl Bundler {
     Ok(())
   }
 
-  pub async fn scan(&mut self) -> Result<BuildResult<ScanStageOutput>> {
+  pub async fn scan(&mut self) -> BuildResult<ScanStageOutput> {
     self.plugin_driver.build_start().await?;
 
     let mut error_for_build_end_hook = None;
@@ -102,30 +103,15 @@ impl Bundler {
     .await
     {
       Ok(v) => v,
-      Err(err) => {
-        // TODO: So far we even call build end hooks on unhandleable errors . But should we call build end hook even for unhandleable errors?
-        error_for_build_end_hook = Some(err.to_string());
-        self
-          .plugin_driver
-          .build_end(error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref())
-          .await?;
-        self.plugin_driver.close_bundle().await?;
-        return Err(err);
-      }
-    };
-
-    let scan_stage_output = match scan_stage_output {
-      Ok(v) => v,
       Err(errs) => {
-        if let Some(err_msg) = errs.first().map(ToString::to_string) {
-          error_for_build_end_hook = Some(err_msg.clone());
-        }
+        // TODO: So far we even call build end hooks on unhandleable errors . But should we call build end hook even for unhandleable errors?
+        error_for_build_end_hook = Some(errs.first().unpack_ref().to_string());
         self
           .plugin_driver
           .build_end(error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref())
           .await?;
         self.plugin_driver.close_bundle().await?;
-        return Ok(Err(errs));
+        return Err(errs);
       }
     };
 
@@ -134,51 +120,42 @@ impl Bundler {
       .build_end(error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref())
       .await?;
 
-    Ok(Ok(scan_stage_output))
+    Ok(scan_stage_output)
   }
 
-  async fn try_build(&mut self) -> Result<BuildResult<LinkStageOutput>> {
-    let build_info = match self.scan().await? {
-      Ok(scan_stage_output) => scan_stage_output,
-      Err(errors) => return Ok(Err(errors)),
-    };
-    Ok(Ok(LinkStage::new(build_info, &self.options).link()))
+  async fn try_build(&mut self) -> BuildResult<LinkStageOutput> {
+    let build_info = self.scan().await?;
+    Ok(LinkStage::new(build_info, &self.options).link())
   }
 
   #[allow(clippy::missing_transmute_annotations)]
-  async fn bundle_up(&mut self, is_write: bool) -> Result<BundleOutput> {
+  async fn bundle_up(&mut self, is_write: bool) -> BuildResult<BundleOutput> {
     if self.closed {
-      return Err(anyhow::anyhow!(
-        "Bundle is already closed, no more calls to 'generate' or 'write' are allowed."
-      ));
+      return Err(
+        anyhow::anyhow!(
+          "Bundle is already closed, no more calls to 'generate' or 'write' are allowed."
+        )
+        .into(),
+      );
     }
 
-    let mut link_stage_output = match self.try_build().await? {
-      Ok(v) => v,
-      Err(errors) => {
-        return Ok(BundleOutput {
-          assets: vec![],
-          warnings: vec![],
-          errors: errors.into_vec(),
-          watch_files: self.plugin_driver.watch_files.iter().map(|f| f.clone()).collect(),
-        })
-      }
-    };
+    let mut link_stage_output = self.try_build().await?;
 
     self.plugin_driver.render_start().await?;
 
-    let mut output = {
-      let bundle_output =
-        GenerateStage::new(&mut link_stage_output, &self.options, &self.plugin_driver)
-          .generate()
-          .await;
+    let bundle_output =
+      GenerateStage::new(&mut link_stage_output, &self.options, &self.plugin_driver)
+        .generate()
+        .await; // Notice we don't use `?` to break the control flow here.
 
-      if let Some(error) = Self::normalize_error(&bundle_output, |ret| &ret.errors) {
-        self.plugin_driver.render_error(&HookRenderErrorArgs { error }).await?;
-      }
+    if let Err(errs) = &bundle_output {
+      self
+        .plugin_driver
+        .render_error(&HookRenderErrorArgs { error: errs.first().unpack_ref().to_string() })
+        .await?;
+    }
 
-      bundle_output?
-    };
+    let mut output = bundle_output?;
 
     // Add additional files from build plugins.
     self.file_emitter.add_additional_files(&mut output.assets);
@@ -190,38 +167,12 @@ impl Bundler {
     Ok(output)
   }
 
-  fn normalize_error<T>(
-    ret: &Result<T>,
-    errors_fn: impl Fn(&T) -> &[BuildDiagnostic],
-  ) -> Option<String> {
-    ret.as_ref().map_or_else(
-      |error| Some(error.to_string()),
-      |ret| errors_fn(ret).first().map(ToString::to_string),
-    )
-  }
-
   pub fn options(&self) -> &NormalizedBundlerOptions {
     &self.options
   }
 
   pub fn watch(bundler: Arc<Mutex<Bundler>>) -> Result<Arc<Watcher>> {
     let watcher = Arc::new(Watcher::new(bundler)?);
-
-    // using async task to run first build, it could be report first build error.
-    let cloned_watcher = Arc::clone(&watcher);
-    let future = async move {
-      let _ = cloned_watcher.run().await;
-    };
-    #[cfg(target_family = "wasm")]
-    {
-      let handle = tokio::runtime::Handle::current();
-      // could not block_on/spawn the main thread in WASI
-      std::thread::spawn(move || {
-        handle.spawn(future);
-      });
-    }
-    #[cfg(not(target_family = "wasm"))]
-    tokio::spawn(future);
 
     wait_for_change(Arc::clone(&watcher));
 

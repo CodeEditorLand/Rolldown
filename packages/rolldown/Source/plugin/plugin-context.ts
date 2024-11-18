@@ -13,6 +13,7 @@ import { ModuleInfo } from '../types/module-info'
 import { PluginContextData } from './plugin-context-data'
 import { SYMBOL_FOR_RESOLVE_CALLER_THAT_SKIP_SELF } from '../constants/plugin-context'
 import { PartialNull } from '../types/utils'
+import { bindingifySideEffects } from '../utils/transform-side-effects'
 
 export interface EmittedAsset {
   type: 'asset'
@@ -73,13 +74,33 @@ export class PluginContext extends MinimalPluginContext {
         moduleSideEffects: options.moduleSideEffects || null,
       }
       data.updateModuleOption(id, rawOptions)
-      let resolveFn
-      // TODO: If is not resolved, we need to set a time to avoid waiting.
-      const promise = new Promise((resolve, _) => {
-        resolveFn = resolve
-      })
-      await context.load(id, resolveFn!)
-      await promise
+
+      async function createLoadModulePromise() {
+        const loadPromise = data.loadModulePromiseMap.get(id)
+        if (loadPromise) {
+          return loadPromise
+        }
+        let resolveFn
+        // TODO: If is not resolved, we need to set a time to avoid waiting.
+        const promise = new Promise<void>((resolve, _) => {
+          resolveFn = resolve
+        })
+        data.loadModulePromiseMap.set(id, promise)
+        try {
+          await context.load(
+            id,
+            bindingifySideEffects(options.moduleSideEffects),
+            resolveFn!,
+          )
+        } finally {
+          // If the load module has failed, avoid it re-load using unresolved promise.
+          data.loadModulePromiseMap.delete(id)
+        }
+        return promise
+      }
+
+      // Here using one promise to avoid pass more callback to rust side, it only accept one callback, other will be ignored.
+      await createLoadModulePromise()
       return data.getModuleInfo(id, context)!
     }
     this.resolve = async (source, importer, options) => {

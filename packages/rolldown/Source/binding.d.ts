@@ -3,6 +3,19 @@ type Nullable<T> = T | null | undefined
 type VoidNullable<T = void> = T | null | undefined | void
 export type BindingStringOrRegex = string | RegExp
 
+export interface RenderedModule {
+  readonly code: string | null
+  renderedLength: number
+}
+
+export declare class BindingCallableBuiltinPlugin {
+  name: string
+  constructor(plugin: BindingBuiltinPlugin)
+  resolveId(id: string, importer?: string | undefined | null, options?: BindingHookJsResolveIdOptions | undefined | null): Promise<BindingHookJsResolveIdOutput | null>
+  load(id: string): Promise<BindingHookJsLoadOutput | null>
+  watchChange(path: string, event: BindingJsWatchChangeEvent): Promise<void>
+}
+
 export declare class BindingLog {
   code: string
   message: string
@@ -32,7 +45,7 @@ export declare class BindingOutputChunk {
   get moduleIds(): Array<string>
   get exports(): Array<string>
   get fileName(): string
-  get modules(): Record<string, BindingRenderedModule>
+  get modules(): Record<string, RenderedModule>
   get imports(): Array<string>
   get dynamicImports(): Array<string>
   get code(): string
@@ -45,16 +58,21 @@ export declare class BindingOutputChunk {
 export declare class BindingOutputs {
   get chunks(): Array<BindingOutputChunk>
   get assets(): Array<BindingOutputAsset>
+  get errors(): Array<unknown>
 }
 
 export declare class BindingPluginContext {
-  load(specifier: string, fn: () => void): Promise<void>
+  load(specifier: string, sideEffects: BindingHookSideEffects | undefined, fn: () => void): Promise<void>
   resolve(specifier: string, importer?: string | undefined | null, extraOptions?: BindingPluginContextResolveOptions | undefined | null): Promise<BindingPluginContextResolvedId | null>
   emitFile(file: BindingEmittedAsset): string
   getFileName(referenceId: string): string
   getModuleInfo(moduleId: string): BindingModuleInfo | null
   getModuleIds(): Array<string>
   addWatchFile(file: string): void
+}
+
+export declare class BindingRenderedModule {
+  get code(): string | null
 }
 
 export declare class BindingTransformPluginContext {
@@ -64,13 +82,14 @@ export declare class BindingTransformPluginContext {
 export declare class BindingWatcher {
   close(): Promise<void>
   on(event: BindingWatcherEvent, listener: (data?: Record<string, string>) => void): void
+  start(): Promise<void>
 }
 
 export declare class Bundler {
   constructor(inputOptions: BindingInputOptions, outputOptions: BindingOutputOptions, parallelPluginsRegistry?: ParallelJsPluginRegistry | undefined | null)
   write(): Promise<BindingOutputs>
   generate(): Promise<BindingOutputs>
-  scan(): Promise<void>
+  scan(): Promise<BindingOutputs>
   close(): Promise<void>
   watch(): Promise<BindingWatcher>
   get closed(): boolean
@@ -169,6 +188,22 @@ export interface BindingGlobImportPluginConfig {
   restoreQueryExtension?: boolean
 }
 
+export interface BindingHookJsLoadOutput {
+  code: string
+  map?: string
+  sideEffects: boolean | 'no-treeshake'
+}
+
+export interface BindingHookJsResolveIdOptions {
+  scan?: boolean
+}
+
+export interface BindingHookJsResolveIdOutput {
+  id: string
+  external?: boolean
+  sideEffects: boolean | 'no-treeshake'
+}
+
 export interface BindingHookLoadOutput {
   code: string
   sideEffects?: BindingHookSideEffects
@@ -257,6 +292,10 @@ export interface BindingJsonSourcemap {
   sources?: Array<string | undefined | null>
   sourcesContent?: Array<string | undefined | null>
   names?: Array<string>
+}
+
+export interface BindingJsWatchChangeEvent {
+  event: string
 }
 
 export declare enum BindingLogLevel {
@@ -397,10 +436,6 @@ export interface BindingPluginWithIndex {
   plugin: BindingPluginOptions
 }
 
-export interface BindingRenderedModule {
-  code?: string
-}
-
 export interface BindingReplacePluginConfig {
   values: Record<string, string>
   delimiters?: [string, string]
@@ -451,16 +486,21 @@ export interface BindingTreeshake {
 export interface BindingViteResolvePluginConfig {
   resolveOptions: BindingViteResolvePluginResolveOptions
   environmentConsumer: string
+  environmentName: string
   external: true | string[]
   noExternal: true | string[]
+  finalizeBareSpecifier?: (resolvedId: string, rawId: string, importer: string | null | undefined) => VoidNullable<string>
+  finalizeOtherSpecifiers?: (resolvedId: string, rawId: string) => VoidNullable<string>
   runtime: string
 }
 
 export interface BindingViteResolvePluginResolveOptions {
+  isBuild: boolean
   isProduction: boolean
   asSrc: boolean
   preferRelative: boolean
   root: string
+  scan: boolean
   mainFields: Array<string>
   conditions: Array<string>
   externalConditions: Array<string>
@@ -493,6 +533,8 @@ export interface ExtensionAliasItem {
   target: string
   replacements: Array<string>
 }
+
+export declare function isCallableCompatibleBuiltinPlugin(plugin: BindingBuiltinPlugin): boolean
 
 /** TypeScript Isolated Declarations for Standalone DTS Emit */
 export declare function isolatedDeclaration(filename: string, sourceText: string, options?: IsolatedDeclarationsOptions | undefined | null): IsolatedDeclarationsResult
@@ -537,7 +579,7 @@ export interface JsOutputChunk {
   moduleIds: Array<string>
   exports: Array<string>
   filename: string
-  modules: Record<string, BindingRenderedModule>
+  modules: Record<string, RenderedModule>
   imports: Array<string>
   dynamicImports: Array<string>
   code: string
@@ -676,7 +718,7 @@ export interface RenderedChunk {
   moduleIds: Array<string>
   exports: Array<string>
   fileName: string
-  modules: Record<string, BindingRenderedModule>
+  modules: Record<string, RenderedModule>
   imports: Array<string>
   dynamicImports: Array<string>
 }

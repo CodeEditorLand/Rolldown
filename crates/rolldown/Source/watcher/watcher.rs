@@ -7,7 +7,7 @@ use rolldown_common::{
   BundleEndEventData, BundleEventKind, WatcherChange, WatcherChangeKind, WatcherEvent,
   WatcherEventData,
 };
-use rolldown_error::DiagnosticOptions;
+use rolldown_error::{BuildResult, DiagnosticOptions, ResultExt};
 use rolldown_utils::pattern_filter;
 use std::{
   path::Path,
@@ -106,7 +106,7 @@ impl Watcher {
     }
   }
 
-  pub async fn run(&self) -> Result<()> {
+  pub async fn run(&self) -> BuildResult<()> {
     let start_time = Instant::now();
     let mut bundler = self.bundler.lock().await;
     self.emitter.emit(WatcherEvent::ReStart, WatcherEventData::default()).await?;
@@ -118,21 +118,23 @@ impl Watcher {
 
     bundler.plugin_driver.clear();
 
-    let mut output = {
+    let output = {
       if bundler.options.watch.skip_write {
         // TODO Here should be call scan
-        bundler.generate().await?
+        bundler.generate().await
       } else {
-        bundler.write().await?
+        bundler.write().await
       }
     };
+
     let mut inner = self.inner.lock().await;
-    for file in &output.watch_files {
+    // FIXME(hyf0): probably should have a more official API/better way to get watch files
+    for file in bundler.plugin_driver.watch_files.iter() {
       // we should skip the file that is already watched, here here some reasons:
       // - The watching files has a ms level overhead.
       // - Watching the same files multiple times will cost more overhead.
       // TODO: tracking https://github.com/notify-rs/notify/issues/653
-      if self.watch_files.contains(file) {
+      if self.watch_files.contains(file.as_str()) {
         continue;
       }
       let path = Path::new(file.as_str());
@@ -147,7 +149,7 @@ impl Watcher {
         )
         .inner()
         {
-          inner.watch(path, RecursiveMode::Recursive)?;
+          inner.watch(path, RecursiveMode::Recursive).map_err_to_unhandleable()?;
           self.watch_files.insert(file.clone());
         }
       }
@@ -155,33 +157,35 @@ impl Watcher {
     // The inner mutex should be dropped to avoid deadlock with bundler lock at `Watcher::close`
     std::mem::drop(inner);
 
-    if output.errors.is_empty() {
-      self
-        .emitter
-        .emit(
-          WatcherEvent::Event,
-          BundleEventKind::BundleEnd(BundleEndEventData {
-            output: bundler.options.cwd.join(&bundler.options.dir).to_string_lossy().to_string(),
-            duration: start_time.elapsed().as_millis().to_string(),
-          })
-          .into(),
-        )
-        .await?;
-    } else {
-      self
-        .emitter
-        .emit(
-          WatcherEvent::Event,
-          BundleEventKind::Error(
-            output
-              .errors
-              .remove(0)
-              .into_diagnostic_with(&DiagnosticOptions { cwd: bundler.options.cwd.clone() })
-              .to_color_string(),
+    match output {
+      Ok(_output) => {
+        self
+          .emitter
+          .emit(
+            WatcherEvent::Event,
+            BundleEventKind::BundleEnd(BundleEndEventData {
+              output: bundler.options.cwd.join(&bundler.options.dir).to_string_lossy().to_string(),
+              duration: start_time.elapsed().as_millis().to_string(),
+            })
+            .into(),
           )
-          .into(),
-        )
-        .await?;
+          .await?;
+      }
+      Err(mut errs) => {
+        self
+          .emitter
+          .emit(
+            WatcherEvent::Event,
+            BundleEventKind::Error(
+              errs
+                .remove(0)
+                .into_diagnostic_with(&DiagnosticOptions { cwd: bundler.options.cwd.clone() })
+                .to_color_string(),
+            )
+            .into(),
+          )
+          .await?;
+      }
     }
 
     self.running.store(false, Ordering::Relaxed);
@@ -208,6 +212,10 @@ impl Watcher {
     bundler.plugin_driver.close_watcher().await?;
 
     Ok(())
+  }
+
+  pub async fn start(&self) {
+    let _ = self.run().await;
   }
 }
 

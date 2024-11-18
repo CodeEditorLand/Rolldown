@@ -1,5 +1,5 @@
 use arcstr::ArcStr;
-use rolldown_common::{Chunk, Specifier, SymbolNameRefToken};
+use rolldown_common::{Chunk, OutputFormat, Specifier, SymbolRef};
 
 use crate::{chunk_graph::ChunkGraph, stages::link_stage::LinkStageOutput};
 
@@ -9,57 +9,35 @@ pub struct RenderImportSpecifier {
   pub alias: Option<ArcStr>,
 }
 
+#[derive(Debug)]
 pub enum RenderImportDeclarationSpecifier {
   ImportSpecifier(Vec<RenderImportSpecifier>),
-  ImportStarSpecifier(ArcStr),
+  ImportStarSpecifier(),
 }
 
+#[derive(Debug)]
 pub struct ExternalRenderImportStmt {
   pub path: ArcStr,
-  pub binding_name_token: SymbolNameRefToken, // for cjs __toESM(require('foo')) and iife get deconflict name
+  pub binding_name_token: SymbolRef, // for cjs __toESM(require('foo')) and iife get deconflict name
   pub specifiers: RenderImportDeclarationSpecifier,
 }
 
-pub struct NormalRenderImportStmt {
-  pub path: ArcStr,
-  pub specifiers: RenderImportDeclarationSpecifier,
-}
-
+#[derive(Debug)]
 pub enum RenderImportStmt {
-  NormalRenderImportStmt(NormalRenderImportStmt),
+  NormalRenderImportStmt(),
   ExternalRenderImportStmt(ExternalRenderImportStmt),
-}
-
-impl RenderImportStmt {
-  pub fn path(&self) -> &ArcStr {
-    match self {
-      Self::ExternalRenderImportStmt(e) => &e.path,
-      Self::NormalRenderImportStmt(n) => &n.path,
-    }
-  }
-
-  pub fn specifiers(&self) -> &RenderImportDeclarationSpecifier {
-    match self {
-      Self::ExternalRenderImportStmt(e) => &e.specifiers,
-      Self::NormalRenderImportStmt(n) => &n.specifiers,
-    }
-  }
-
-  pub fn is_external(&self) -> bool {
-    matches!(self, Self::ExternalRenderImportStmt(_))
-  }
 }
 
 pub fn collect_render_chunk_imports(
   chunk: &Chunk,
   graph: &LinkStageOutput,
-  chunk_graph: &ChunkGraph,
+  _chunk_graph: &ChunkGraph,
+  format: &OutputFormat,
 ) -> Vec<RenderImportStmt> {
   let mut render_import_stmts = vec![];
 
   // render imports from other chunks
-  chunk.imports_from_other_chunks.iter().for_each(|(exporter_id, items)| {
-    let importee_chunk = &chunk_graph.chunk_table[*exporter_id];
+  chunk.imports_from_other_chunks.iter().for_each(|(_, items)| {
     let mut specifiers = items
       .iter()
       .map(|item| {
@@ -80,11 +58,7 @@ pub fn collect_render_chunk_imports(
       .collect::<Vec<_>>();
     specifiers.sort_unstable();
 
-    render_import_stmts.push(RenderImportStmt::NormalRenderImportStmt(NormalRenderImportStmt {
-      // TODO: filename relative to importee
-      path: chunk.import_path_for(importee_chunk).into(),
-      specifiers: RenderImportDeclarationSpecifier::ImportSpecifier(specifiers),
-    }));
+    render_import_stmts.push(RenderImportStmt::NormalRenderImportStmt());
   });
 
   // render external imports
@@ -98,7 +72,12 @@ pub fn collect_render_chunk_imports(
     let mut specifiers = named_imports
       .iter()
       .filter_map(|item| {
-        let canonical_ref = graph.symbol_db.canonical_ref_for(item.imported_as);
+        let target = if matches!(format, OutputFormat::Esm) {
+          item.imported_as
+        } else {
+          importee.namespace_ref
+        };
+        let canonical_ref = graph.symbol_db.canonical_ref_for(target);
         if !graph.used_symbol_refs.contains(&canonical_ref) {
           return None;
         };
@@ -109,10 +88,8 @@ pub fn collect_render_chunk_imports(
             render_import_stmts.push(RenderImportStmt::ExternalRenderImportStmt(
               ExternalRenderImportStmt {
                 path: importee.name.clone(),
-                binding_name_token: importee.name_token_for_external_binding.clone(),
-                specifiers: RenderImportDeclarationSpecifier::ImportStarSpecifier(
-                  alias.as_str().into(),
-                ),
+                binding_name_token: importee.namespace_ref,
+                specifiers: RenderImportDeclarationSpecifier::ImportStarSpecifier(),
               },
             ));
             None
@@ -132,7 +109,7 @@ pub fn collect_render_chunk_imports(
       render_import_stmts.push(RenderImportStmt::ExternalRenderImportStmt(
         ExternalRenderImportStmt {
           path: importee.name.clone(),
-          binding_name_token: importee.name_token_for_external_binding.clone(),
+          binding_name_token: importee.namespace_ref,
           specifiers: RenderImportDeclarationSpecifier::ImportSpecifier(specifiers),
         },
       ));

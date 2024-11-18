@@ -13,7 +13,7 @@ use rolldown::{
   OutputFormat, SourceMapType,
 };
 use rolldown_common::Output;
-use rolldown_error::DiagnosticOptions;
+use rolldown_error::{BuildDiagnostic, BuildResult, DiagnosticOptions};
 use rolldown_sourcemap::SourcemapVisualizer;
 use rolldown_testing_config::TestMeta;
 use serde_json::{Map, Value};
@@ -35,7 +35,7 @@ impl IntegrationTest {
     Self { test_meta }
   }
 
-  pub async fn bundle(&self, mut options: BundlerOptions) -> BundleOutput {
+  pub async fn bundle(&self, mut options: BundlerOptions) -> BuildResult<BundleOutput> {
     self.apply_test_defaults(&mut options);
 
     let mut bundler = Bundler::new(options);
@@ -46,9 +46,9 @@ impl IntegrationTest {
           .context(bundler.options().dir.clone())
           .expect("Failed to clean the output directory");
       }
-      bundler.write().await.unwrap()
+      bundler.write().await
     } else {
-      bundler.generate().await.unwrap()
+      bundler.generate().await
     }
   }
 
@@ -74,31 +74,36 @@ impl IntegrationTest {
           .context(format!("{abs_output_dir:?}"))
           .expect("Failed to clean the output directory");
       }
-      bundler.write().await.unwrap()
+      bundler.write().await
     } else {
-      bundler.generate().await.unwrap()
+      bundler.generate().await
     };
 
-    assert!(
-      !(self.test_meta.expect_error && bundle_output.errors.is_empty()),
-      "Expected the bundling to be failed with diagnosable errors, but got success"
-    );
+    match bundle_output {
+      Ok(bundle_output) => {
+        assert!(
+          !self.test_meta.expect_error,
+          "Expected the bundling to be failed with diagnosable errors, but got success"
+        );
 
-    assert!(
-      !(!bundle_output.errors.is_empty() && !self.test_meta.expect_error),
-      "Expected the bundling to be success, but got diagnosable errors: {:?}",
-      bundle_output.errors
-    );
+        self.snapshot_bundle_output(bundle_output, vec![], &cwd);
 
-    self.snapshot_bundle_output(bundle_output, &cwd);
-
-    if !self.test_meta.expect_executed
-      || self.test_meta.expect_error
-      || !self.test_meta.write_to_disk
-    {
-      // do nothing
-    } else {
-      Self::execute_output_assets(&bundler);
+        if !self.test_meta.expect_executed
+          || self.test_meta.expect_error
+          || !self.test_meta.write_to_disk
+        {
+          // do nothing
+        } else {
+          Self::execute_output_assets(&bundler);
+        }
+      }
+      Err(errs) => {
+        assert!(
+          self.test_meta.expect_error,
+          "Expected the bundling to be success, but got diagnosable errors: {errs:#?}"
+        );
+        self.snapshot_bundle_output(BundleOutput::default(), errs.into_vec(), &cwd);
+      }
     }
   }
 
@@ -147,8 +152,13 @@ impl IntegrationTest {
 
   #[allow(clippy::too_many_lines)]
   #[allow(clippy::if_not_else)]
-  fn snapshot_bundle_output(&self, bundle_output: BundleOutput, cwd: &Path) {
-    let mut errors = bundle_output.errors;
+  fn snapshot_bundle_output(
+    &self,
+    bundle_output: BundleOutput,
+    errs: Vec<BuildDiagnostic>,
+    cwd: &Path,
+  ) {
+    let mut errors = errs;
     let errors_section = if !errors.is_empty() {
       let mut snapshot = String::new();
       snapshot.push_str("# Errors\n\n");

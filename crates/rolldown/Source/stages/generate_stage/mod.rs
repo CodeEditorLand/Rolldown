@@ -1,9 +1,9 @@
 use std::collections::hash_map::Entry;
 
-use anyhow::Result;
 use arcstr::ArcStr;
 use oxc::{ast::VisitMut, index::IndexVec};
 use rolldown_ecmascript_utils::AstSnippet;
+use rolldown_error::BuildResult;
 use rolldown_std_utils::OptionExt;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -13,6 +13,7 @@ use rolldown_common::{
 };
 use rolldown_plugin::SharedPluginDriver;
 use rolldown_utils::{
+  concat_string,
   extract_hash_pattern::extract_hash_pattern,
   hash_placeholder::HashPlaceholderGenerator,
   path_buf_ext::PathBufExt,
@@ -61,7 +62,7 @@ impl<'a> GenerateStage<'a> {
   }
 
   #[tracing::instrument(level = "debug", skip_all)]
-  pub async fn generate(&mut self) -> Result<BundleOutput> {
+  pub async fn generate(&mut self) -> BuildResult<BundleOutput> {
     let mut chunk_graph = self.generate_chunks().await?;
     if chunk_graph.chunk_table.len() > 1 {
       validate_options_for_multi_chunk_output(self.options)?;
@@ -197,7 +198,7 @@ impl<'a> GenerateStage<'a> {
               let next_count = *occ.get();
               occ.insert(next_count + 1);
               candidate =
-                ArcStr::from(format!("{}{}", name, itoa::Buffer::new().format(next_count)));
+                ArcStr::from(concat_string!(name, itoa::Buffer::new().format(next_count)).as_str());
             }
             Entry::Vacant(vac) => {
               // This is the first time we see this name
