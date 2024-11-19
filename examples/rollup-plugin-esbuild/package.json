@@ -11,7 +11,7 @@
 		"rollup-plugin-esbuild": "6.1.1"
 	},
 	"devDependencies": {
-		"@playform/build": "0.1.8",
+		"@playform/build": "0.1.9",
 		"rolldown": "workspace:*"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",

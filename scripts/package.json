@@ -29,7 +29,7 @@
 	},
 	"devDependencies": {
 		"@oxc-node/core": "^0.0.15",
-		"@playform/build": "0.1.8",
+		"@playform/build": "0.1.9",
 		"@types/diff": "^6.0.0",
 		"@types/lodash-es": "^4.17.12",
 		"acorn": "^8.14.0",

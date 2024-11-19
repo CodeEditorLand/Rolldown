@@ -17,7 +17,7 @@
 	"devDependencies": {
 		"@napi-rs/cli": "^3.0.0-alpha.60",
 		"@napi-rs/wasm-runtime": "^0.2.5",
-		"@playform/build": "0.1.8",
+		"@playform/build": "0.1.9",
 		"@rolldown/testing": "workspace:*",
 		"@types/lodash-es": "^4.17.12",
 		"colorette": "^2.0.20",

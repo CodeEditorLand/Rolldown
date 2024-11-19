@@ -15,7 +15,7 @@
 		"source-map-support": "^0.5.21"
 	},
 	"devDependencies": {
-		"@playform/build": "0.1.8",
+		"@playform/build": "0.1.9",
 		"@types/node": "22.9.0",
 		"buble": "^0.20.0",
 		"source-map": "^0.7.4",
