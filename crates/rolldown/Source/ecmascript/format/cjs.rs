@@ -1,4 +1,3 @@
-use crate::utils::chunk::collect_render_chunk_imports::RenderImportStmt;
 use crate::utils::chunk::determine_export_mode::determine_export_mode;
 use crate::utils::chunk::namespace_marker::render_namespace_markers;
 use crate::utils::chunk::render_chunk_exports::get_export_items;
@@ -6,21 +5,18 @@ use crate::{
   ecmascript::ecma_generator::RenderedModuleSources,
   types::generator::GenerateContext,
   utils::chunk::{
-    collect_render_chunk_imports::{
-      collect_render_chunk_imports, RenderImportDeclarationSpecifier,
-    },
-    determine_use_strict::determine_use_strict,
-    render_chunk_exports::render_chunk_exports,
+    determine_use_strict::determine_use_strict, render_chunk_exports::render_chunk_exports,
   },
 };
 use rolldown_common::{ChunkKind, ExportsKind, Module, OutputExports, WrapKind};
-use rolldown_error::BuildResult;
+use rolldown_error::{BuildDiagnostic, BuildResult};
 use rolldown_sourcemap::SourceJoiner;
 use rolldown_utils::concat_string;
 
-#[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_lines, clippy::too_many_arguments)]
 pub fn render_cjs<'code>(
-  ctx: &mut GenerateContext<'_>,
+  warnings: &mut Vec<BuildDiagnostic>,
+  ctx: &GenerateContext<'_>,
   module_sources: &'code RenderedModuleSources,
   banner: Option<&'code str>,
   footer: Option<&'code str>,
@@ -53,11 +49,11 @@ pub fn render_cjs<'code>(
       if matches!(entry_module.exports_kind, ExportsKind::Esm) {
         let export_items = get_export_items(ctx.chunk, ctx.link_output);
         let has_default_export = export_items.iter().any(|(name, _)| name.as_str() == "default");
-        let export_mode = determine_export_mode(ctx, entry_module, &export_items)?;
+        let export_mode = determine_export_mode(warnings, ctx, entry_module, &export_items)?;
         // Only `named` export can we render the namespace markers.
         if matches!(&export_mode, OutputExports::Named) {
           if let Some(marker) =
-            render_namespace_markers(&ctx.options.es_module, has_default_export, false)
+            render_namespace_markers(ctx.options.es_module, has_default_export, false)
           {
             source_joiner.append_source(marker.to_string());
           }
@@ -108,8 +104,12 @@ pub fn render_cjs<'code>(
       WrapKind::Esm => {
         // init_xxx()
         let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
-        let wrapper_ref_name =
-          ctx.link_output.symbol_db.canonical_name_for(*wrapper_ref, &ctx.chunk.canonical_names);
+        let wrapper_ref_name = ctx.finalized_string_pattern_for_symbol_ref(
+          *wrapper_ref,
+          ctx.chunk_idx,
+          &ctx.chunk.canonical_names,
+        );
+        ctx.link_output.symbol_db.canonical_name_for(*wrapper_ref, &ctx.chunk.canonical_names);
         source_joiner.append_source(concat_string!(wrapper_ref_name, "();"));
       }
       WrapKind::Cjs => {
@@ -142,9 +142,6 @@ pub fn render_cjs<'code>(
 
 // Make sure the imports generate stmts keep live bindings.
 fn render_cjs_chunk_imports(ctx: &GenerateContext<'_>) -> String {
-  let render_import_stmts =
-    collect_render_chunk_imports(ctx.chunk, ctx.link_output, ctx.chunk_graph, &ctx.options.format);
-
   let mut s = String::new();
 
   // render imports from other chunks
@@ -162,33 +159,31 @@ fn render_cjs_chunk_imports(ctx: &GenerateContext<'_>) -> String {
     }
   });
 
-  render_import_stmts.iter().for_each(|stmt| {
-    if let RenderImportStmt::ExternalRenderImportStmt(stmt) = stmt {
-      let has_specifiers = match &stmt.specifiers {
-        RenderImportDeclarationSpecifier::ImportSpecifier(specifiers) => !specifiers.is_empty(),
-        RenderImportDeclarationSpecifier::ImportStarSpecifier() => true,
-      };
+  // render external imports
+  ctx.chunk.imports_from_external_modules.iter().for_each(|(importee_id, _)| {
+    let importee = ctx.link_output.module_table.modules[*importee_id]
+      .as_external()
+      .expect("Should be external module here");
 
-      let require_path_str = concat_string!("require(\"", &stmt.path, "\")");
+    let require_path_str = concat_string!("require(\"", &importee.name, "\")");
 
-      if has_specifiers {
-        let to_esm_fn_name = &ctx.chunk.canonical_names[&ctx
-          .link_output
-          .symbol_db
-          .canonical_ref_for(ctx.link_output.runtime.resolve_symbol("__toESM"))];
+    if ctx.link_output.used_symbol_refs.contains(&importee.namespace_ref) {
+      let to_esm_fn_name = &ctx.chunk.canonical_names[&ctx
+        .link_output
+        .symbol_db
+        .canonical_ref_for(ctx.link_output.runtime.resolve_symbol("__toESM"))];
 
-        let external_module_symbol_name = &ctx.chunk.canonical_names[&stmt.binding_name_token];
-        s.push_str("const ");
-        s.push_str(external_module_symbol_name);
-        s.push_str(" = ");
-        s.push_str(to_esm_fn_name);
-        s.push('(');
-        s.push_str(&require_path_str);
-        s.push_str(");\n");
-      } else {
-        s.push_str(&require_path_str);
-        s.push_str(";\n");
-      }
+      let external_module_symbol_name = &ctx.chunk.canonical_names[&importee.namespace_ref];
+      s.push_str("const ");
+      s.push_str(external_module_symbol_name);
+      s.push_str(" = ");
+      s.push_str(to_esm_fn_name);
+      s.push('(');
+      s.push_str(&require_path_str);
+      s.push_str(");\n");
+    } else if importee.side_effects.has_side_effects() {
+      s.push_str(&require_path_str);
+      s.push_str(";\n");
     }
   });
 
