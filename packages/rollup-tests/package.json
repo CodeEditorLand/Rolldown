@@ -10,7 +10,7 @@
 	"dependencies": {
 		"fixturify": "3.0.0",
 		"fs-extra": "11.2.0",
-		"oxc-transform": "0.36.0",
+		"oxc-transform": "0.37.0",
 		"rolldown": "workspace:*",
 		"source-map-support": "0.5.21"
 	},
