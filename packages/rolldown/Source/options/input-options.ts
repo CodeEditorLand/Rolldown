@@ -1,214 +1,158 @@
-import { z } from "zod";
-
-import { dim, gray, underline, yellow } from "../cli/colors";
+import { RolldownPluginRec } from '../plugin'
 import {
-	LogLevelOptionSchema,
-	LogLevelSchema,
-	LogLevelWithErrorSchema,
-	RollupLogSchema,
-	RollupLogWithStringSchema,
-} from "../log/logging";
-import type { RolldownPluginRec } from "../plugin";
-import { TreeshakingOptionsSchema } from "../treeshake";
-import type {
-	ExternalOption,
-	InputCliOptions,
-	InputOption,
-	InputOptions,
-	JsxOptions,
-	ModuleTypes,
-	WatchOptions,
-} from "../types/input-options";
-import type { StringOrRegExp } from "../types/utils";
-import * as zodExt from "../utils/zod-ext";
+  LogLevel,
+  LogLevelOption,
+  LogLevelWithError,
+  RollupLog,
+  RollupLogWithString,
+} from '../log/logging'
+import { TreeshakingOptions } from '../treeshake'
+import { NullValue, StringOrRegExp } from '../types/utils'
 
-const inputOptionSchema = z
-	.string()
-	.or(z.string().array())
-	.or(z.record(z.string())) satisfies z.ZodType<InputOption>;
+export type InputOption = string | string[] | Record<string, string>
 
-const externalSchema = zodExt
-	.stringOrRegExp()
-	.or(zodExt.stringOrRegExp().array())
-	.or(
-		z
-			.function()
-			.args(z.string(), z.string().optional(), z.boolean())
-			.returns(zodExt.voidNullableWith(z.boolean())),
-	) satisfies z.ZodType<ExternalOption>;
+export type ExternalOption =
+  | StringOrRegExp
+  | StringOrRegExp[]
+  | ((
+      id: string,
+      parentId: string | undefined,
+      isResolved: boolean,
+    ) => NullValue<boolean>)
 
-const moduleTypesSchema = z.record(
-	z
-		.literal("js")
-		.or(z.literal("jsx"))
-		.or(z.literal("ts"))
-		.or(z.literal("tsx"))
-		.or(z.literal("json"))
-		.or(z.literal("text"))
-		.or(z.literal("base64"))
-		.or(z.literal("dataurl"))
-		.or(z.literal("binary"))
-		.or(z.literal("empty"))
-		.or(z.literal("css")),
-) satisfies z.ZodType<ModuleTypes>;
+export type ModuleTypes = Record<
+  string,
+  | 'js'
+  | 'jsx'
+  | 'ts'
+  | 'tsx'
+  | 'json'
+  | 'text'
+  | 'base64'
+  | 'dataurl'
+  | 'binary'
+  | 'empty'
+  | 'css'
+>
 
-const jsxOptionsSchema = z.strictObject({
-	mode: z
-		.literal("classic")
-		.or(z.literal("automatic"))
-		.describe("Jsx transformation mode")
-		.optional(), // The rollup preserve is not supported at now
-	factory: z.string().describe("Jsx element transformation").optional(),
-	fragment: z.string().describe("Jsx fragment transformation").optional(),
-	importSource: z
-		.string()
-		.describe(
-			"Import the factory of element and fragment if mode is classic",
-		)
-		.optional(),
-	jsxImportSource: z
-		.string()
-		.describe(
-			"Import the factory of element and fragment if mode is automatic",
-		)
-		.optional(),
-	refresh: z.boolean().describe("React refresh transformation").optional(),
-	development: z
-		.boolean()
-		.describe("Development specific information")
-		.optional(),
-	// The rollup preset is not supported at now
-}) satisfies z.ZodType<JsxOptions>;
+export interface JsxOptions {
+  mode?: 'classic' | 'automatic'
+  factory?: string
+  fragment?: string
+  importSource?: string
+  jsxImportSource?: string
+  refresh?: boolean
+  development?: boolean
+}
 
-const stringOrRegExpSchema = zodExt
-	.stringOrRegExp()
-	.or(zodExt.stringOrRegExp().array()) satisfies z.ZodType<
-	StringOrRegExp | StringOrRegExp[]
->;
+export interface WatchOptions {
+  skipWrite?: boolean
+  notify?: {
+    pollInterval?: number
+    compareContents?: boolean
+  }
+  include?: StringOrRegExp | StringOrRegExp[]
+  exclude?: StringOrRegExp | StringOrRegExp[]
+  chokidar?: any
+}
 
-const watchOptionsSchema = z.strictObject({
-	skipWrite: z.boolean().describe("Skip the bundle.write() step").optional(),
-	notify: z
-		.strictObject({
-			pollInterval: z.number().optional(),
-			compareContents: z.boolean().optional(),
-		})
-		.describe("Notify options")
-		.optional(),
-	include: stringOrRegExpSchema.optional(),
-	exclude: stringOrRegExpSchema.optional(),
-	chokidar: z.any().optional(),
-}) satisfies z.ZodType<WatchOptions>;
+export interface InputOptions {
+  input?: InputOption
+  plugins?: RolldownPluginRec[]
+  external?: ExternalOption
+  resolve?: {
+    alias?: Record<string, string>
+    aliasFields?: string[][]
+    conditionNames?: string[]
+    extensionAlias?: Record<string, string[]>
+    exportsFields?: string[][]
+    extensions?: string[]
+    mainFields?: string[]
+    mainFiles?: string[]
+    modules?: string[]
+    symlinks?: boolean
+    tsconfigFilename?: string
+  }
+  cwd?: string
+  /**
+   * Expected platform where the code run.
+   *
+   * @default
+   * - 'node' if the format is 'cjs'
+   * - 'browser' for other formats
+   */
+  platform?: 'node' | 'browser' | 'neutral'
+  shimMissingExports?: boolean
+  treeshake?: boolean | TreeshakingOptions
+  logLevel?: LogLevelOption
+  onLog?: (
+    level: LogLevel,
+    log: RollupLog,
+    defaultHandler: (
+      level: LogLevelWithError,
+      log: RollupLogWithString,
+    ) => void,
+  ) => void
+  onwarn?: (
+    warning: RollupLog,
+    defaultHandler: (
+      warning: RollupLogWithString | (() => RollupLogWithString),
+    ) => void,
+  ) => void
+  moduleTypes?: ModuleTypes
+  experimental?: {
+    enableComposingJsPlugins?: boolean
+    strictExecutionOrder?: boolean
+    disableLiveBindings?: boolean
+    viteMode?: boolean
+  }
+  define?: Record<string, string>
+  /**
+   * Inject import statements on demand.
+   *
+   * ## Supported patterns
+   * ```js
+   * {
+   *   // import { Promise } from 'es6-promise'
+   *   Promise: ['es6-promise', 'Promise'],
+   *
+   *   // import { Promise as P } from 'es6-promise'
+   *   P: ['es6-promise', 'Promise'],
+   *
+   *   // import $ from 'jquery'
+   *   $: 'jquery',
+   *
+   *   // import * as fs from 'node:fs'
+   *   fs: ['node:fs', '*'],
+   *
+   *   // Inject shims for property access pattern
+   *   'Object.assign': path.resolve( 'src/helpers/object-assign.js' ),
+   * }
+   * ```
+   */
+  inject?: Record<string, string | [string, string]>
+  profilerNames?: boolean
+  jsx?: JsxOptions
+  watch?: WatchOptions | false
+  dropLabels?: string[]
+}
 
-export const inputOptionsSchema = z.strictObject({
-	input: inputOptionSchema.optional(),
-	plugins: zodExt.phantom<RolldownPluginRec>().array().optional(),
-	external: externalSchema.optional(),
-	resolve: z
-		.strictObject({
-			alias: z.record(z.string()).optional(),
-			aliasFields: z.array(z.array(z.string())).optional(),
-			conditionNames: zodExt.optionalStringArray(),
-			extensionAlias: z
-				.record(z.string(), z.array(z.string()))
-				.optional(),
-			exportsFields: z.array(z.array(z.string())).optional(),
-			extensions: zodExt.optionalStringArray(),
-			mainFields: zodExt.optionalStringArray(),
-			mainFiles: zodExt.optionalStringArray(),
-			modules: zodExt.optionalStringArray(),
-			symlinks: z.boolean().optional(),
-			tsconfigFilename: z.string().optional(),
-		})
-		.optional(),
-	cwd: z.string().describe("Current working directory").optional(),
-	platform: z
-		.literal("node")
-		.or(z.literal("browser"))
-		.or(z.literal("neutral"))
-		.describe(
-			`Platform for which the code should be generated (node, ${underline("browser")}, neutral)`,
-		)
-		.optional(),
-	shimMissingExports: z
-		.boolean()
-		.describe(`Create shim variables for missing exports`)
-		.optional(),
-	treeshake: TreeshakingOptionsSchema.optional(),
-	logLevel: LogLevelOptionSchema.describe(
-		`Log level (${dim("silent")}, ${underline(gray("info"))}, debug, ${yellow("warn")})`,
-	).optional(),
-	onLog: z
-		.function()
-		.args(
-			LogLevelSchema,
-			RollupLogSchema,
-			z
-				.function()
-				.args(LogLevelWithErrorSchema, RollupLogWithStringSchema),
-		)
-		.optional(),
-	onwarn: z
-		.function()
-		.args(
-			RollupLogSchema,
-			z
-				.function()
-				.args(
-					RollupLogWithStringSchema.or(
-						z.function().returns(RollupLogWithStringSchema),
-					),
-				),
-		)
-		.optional(),
-	moduleTypes: moduleTypesSchema
-		.describe("Module types for customized extensions")
-		.optional(),
-	experimental: z
-		.strictObject({
-			enableComposingJsPlugins: z.boolean().optional(),
-			strictExecutionOrder: z.boolean().optional(),
-			disableLiveBindings: z.boolean().optional(),
-		})
-		.optional(),
-	define: z.record(z.string()).describe("Define global variables").optional(),
-	inject: z
-		.record(z.string().or(z.tuple([z.string(), z.string()])))
-		.optional(),
-	profilerNames: z.boolean().optional(),
-	jsx: jsxOptionsSchema.optional(),
-	watch: watchOptionsSchema.or(z.literal(false)).optional(),
-	dropLabels: z
-		.array(z.string())
-		.describe("Remove labeled statements with these label names")
-		.optional(),
-}) satisfies z.ZodType<InputOptions>;
+interface OverwriteInputOptionsForCli {
+  external?: string[]
+  inject?: Record<string, string>
+  treeshake?: boolean
+}
 
-export const inputCliOptionsSchema = inputOptionsSchema
-	.extend({
-		external: z
-			.array(z.string())
-			.describe(
-				"Comma-separated list of module ids to exclude from the bundle `<module-id>,...`",
-			)
-			.optional(),
-		inject: z
-			.record(z.string())
-			.describe("Inject import statements on demand")
-			.optional(),
-		treeshake: z
-			.boolean()
-			.describe("enable treeshaking")
-			.default(true)
-			.optional(),
-	})
-	.omit({
-		input: true,
-		plugins: true,
-		onwarn: true,
-		onLog: true,
-		resolve: true,
-		experimental: true,
-		profilerNames: true,
-		watch: true,
-	}) satisfies z.ZodType<InputCliOptions>;
+export type InputCliOptions = Omit<
+  InputOptions,
+  | keyof OverwriteInputOptionsForCli
+  | 'input'
+  | 'plugins'
+  | 'onwarn'
+  | 'onLog'
+  | 'resolve'
+  | 'experimental'
+  | 'profilerNames'
+  | 'watch'
+> &
+  OverwriteInputOptionsForCli
