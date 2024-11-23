@@ -10,7 +10,7 @@ use std::{
 use anyhow::Context;
 use rolldown::{
   plugin::__inner::SharedPluginable, BundleOutput, Bundler, BundlerOptions, IsExternal,
-  OutputFormat, SourceMapType,
+  OutputFormat, Platform, SourceMapType,
 };
 use rolldown_common::Output;
 use rolldown_error::{BuildDiagnostic, BuildResult, DiagnosticOptions};
@@ -99,7 +99,7 @@ impl IntegrationTest {
         {
           // do nothing
         } else {
-          Self::execute_output_assets(&bundler);
+          Self::execute_output_assets(&bundler, "");
         }
       }
       Err(errs) => {
@@ -160,7 +160,7 @@ impl IntegrationTest {
           {
             // do nothing
           } else {
-            Self::execute_output_assets(&bundler);
+            Self::execute_output_assets(&bundler, &debug_title);
           }
         }
         Err(errs) => {
@@ -438,14 +438,16 @@ impl IntegrationTest {
     });
   }
 
-  fn execute_output_assets(bundler: &Bundler) {
+  fn execute_output_assets(bundler: &Bundler, test_title: &str) {
     let cwd = bundler.options().cwd.clone();
     let dist_folder = cwd.join(&bundler.options().dir);
 
-    let is_output_cjs = matches!(bundler.options().format, OutputFormat::Cjs);
+    let is_expect_executed_under_esm = matches!(bundler.options().format, OutputFormat::Esm)
+      || (!matches!(bundler.options().format, OutputFormat::Cjs)
+        && matches!(bundler.options().platform, Platform::Browser));
 
     // add a dummy `package.json` to allow `import and export` when output module format is `esm`
-    if !is_output_cjs {
+    if is_expect_executed_under_esm {
       let package_json_path = dist_folder.join("package.json");
       let mut package_json = std::fs::File::options()
         .create(true)
@@ -462,16 +464,7 @@ impl IntegrationTest {
       package_json.write_all(serde_json::to_string_pretty(&json).unwrap().as_bytes()).unwrap();
     }
 
-    let mut test_script = cwd.join("_test.mjs");
-
-    let mut is_cjs_test_script = false;
-    if is_output_cjs {
-      let cjs_test_script = cwd.join("_test.cjs");
-      if cjs_test_script.is_dir() {
-        test_script = cjs_test_script;
-        is_cjs_test_script = true;
-      }
-    }
+    let test_script = cwd.join("_test.mjs");
 
     let mut node_command = Command::new("node");
 
@@ -491,12 +484,8 @@ impl IntegrationTest {
         .collect::<Vec<_>>();
 
       compiled_entries.iter().for_each(|entry| {
-        if is_cjs_test_script {
-          node_command.arg("--require");
-        } else {
-          node_command.arg("--import");
-        }
-        if cfg!(target_os = "windows") && !is_cjs_test_script {
+        node_command.arg("--import");
+        if cfg!(target_os = "windows") {
           // Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs.
           node_command.arg(format!("file://{}", entry.to_str().expect("should be valid utf8")));
         } else {
@@ -514,8 +503,12 @@ impl IntegrationTest {
       let stdout_utf8 = std::str::from_utf8(&output.stdout).unwrap();
       let stderr_utf8 = std::str::from_utf8(&output.stderr).unwrap();
 
-      println!("⬇️⬇️ Failed to execute command ⬇️⬇️\n{node_command:?}\n⬆️⬆️ end  ⬆️⬆️");
-      panic!("⬇️⬇️ stderr ⬇️⬇️\n{stderr_utf8}\n⬇️⬇️ stdout ⬇️⬇️\n{stdout_utf8}\n⬆️⬆️ end  ⬆️⬆️",);
+      println!(
+        "⬇️⬇️ Failed to execute command {test_title} ⬇️⬇️\n{node_command:?}\n⬆️⬆️ end  ⬆️⬆️"
+      );
+      panic!(
+        "⬇️⬇️ stderr {test_title} ⬇️⬇️\n{stderr_utf8}\n⬇️⬇️ stdout ⬇️⬇️\n{stdout_utf8}\n⬆️⬆️ end  ⬆️⬆️",
+      );
     }
   }
 }

@@ -34,7 +34,7 @@ use crate::{
   },
 };
 use arcstr::ArcStr;
-use rolldown_common::{ChunkKind, ExternalModule, OutputExports};
+use rolldown_common::{ExternalModule, OutputExports, WrapKind};
 use rolldown_error::{BuildDiagnostic, BuildResult};
 use rolldown_sourcemap::SourceJoiner;
 use rolldown_utils::{concat_string, ecmascript::legitimize_identifier_name};
@@ -42,16 +42,16 @@ use rolldown_utils::{concat_string, ecmascript::legitimize_identifier_name};
 use super::utils::{render_chunk_external_imports, render_factory_parameters};
 
 /// The main function for rendering the IIFE format chunks.
-#[allow(clippy::too_many_arguments)]
-pub fn render_iife<'code>(
-  warnings: &mut Vec<BuildDiagnostic>,
+#[expect(clippy::too_many_arguments, clippy::too_many_lines)]
+pub async fn render_iife<'code>(
   ctx: &GenerateContext<'_>,
-  module_sources: &'code RenderedModuleSources,
+  hashbang: Option<&'code str>,
   banner: Option<&'code str>,
-  footer: Option<&'code str>,
   intro: Option<&'code str>,
   outro: Option<&'code str>,
-  hashbang: Option<&'code str>,
+  footer: Option<&'code str>,
+  module_sources: &'code RenderedModuleSources,
+  warnings: &mut Vec<BuildDiagnostic>,
 ) -> BuildResult<SourceJoiner<'code>> {
   let mut source_joiner = SourceJoiner::default();
 
@@ -70,12 +70,10 @@ pub fn render_iife<'code>(
   let has_exports = !export_items.is_empty();
   let has_default_export = export_items.iter().any(|(name, _)| name.as_str() == "default");
 
-  let entry_module = match ctx.chunk.kind {
-    ChunkKind::EntryPoint { module, .. } => {
-      &ctx.link_output.module_table.modules[module].as_normal().expect("should be normal module")
-    }
-    ChunkKind::Common => unreachable!("iife should be entry point chunk"),
-  };
+  let entry_module = ctx
+    .chunk
+    .entry_module(&ctx.link_output.module_table)
+    .expect("iife format only have entry chunk");
 
   // We need to transform the `OutputExports::Auto` to suitable `OutputExports`.
   let export_mode = determine_export_mode(warnings, ctx, entry_module, &export_items)?;
@@ -164,6 +162,37 @@ pub fn render_iife<'code>(
     }
   });
 
+  if let Some(entry_id) = ctx.chunk.entry_module_idx() {
+    let entry_meta = &ctx.link_output.metas[entry_id];
+    match entry_meta.wrap_kind {
+      WrapKind::Esm => {
+        let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
+        // init_xxx
+        let wrapper_ref_name = ctx.finalized_string_pattern_for_symbol_ref(
+          *wrapper_ref,
+          ctx.chunk_idx,
+          &ctx.chunk.canonical_names,
+        );
+        ctx.link_output.symbol_db.canonical_name_for(*wrapper_ref, &ctx.chunk.canonical_names);
+        source_joiner.append_source(concat_string!(wrapper_ref_name, "();"));
+      }
+      WrapKind::Cjs => {
+        let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
+
+        // require_xxx
+        let wrapper_ref_name = ctx.finalized_string_pattern_for_symbol_ref(
+          *wrapper_ref,
+          ctx.chunk_idx,
+          &ctx.chunk.canonical_names,
+        );
+
+        // return require_xxx();
+        source_joiner.append_source(concat_string!("return ", wrapper_ref_name, "();\n"));
+      }
+      WrapKind::None => {}
+    }
+  }
+
   // iife exports
   if let Some(exports) = render_chunk_exports(ctx, Some(&export_mode)) {
     source_joiner.append_source(exports);
@@ -179,7 +208,8 @@ pub fn render_iife<'code>(
   }
 
   // iife wrapper end
-  let factory_arguments = render_iife_factory_arguments(warnings, ctx, &externals, exports_prefix);
+  let factory_arguments =
+    render_iife_factory_arguments(warnings, ctx, &externals, exports_prefix).await;
   source_joiner.append_source(concat_string!("})(", factory_arguments, ");"));
 
   if let Some(footer) = footer {
@@ -189,7 +219,7 @@ pub fn render_iife<'code>(
   Ok(source_joiner)
 }
 
-fn render_iife_factory_arguments(
+async fn render_iife_factory_arguments(
   warnings: &mut Vec<BuildDiagnostic>,
   ctx: &GenerateContext<'_>,
   externals: &[&ExternalModule],
@@ -201,17 +231,20 @@ fn render_iife_factory_arguments(
     vec![]
   };
   let globals = &ctx.options.globals;
-  externals.iter().for_each(|external| {
-    if let Some(global) = globals.get(external.name.as_str()) {
-      factory_arguments.push(legitimize_identifier_name(global).to_string());
-    } else {
-      let target = legitimize_identifier_name(&external.name).to_string();
-      warnings.push(
-        BuildDiagnostic::missing_global_name(external.name.clone(), ArcStr::from(&target))
-          .with_severity_warning(),
-      );
-      factory_arguments.push(target);
-    }
-  });
+  for external in externals {
+    let global = globals.call(external.name.as_str()).await;
+    let target = match &global {
+      Some(global_name) => legitimize_identifier_name(global_name).to_string(),
+      None => {
+        let target = legitimize_identifier_name(&external.name).to_string();
+        warnings.push(
+          BuildDiagnostic::missing_global_name(external.name.clone(), ArcStr::from(&target))
+            .with_severity_warning(),
+        );
+        target
+      }
+    };
+    factory_arguments.push(target);
+  }
   factory_arguments.join(", ")
 }

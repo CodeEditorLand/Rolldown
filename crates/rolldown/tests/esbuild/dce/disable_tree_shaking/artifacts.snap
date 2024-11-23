@@ -1,0 +1,22 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# Assets
+
+## entry.js
+
+```js
+
+//#region entry.jsx
+function KeepMe1() {}
+let keepMe2 = React.createElement(KeepMe1, null);
+function keepMe3() {
+	console.log("side effects");
+}
+let keepMe4 = /* @__PURE__ */ keepMe3();
+let keepMe5 = pure();
+let keepMe6 = some.fn();
+
+//#endregion
+```

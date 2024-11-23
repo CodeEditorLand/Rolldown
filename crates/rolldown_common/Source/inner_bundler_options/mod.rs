@@ -5,6 +5,7 @@ use types::advanced_chunks_options::AdvancedChunksOptions;
 use types::checks_options::ChecksOptions;
 use types::comments::Comments;
 use types::inject_import::InjectImport;
+use types::output_option::GlobalsOutputOption;
 use types::target::ESTarget;
 use types::watch_option::WatchOption;
 
@@ -76,7 +77,12 @@ pub struct BundlerOptions {
   pub file: Option<String>,
   pub format: Option<OutputFormat>,
   pub exports: Option<OutputExports>,
-  pub globals: Option<HashMap<String, String>>,
+  #[cfg_attr(
+    feature = "deserialize_bundler_options",
+    serde(default, deserialize_with = "deserialize_globals"),
+    schemars(with = "Option<HashMap<String, String>>")
+  )]
+  pub globals: Option<GlobalsOutputOption>,
   pub sourcemap: Option<SourceMapType>,
   pub es_module: Option<EsModuleFlag>,
   pub drop_labels: Option<Vec<String>>,
@@ -183,6 +189,15 @@ where
 }
 
 #[cfg(feature = "deserialize_bundler_options")]
+fn deserialize_globals<'de, D>(deserializer: D) -> Result<Option<GlobalsOutputOption>, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let deserialized = Option::<HashMap<String, String>>::deserialize(deserializer)?;
+  Ok(deserialized.map(From::from))
+}
+
+#[cfg(feature = "deserialize_bundler_options")]
 fn deserialize_treeshake<'de, D>(deserializer: D) -> Result<TreeshakeOptions, D::Error>
 where
   D: Deserializer<'de>,
@@ -193,6 +208,7 @@ where
     None | Some(Value::Bool(true)) => {
       Ok(TreeshakeOptions::Option(types::treeshake::InnerOptions {
         module_side_effects: types::treeshake::ModuleSideEffects::Boolean(true),
+        annotations: Some(true),
       }))
     }
     Some(Value::Object(obj)) => {
@@ -203,7 +219,17 @@ where
           _ => Err(serde::de::Error::custom("moduleSideEffects should be a `true` or `false`")),
         },
       )?;
-      Ok(TreeshakeOptions::Option(types::treeshake::InnerOptions { module_side_effects }))
+      let annotations = obj.get("annotations").map_or_else(
+        || Ok(Some(true)),
+        |v| match v {
+          Value::Bool(b) => Ok(Some(*b)),
+          _ => Err(serde::de::Error::custom("annotations should be a `true` or `false`")),
+        },
+      )?;
+      Ok(TreeshakeOptions::Option(types::treeshake::InnerOptions {
+        module_side_effects,
+        annotations,
+      }))
     }
     _ => Err(serde::de::Error::custom("treeshake should be a boolean or an object")),
   }

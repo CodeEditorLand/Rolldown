@@ -551,6 +551,12 @@
             "boolean",
             "null"
           ]
+        },
+        "viteMode": {
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       },
       "additionalProperties": false
@@ -624,6 +630,12 @@
     "InnerOptions": {
       "type": "object",
       "properties": {
+        "annotations": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "moduleSideEffects": {
           "type": [
             "boolean",

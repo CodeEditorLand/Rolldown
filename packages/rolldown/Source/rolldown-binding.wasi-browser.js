@@ -93,19 +93,19 @@ function __napi_rs_initialize_modules(__napiInstance) {
   __napiInstance.exports['__napi_register__BindingTransformPluginContext_struct_34']?.()
   __napiInstance.exports['__napi_register__BindingTransformPluginContext_impl_36']?.()
   __napiInstance.exports['__napi_register__BindingAssetSource_struct_37']?.()
-  __napiInstance.exports['__napi_register__BindingEmittedAsset_struct_38']?.()
-  __napiInstance.exports['__napi_register__BindingGeneralHookFilter_struct_39']?.()
-  __napiInstance.exports['__napi_register__BindingTransformHookFilter_struct_40']?.()
-  __napiInstance.exports['__napi_register__BindingHookLoadOutput_struct_41']?.()
-  __napiInstance.exports['__napi_register__BindingHookRenderChunkOutput_struct_42']?.()
-  __napiInstance.exports['__napi_register__BindingHookResolveIdExtraArgs_struct_43']?.()
-  __napiInstance.exports['__napi_register__BindingHookResolveIdOutput_struct_44']?.()
-  __napiInstance.exports['__napi_register__BindingHookSideEffects_45']?.()
-  __napiInstance.exports['__napi_register__BindingHookTransformOutput_struct_46']?.()
-  __napiInstance.exports['__napi_register__BindingPluginContextResolveOptions_struct_47']?.()
-  __napiInstance.exports['__napi_register__BindingTransformHookExtraArgs_struct_48']?.()
-  __napiInstance.exports['__napi_register__BindingBuiltinPlugin_struct_49']?.()
-  __napiInstance.exports['__napi_register__BindingBuiltinPluginName_50']?.()
+  __napiInstance.exports['__napi_register__BindingBuiltinPluginName_38']?.()
+  __napiInstance.exports['__napi_register__BindingEmittedAsset_struct_39']?.()
+  __napiInstance.exports['__napi_register__BindingGeneralHookFilter_struct_40']?.()
+  __napiInstance.exports['__napi_register__BindingTransformHookFilter_struct_41']?.()
+  __napiInstance.exports['__napi_register__BindingHookLoadOutput_struct_42']?.()
+  __napiInstance.exports['__napi_register__BindingHookRenderChunkOutput_struct_43']?.()
+  __napiInstance.exports['__napi_register__BindingHookResolveIdExtraArgs_struct_44']?.()
+  __napiInstance.exports['__napi_register__BindingHookResolveIdOutput_struct_45']?.()
+  __napiInstance.exports['__napi_register__BindingHookSideEffects_46']?.()
+  __napiInstance.exports['__napi_register__BindingHookTransformOutput_struct_47']?.()
+  __napiInstance.exports['__napi_register__BindingPluginContextResolveOptions_struct_48']?.()
+  __napiInstance.exports['__napi_register__BindingTransformHookExtraArgs_struct_49']?.()
+  __napiInstance.exports['__napi_register__BindingBuiltinPlugin_struct_50']?.()
   __napiInstance.exports['__napi_register__BindingGlobImportPluginConfig_struct_51']?.()
   __napiInstance.exports['__napi_register__BindingManifestPluginConfig_struct_52']?.()
   __napiInstance.exports['__napi_register__BindingModulePreloadPolyfillPluginConfig_struct_53']?.()
@@ -151,12 +151,11 @@ function __napi_rs_initialize_modules(__napiInstance) {
   __napiInstance.exports['__napi_register__BindingSourcemap_struct_121']?.()
   __napiInstance.exports['__napi_register__BindingJsonSourcemap_struct_122']?.()
   __napiInstance.exports['__napi_register__BindingWatcher_struct_123']?.()
-  __napiInstance.exports['__napi_register__BindingWatcher_impl_127']?.()
-  __napiInstance.exports['__napi_register__BindingWatcherEvent_128']?.()
-  __napiInstance.exports['__napi_register__BindingWatcherEventData_struct_129']?.()
-  __napiInstance.exports['__napi_register__BindingWatcherEventData_impl_134']?.()
-  __napiInstance.exports['__napi_register__BindingWatcherChangeData_struct_135']?.()
-  __napiInstance.exports['__napi_register__BindingBundleEndEventData_struct_136']?.()
+  __napiInstance.exports['__napi_register__BindingWatcher_impl_126']?.()
+  __napiInstance.exports['__napi_register__BindingWatcherEvent_struct_127']?.()
+  __napiInstance.exports['__napi_register__BindingWatcherEvent_impl_133']?.()
+  __napiInstance.exports['__napi_register__BindingWatcherChangeData_struct_134']?.()
+  __napiInstance.exports['__napi_register__BindingBundleEndEventData_struct_135']?.()
 }
 export const BindingBundleEndEventData = __napiModule.exports.BindingBundleEndEventData
 export const BindingCallableBuiltinPlugin = __napiModule.exports.BindingCallableBuiltinPlugin
@@ -170,14 +169,13 @@ export const BindingRenderedModule = __napiModule.exports.BindingRenderedModule
 export const BindingTransformPluginContext = __napiModule.exports.BindingTransformPluginContext
 export const BindingWatcher = __napiModule.exports.BindingWatcher
 export const BindingWatcherChangeData = __napiModule.exports.BindingWatcherChangeData
-export const BindingWatcherEventData = __napiModule.exports.BindingWatcherEventData
+export const BindingWatcherEvent = __napiModule.exports.BindingWatcherEvent
 export const Bundler = __napiModule.exports.Bundler
 export const ParallelJsPluginRegistry = __napiModule.exports.ParallelJsPluginRegistry
 export const BindingBuiltinPluginName = __napiModule.exports.BindingBuiltinPluginName
 export const BindingHookSideEffects = __napiModule.exports.BindingHookSideEffects
 export const BindingLogLevel = __napiModule.exports.BindingLogLevel
 export const BindingPluginOrder = __napiModule.exports.BindingPluginOrder
-export const BindingWatcherEvent = __napiModule.exports.BindingWatcherEvent
 export const isCallableCompatibleBuiltinPlugin = __napiModule.exports.isCallableCompatibleBuiltinPlugin
 export const isolatedDeclaration = __napiModule.exports.isolatedDeclaration
 export const registerPlugins = __napiModule.exports.registerPlugins

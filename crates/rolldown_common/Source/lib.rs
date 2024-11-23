@@ -28,7 +28,9 @@ pub mod bundler_options {
       normalized_bundler_options::{NormalizedBundlerOptions, SharedNormalizedBundlerOptions},
       output_exports::OutputExports,
       output_format::OutputFormat,
-      output_option::{AddonFunction, AddonOutputOption, ChunkFilenamesOutputOption},
+      output_option::{
+        AddonFunction, AddonOutputOption, ChunkFilenamesOutputOption, GlobalsOutputOption,
+      },
       platform::Platform,
       resolve_options::ResolveOptions,
       source_map_type::SourceMapType,
@@ -108,6 +110,7 @@ pub use crate::{
   types::namespace_alias::NamespaceAlias,
   types::output::{Output, OutputAsset},
   types::output_chunk::OutputChunk,
+  types::outputs_diagnostics::OutputsDiagnostics,
   types::package_json::PackageJson,
   types::rendered_module::RenderedModule,
   types::resolved_export::ResolvedExport,
@@ -123,8 +126,7 @@ pub use crate::{
   types::symbol_ref::SymbolRef,
   types::symbol_ref_db::{SymbolRefDb, SymbolRefDbForModule, SymbolRefFlags},
   types::watch::{
-    BundleEndEventData, BundleEventKind, WatcherChangeData, WatcherChangeKind, WatcherEvent,
-    WatcherEventData,
+    BundleEndEventData, BundleEvent, WatcherChangeData, WatcherChangeKind, WatcherEvent,
   },
   types::wrap_kind::WrapKind,
 };

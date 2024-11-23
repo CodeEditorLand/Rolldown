@@ -1,6 +1,7 @@
 use oxc::transformer::InjectGlobalVariablesConfig;
 use rolldown_common::{
-  Comments, InjectImport, ModuleType, NormalizedBundlerOptions, OutputFormat, Platform,
+  Comments, GlobalsOutputOption, InjectImport, ModuleType, NormalizedBundlerOptions, OutputFormat,
+  Platform,
 };
 use rolldown_error::{BuildDiagnostic, InvalidOptionType};
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -13,8 +14,16 @@ pub struct NormalizeOptionsReturn {
 
 #[allow(clippy::too_many_lines)] // This function is long, but it's mostly just mapping values
 pub fn normalize_options(mut raw_options: crate::BundlerOptions) -> NormalizeOptionsReturn {
+  let format = raw_options.format.unwrap_or(crate::OutputFormat::Esm);
+
+  let platform = raw_options.platform.unwrap_or(match format {
+    OutputFormat::Cjs => Platform::Node,
+    OutputFormat::Esm | OutputFormat::App | OutputFormat::Iife | OutputFormat::Umd => {
+      Platform::Browser
+    }
+  });
+
   // Take out resolve options
-  let platform = raw_options.platform.unwrap_or(Platform::Browser);
   let raw_resolve = std::mem::take(&mut raw_options.resolve).unwrap_or_default();
 
   let mut warnings: Vec<BuildDiagnostic> = Vec::new();
@@ -53,8 +62,7 @@ pub fn normalize_options(mut raw_options: crate::BundlerOptions) -> NormalizeOpt
 
   loaders.extend(user_defined_loaders);
 
-  let globals: FxHashMap<String, String> =
-    raw_options.globals.map(|globals| globals.into_iter().collect()).unwrap_or_default();
+  let globals = raw_options.globals.unwrap_or(GlobalsOutputOption::FxHashMap(FxHashMap::default()));
 
   let oxc_inject_global_variables_config = InjectGlobalVariablesConfig::new(
     raw_options
@@ -89,20 +97,15 @@ pub fn normalize_options(mut raw_options: crate::BundlerOptions) -> NormalizeOpt
     experimental.strict_execution_order = Some(true);
   }
 
-  let format = raw_options.format.unwrap_or(crate::OutputFormat::Esm);
-
   let inline_dynamic_imports = match format {
     OutputFormat::Umd | OutputFormat::Iife => {
-      let format_name = match format {
-        OutputFormat::Umd => "umd",
-        OutputFormat::Iife => "iife",
-        _ => unreachable!(),
-      };
-
       if matches!(raw_options.inline_dynamic_imports, Some(false)) {
-        warnings.push(BuildDiagnostic::invalid_option(
-          InvalidOptionType::UnsupportedCodeSplittingFormat(format_name.to_string()),
-        ));
+        warnings.push(
+          BuildDiagnostic::invalid_option(InvalidOptionType::UnsupportedCodeSplittingFormat(
+            format.to_string(),
+          ))
+          .with_severity_warning(),
+        );
       }
       true
     }

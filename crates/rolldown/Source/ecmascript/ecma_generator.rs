@@ -64,21 +64,15 @@ impl Generator for EcmaGenerator {
       ctx.chunk.pre_rendered_chunk.as_ref().expect("Should have pre-rendered chunk"),
       ctx.chunk_graph,
     );
-    let hashbang = match ctx.chunk.kind {
-      rolldown_common::ChunkKind::EntryPoint { is_user_defined, module, .. } if is_user_defined => {
-        let module = &ctx.link_output.module_table.modules[module];
-        match module {
-          rolldown_common::Module::Normal(normal_module) => {
-            let source = &normal_module.source;
-            normal_module
-              .ecma_view
-              .hashbang_range
-              .map(|range| &source.as_str()[range.start as usize..range.end as usize])
-          }
-          rolldown_common::Module::External(_) => None,
-        }
+    let hashbang = match ctx.chunk.user_defined_entry_module(&ctx.link_output.module_table) {
+      Some(normal_module) => {
+        let source = &normal_module.source;
+        normal_module
+          .ecma_view
+          .hashbang_range
+          .map(|range| &source.as_str()[range.start as usize..range.end as usize])
       }
-      _ => None,
+      None => None,
     };
 
     let banner = {
@@ -130,23 +124,23 @@ impl Generator for EcmaGenerator {
     let source_joiner = match ctx.options.format {
       OutputFormat::Esm => render_esm(
         ctx,
-        &rendered_module_sources,
+        hashbang,
         banner.as_deref(),
-        footer.as_deref(),
         intro.as_deref(),
         outro.as_deref(),
-        hashbang,
+        footer.as_deref(),
+        &rendered_module_sources,
       ),
       OutputFormat::Cjs => {
         match render_cjs(
-          &mut warnings,
           ctx,
-          &rendered_module_sources,
+          hashbang,
           banner.as_deref(),
-          footer.as_deref(),
           intro.as_deref(),
           outro.as_deref(),
-          hashbang,
+          footer.as_deref(),
+          &rendered_module_sources,
+          &mut warnings,
         ) {
           Ok(source_joiner) => source_joiner,
           Err(errors) => return Ok(Err(errors)),
@@ -154,38 +148,42 @@ impl Generator for EcmaGenerator {
       }
       OutputFormat::App => render_app(
         ctx,
-        &rendered_module_sources,
+        hashbang,
         banner.as_deref(),
-        footer.as_deref(),
         intro.as_deref(),
         outro.as_deref(),
-        hashbang,
+        footer.as_deref(),
+        &rendered_module_sources,
       ),
       OutputFormat::Iife => {
         match render_iife(
-          &mut warnings,
           ctx,
-          &rendered_module_sources,
+          hashbang,
           banner.as_deref(),
-          footer.as_deref(),
           intro.as_deref(),
           outro.as_deref(),
-          hashbang,
-        ) {
+          footer.as_deref(),
+          &rendered_module_sources,
+          &mut warnings,
+        )
+        .await
+        {
           Ok(source_joiner) => source_joiner,
           Err(errors) => return Ok(Err(errors)),
         }
       }
       OutputFormat::Umd => {
         match render_umd(
-          &mut warnings,
           ctx,
-          &rendered_module_sources,
           banner.as_deref(),
-          footer.as_deref(),
           intro.as_deref(),
           outro.as_deref(),
-        ) {
+          footer.as_deref(),
+          &rendered_module_sources,
+          &mut warnings,
+        )
+        .await
+        {
           Ok(source_joiner) => source_joiner,
           Err(errors) => return Ok(Err(errors)),
         }

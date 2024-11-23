@@ -84,11 +84,6 @@
 - crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_common_js
 - crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_iife
 - crates/rolldown/tests/esbuild/loader/loader_json_shared_with_multiple_entries_issue413
-## throw should be kept
-- crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_chain_all
-- crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_chain_one
-- crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_diamond
-- crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_intermediate_files_used
 ## not support import attributes
 - crates/rolldown/tests/esbuild/default/comment_preservation_import_assertions
 - crates/rolldown/tests/esbuild/default/metafile_import_with_type_json
@@ -98,10 +93,6 @@
 - crates/rolldown/tests/esbuild/default/nested_require_without_call
 - crates/rolldown/tests/esbuild/default/require_without_call
 - crates/rolldown/tests/esbuild/default/require_without_call_inside_try
-## different iife impl
-- crates/rolldown/tests/esbuild/default/use_strict_directive_bundle_iife_issue2264
-- crates/rolldown/tests/esbuild/importstar/re_export_star_as_external_iife
-- crates/rolldown/tests/esbuild/importstar/re_export_star_as_iife_no_bundle
 ## rolldown has redundant `require('external')`
 - crates/rolldown/tests/esbuild/importstar/re_export_star_common_js_no_bundle
 - crates/rolldown/tests/esbuild/importstar/re_export_star_entry_point_and_inner_file
@@ -118,12 +109,9 @@
 ## cjs module lexer can't recognize esbuild interop pattern
 - crates/rolldown/tests/esbuild/default/export_forms_iife
 - crates/rolldown/tests/esbuild/default/export_wildcard_fs_node_common_js
-## rolldown split chunks
-- crates/rolldown/tests/esbuild/default/import_namespace_this_value
-- crates/rolldown/tests/esbuild/default/multiple_entry_points_same_name_collision
-## should not replace the function it self in `inject files`
-- crates/rolldown/tests/esbuild/default/inject_with_string_export_name_bundle
-- crates/rolldown/tests/esbuild/default/inject_with_string_export_name_no_bundle
+## different iife impl
+- crates/rolldown/tests/esbuild/importstar/re_export_star_as_external_iife
+- crates/rolldown/tests/esbuild/importstar/re_export_star_as_iife_no_bundle
 ## rolldown has redundant `import "external"`
 - crates/rolldown/tests/esbuild/importstar/re_export_star_es6_no_bundle
 - crates/rolldown/tests/esbuild/importstar/re_export_star_external_es6
@@ -139,9 +127,6 @@
 ## static class field lowering
 - crates/rolldown/tests/esbuild/ts/this_inside_function_ts
 - crates/rolldown/tests/esbuild/ts/this_inside_function_ts_no_bundle
-## should not convert `ClassDeclaration` to `ClassExpr`
-- crates/rolldown/tests/esbuild/ts/this_inside_function_ts_no_bundle_use_define_for_class_fields
-- crates/rolldown/tests/esbuild/ts/ts_abstract_class_field_use_define
 ## sub optimal
 - crates/rolldown/tests/esbuild/ts/ts_common_js_variable_in_esm_type_module
 - crates/rolldown/tests/esbuild/ts/ts_import_in_node_modules_name_collision_with_css
@@ -150,14 +135,10 @@
 - crates/rolldown/tests/esbuild/ts/ts_experimental_decorators
 ## dce decorator
 - crates/rolldown/tests/esbuild/dce/dce_of_decorators
-## side effects detect
-- crates/rolldown/tests/esbuild/dce/dce_of_destructuring
 ## lower decorator
 - crates/rolldown/tests/esbuild/dce/dce_of_experimental_decorators
 ## don't support dce iife
 - crates/rolldown/tests/esbuild/dce/dce_of_iife
-## rolldown don't have `ignoreDCEAnnotations` option
-- crates/rolldown/tests/esbuild/dce/disable_tree_shaking
 ## annotation codegen
 - crates/rolldown/tests/esbuild/dce/no_side_effects_comment
 ## rolldown should not shake the namespace iife
@@ -174,10 +155,6 @@
 - crates/rolldown/tests/esbuild/dce/pure_calls_with_spread
 ## side effects detector not align
 - crates/rolldown/tests/esbuild/dce/remove_unused_no_side_effects_tagged_templates
-## Since the `sideEffects: false`, and the `ImportDeclaration` is just plain, the sub tree should be eliminated
-- crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false
-## Our side effects normalization is not right
-- crates/rolldown/tests/esbuild/dce/tree_shaking_js_with_associated_css_unused_nested_import_side_effects_false_only_js
 ## seems esbuild mark static field as side effects whatever, should investigate
 - crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field_assignment
 ## jsx element don't have pure annotation
@@ -188,8 +165,6 @@
 - crates/rolldown/tests/esbuild/default/argument_default_value_scope_no_bundle
 ## related to minifier
 - crates/rolldown/tests/esbuild/default/arguments_special_case_no_bundle
-## the deconflict of no top level is sub optimal
-- crates/rolldown/tests/esbuild/default/arrow_fn_scope
 ## for `__require` diff, we don't have `ModePassThrough`
 - crates/rolldown/tests/esbuild/default/comment_preservation
 ## not support `jsx.preserve`
@@ -236,10 +211,14 @@
 - crates/rolldown/tests/esbuild/default/false_require
 ## query and hashban in specifier
 - crates/rolldown/tests/esbuild/default/import_abs_path_with_query_parameter
-## commonjs don't have `import.meta`, should rewrite
+## rolldown keep unsupported `import.meta` as it is in cjs format.
+- crates/rolldown/tests/esbuild/default/import_meta_common_js
+## rolldown polyfill `import.meta.url` with `require("url").pathToFileURL(__filename).href` in cjs format and node platform.
 - crates/rolldown/tests/esbuild/default/import_meta_common_js
 ## rolldown extract common module
 - crates/rolldown/tests/esbuild/default/import_missing_neither_es6_nor_common_js
+## rolldown split chunks
+- crates/rolldown/tests/esbuild/default/import_namespace_this_value
 ## not align
 - crates/rolldown/tests/esbuild/default/indirect_require_message
 ## generate wrong syntax when Exported is `StringLiteral`
@@ -254,8 +233,6 @@
 - crates/rolldown/tests/esbuild/default/mangle_no_quoted_props
 ## not support preserve `jsx`
 - crates/rolldown/tests/esbuild/default/minified_jsx_preserve_with_object_spread
-## don't rewrite top level binding
-- crates/rolldown/tests/esbuild/default/named_function_expression_argument_collision
 ## should read `tsconfig.json`
 - crates/rolldown/tests/esbuild/default/non_determinism_issue2537
 ## resolve alias
@@ -272,7 +249,7 @@
 - crates/rolldown/tests/esbuild/default/require_json
 ## require `.json`, the json file should not wrapped in `__esm`
 - crates/rolldown/tests/esbuild/default/require_shim_substitution
-## obviously, the output is incorrect
+## should not reuse `__toESM(require('./foo'))`
 - crates/rolldown/tests/esbuild/default/string_export_names_common_js
 ## string export name not correct
 - crates/rolldown/tests/esbuild/default/string_export_names_iife
@@ -290,12 +267,8 @@
 - crates/rolldown/tests/esbuild/default/top_level_await_allowed_import_with_splitting
 ## Can't disable bundle splitting
 - crates/rolldown/tests/esbuild/default/top_level_await_allowed_import_without_splitting
-## should not appear `__commonJS`
-- crates/rolldown/tests/esbuild/default/top_level_await_forbidden_require_dead_branch
 ## inject path
 - crates/rolldown/tests/esbuild/default/use_strict_directive_bundle_issue1837
-## should not drop `'use strict'`
-- crates/rolldown/tests/esbuild/default/use_strict_directive_minify_no_bundle
 ## alias
 - crates/rolldown/tests/esbuild/default/warnings_inside_node_modules
 ## esbuild did not needs `__toESM`
@@ -344,6 +317,8 @@
 - crates/rolldown/tests/esbuild/ts/export_type_issue379
 ## transform `FunctionDeclaration` to `FunctionExpr`
 - crates/rolldown/tests/esbuild/ts/this_inside_function_ts_no_bundle
+## should not convert `ClassDeclaration` to `ClassExpr`
+- crates/rolldown/tests/esbuild/ts/this_inside_function_ts_no_bundle_use_define_for_class_fields
 ## should convert `FunctionDeclaration` to `FunctionExpr`
 - crates/rolldown/tests/esbuild/ts/this_inside_function_ts_use_define_for_class_fields
 ## redundant wrap function
