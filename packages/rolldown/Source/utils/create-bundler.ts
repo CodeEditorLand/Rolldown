@@ -1,58 +1,58 @@
-import { bindingifyInputOptions } from '../options/bindingify-input-options'
-import { Bundler } from '../binding'
-import { initializeParallelPlugins } from './initialize-parallel-plugins'
-import { normalizeInputOptions } from './normalize-input-options'
-import { normalizeOutputOptions } from './normalize-output-options'
-import { bindingifyOutputOptions } from '../options/bindingify-output-options'
-import { PluginDriver } from '../plugin/plugin-driver'
-import type { InputOptions } from '../types/input-options'
-import type { OutputOptions } from '../types/output-options'
-import { TreeshakingOptionsSchema } from '../treeshake'
+import { Bundler } from "../binding";
+import { bindingifyInputOptions } from "../options/bindingify-input-options";
+import { bindingifyOutputOptions } from "../options/bindingify-output-options";
+import { PluginDriver } from "../plugin/plugin-driver";
+import { TreeshakingOptionsSchema } from "../treeshake";
+import type { InputOptions } from "../types/input-options";
+import type { OutputOptions } from "../types/output-options";
+import { initializeParallelPlugins } from "./initialize-parallel-plugins";
+import { normalizeInputOptions } from "./normalize-input-options";
+import { normalizeOutputOptions } from "./normalize-output-options";
 
 export async function createBundler(
-  inputOptions: InputOptions,
-  outputOptions: OutputOptions,
+	inputOptions: InputOptions,
+	outputOptions: OutputOptions,
 ): Promise<BundlerWithStopWorker> {
-  const pluginDriver = new PluginDriver()
-  inputOptions = await pluginDriver.callOptionsHook(inputOptions)
-  if (inputOptions.treeshake !== undefined) {
-    TreeshakingOptionsSchema.parse(inputOptions.treeshake)
-  }
-  // Convert `InputOptions` to `NormalizedInputOptions`.
-  const normalizedInputOptions = await normalizeInputOptions(inputOptions)
+	const pluginDriver = new PluginDriver();
+	inputOptions = await pluginDriver.callOptionsHook(inputOptions);
+	if (inputOptions.treeshake !== undefined) {
+		TreeshakingOptionsSchema.parse(inputOptions.treeshake);
+	}
+	// Convert `InputOptions` to `NormalizedInputOptions`.
+	const normalizedInputOptions = await normalizeInputOptions(inputOptions);
 
-  const parallelPluginInitResult = await initializeParallelPlugins(
-    normalizedInputOptions.plugins,
-  )
+	const parallelPluginInitResult = await initializeParallelPlugins(
+		normalizedInputOptions.plugins,
+	);
 
-  try {
-    outputOptions = pluginDriver.callOutputOptionsHook(
-      normalizedInputOptions,
-      outputOptions,
-    )
-    const normalizedOutputOptions = normalizeOutputOptions(outputOptions)
+	try {
+		outputOptions = pluginDriver.callOutputOptionsHook(
+			normalizedInputOptions,
+			outputOptions,
+		);
+		const normalizedOutputOptions = normalizeOutputOptions(outputOptions);
 
-    // Convert `NormalizedInputOptions` to `BindingInputOptions`
-    const bindingInputOptions = bindingifyInputOptions(
-      normalizedInputOptions,
-      normalizedOutputOptions,
-    )
+		// Convert `NormalizedInputOptions` to `BindingInputOptions`
+		const bindingInputOptions = bindingifyInputOptions(
+			normalizedInputOptions,
+			normalizedOutputOptions,
+		);
 
-    return {
-      bundler: new Bundler(
-        bindingInputOptions,
-        bindingifyOutputOptions(normalizedOutputOptions),
-        parallelPluginInitResult?.registry,
-      ),
-      stopWorkers: parallelPluginInitResult?.stopWorkers,
-    }
-  } catch (e) {
-    await parallelPluginInitResult?.stopWorkers()
-    throw e
-  }
+		return {
+			bundler: new Bundler(
+				bindingInputOptions,
+				bindingifyOutputOptions(normalizedOutputOptions),
+				parallelPluginInitResult?.registry,
+			),
+			stopWorkers: parallelPluginInitResult?.stopWorkers,
+		};
+	} catch (e) {
+		await parallelPluginInitResult?.stopWorkers();
+		throw e;
+	}
 }
 
 export interface BundlerWithStopWorker {
-  bundler: Bundler
-  stopWorkers?: () => Promise<void>
+	bundler: Bundler;
+	stopWorkers?: () => Promise<void>;
 }

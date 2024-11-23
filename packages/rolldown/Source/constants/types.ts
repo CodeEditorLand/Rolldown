@@ -1,1 +1,1 @@
-export type StringOrRegExp = string | RegExp
+export type StringOrRegExp = string | RegExp;

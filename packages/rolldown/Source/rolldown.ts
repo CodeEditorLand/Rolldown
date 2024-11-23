@@ -1,26 +1,26 @@
-import type { InputOptions } from './types/input-options'
-import { RolldownBuild } from './rolldown-build'
-import { Watcher } from './watcher'
-import { createBundler } from './utils/create-bundler'
-import { WatchOptions } from './options/watch-option'
-import { handleOutputErrors } from './utils/transform-to-rollup-output'
+import { WatchOptions } from "./options/watch-option";
+import { RolldownBuild } from "./rolldown-build";
+import type { InputOptions } from "./types/input-options";
+import { createBundler } from "./utils/create-bundler";
+import { handleOutputErrors } from "./utils/transform-to-rollup-output";
+import { Watcher } from "./watcher";
 
 // Compat to `rollup.rollup`, it is included scan module graph and linker.
 export const rolldown = async (input: InputOptions): Promise<RolldownBuild> => {
-  return new RolldownBuild(input)
-}
+	return new RolldownBuild(input);
+};
 
 // Compat to `rollup.watch`
 export const watch = async (input: WatchOptions): Promise<Watcher> => {
-  const { bundler, stopWorkers } = await createBundler(
-    input,
-    input.output || {},
-  )
-  const bindingWatcher = await bundler.watch()
-  const watcher = new Watcher(bindingWatcher, stopWorkers)
-  watcher.watch()
-  return watcher
-}
+	const { bundler, stopWorkers } = await createBundler(
+		input,
+		input.output || {},
+	);
+	const bindingWatcher = await bundler.watch();
+	const watcher = new Watcher(bindingWatcher, stopWorkers);
+	watcher.watch();
+	return watcher;
+};
 
 /**
  * @description
@@ -28,8 +28,8 @@ export const watch = async (input: WatchOptions): Promise<Watcher> => {
  * Calling this API will only execute the scan stage of rolldown.
  */
 export const experimental_scan = async (input: InputOptions): Promise<void> => {
-  const { bundler, stopWorkers } = await createBundler(input, {})
-  const output = await bundler.scan()
-  handleOutputErrors(output)
-  await stopWorkers?.()
-}
+	const { bundler, stopWorkers } = await createBundler(input, {});
+	const output = await bundler.scan();
+	handleOutputErrors(output);
+	await stopWorkers?.();
+};

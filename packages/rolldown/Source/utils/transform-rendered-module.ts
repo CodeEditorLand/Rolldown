@@ -1,14 +1,14 @@
-import { RenderedModule } from '../binding'
+import { RenderedModule } from "../binding";
 
 export function transformToRenderedModule(
-  bindingRenderedModule: RenderedModule,
+	bindingRenderedModule: RenderedModule,
 ): RenderedModule {
-  return {
-    get code() {
-      return bindingRenderedModule.code
-    },
-    get renderedLength() {
-      return bindingRenderedModule.code?.length || 0
-    },
-  }
+	return {
+		get code() {
+			return bindingRenderedModule.code;
+		},
+		get renderedLength() {
+			return bindingRenderedModule.code?.length || 0;
+		},
+	};
 }

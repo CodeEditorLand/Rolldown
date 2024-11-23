@@ -1,4 +1,4 @@
-import { BindingStringOrRegex } from '../binding.d'
+import { BindingStringOrRegex } from "../binding.d";
 
 /*
  * Normalize single or multiple string or regex patterns to an array of BindingStringOrRegex
@@ -6,13 +6,13 @@ import { BindingStringOrRegex } from '../binding.d'
  *
  * */
 export function normalizedStringOrRegex(
-  pattern?: Array<string | RegExp> | (string | RegExp),
+	pattern?: Array<string | RegExp> | (string | RegExp),
 ): BindingStringOrRegex[] | undefined {
-  if (!pattern) {
-    return undefined
-  }
-  if (!Array.isArray(pattern)) {
-    pattern = [pattern]
-  }
-  return pattern
+	if (!pattern) {
+		return undefined;
+	}
+	if (!Array.isArray(pattern)) {
+		pattern = [pattern];
+	}
+	return pattern;
 }

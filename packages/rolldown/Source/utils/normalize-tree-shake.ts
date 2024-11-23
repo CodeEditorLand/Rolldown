@@ -1,29 +1,29 @@
-import type { InputOptions } from '../types/input-options'
-import { NormalizedTreeshakingOptions } from '../treeshake'
+import { NormalizedTreeshakingOptions } from "../treeshake";
+import type { InputOptions } from "../types/input-options";
 
 export function normalizeTreeshakeOptions(
-  config: InputOptions['treeshake'],
+	config: InputOptions["treeshake"],
 ): NormalizedTreeshakingOptions | undefined {
-  if (config === false) {
-    return undefined
-  }
-  if (config === true || config === undefined) {
-    return {
-      moduleSideEffects: true,
-    }
-  }
-  let normalizedConfig: NormalizedTreeshakingOptions = {
-    moduleSideEffects: true,
-  }
-  if (config.moduleSideEffects === undefined) {
-    normalizedConfig.moduleSideEffects = true
-  } else if (config.moduleSideEffects === 'no-external') {
-    normalizedConfig.moduleSideEffects = [
-      { external: true, sideEffects: false },
-      { external: false, sideEffects: true },
-    ]
-  } else {
-    normalizedConfig.moduleSideEffects = config.moduleSideEffects
-  }
-  return normalizedConfig
+	if (config === false) {
+		return undefined;
+	}
+	if (config === true || config === undefined) {
+		return {
+			moduleSideEffects: true,
+		};
+	}
+	let normalizedConfig: NormalizedTreeshakingOptions = {
+		moduleSideEffects: true,
+	};
+	if (config.moduleSideEffects === undefined) {
+		normalizedConfig.moduleSideEffects = true;
+	} else if (config.moduleSideEffects === "no-external") {
+		normalizedConfig.moduleSideEffects = [
+			{ external: true, sideEffects: false },
+			{ external: false, sideEffects: true },
+		];
+	} else {
+		normalizedConfig.moduleSideEffects = config.moduleSideEffects;
+	}
+	return normalizedConfig;
 }
