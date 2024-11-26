@@ -1,54 +1,61 @@
-import type { BindingPluginOptions } from "../binding";
-import type { NormalizedInputOptions } from "../options/normalized-input-options";
-import { normalizeHook } from "../utils/normalize-hook";
+import { normalizeHook } from '../utils/normalize-hook'
+import type { BindingPluginOptions } from '../binding'
+import type { ChangeEvent } from './index'
+import { PluginContext } from './plugin-context'
 import {
-	bindingifyPluginHookMeta,
-	PluginHookWithBindingExt,
-} from "./bindingify-plugin-hook-meta";
-import type { ChangeEvent, Plugin } from "./index";
-import { PluginContext } from "./plugin-context";
-import { PluginContextData } from "./plugin-context-data";
+  PluginHookWithBindingExt,
+  bindingifyPluginHookMeta,
+} from './bindingify-plugin-hook-meta'
+import { BindingifyPluginArgs } from './bindingify-plugin'
 
 export function bindingifyWatchChange(
-	plugin: Plugin,
-	options: NormalizedInputOptions,
-	pluginContextData: PluginContextData,
-): PluginHookWithBindingExt<BindingPluginOptions["watchChange"]> {
-	const hook = plugin.watchChange;
-	if (!hook) {
-		return {};
-	}
-	const { handler, meta } = normalizeHook(hook);
+  args: BindingifyPluginArgs,
+): PluginHookWithBindingExt<BindingPluginOptions['watchChange']> {
+  const hook = args.plugin.watchChange
+  if (!hook) {
+    return {}
+  }
+  const { handler, meta } = normalizeHook(hook)
 
-	return {
-		plugin: async (ctx, id, event) => {
-			await handler.call(
-				new PluginContext(options, ctx, plugin, pluginContextData),
-				id,
-				{ event: event as ChangeEvent },
-			);
-		},
-		meta: bindingifyPluginHookMeta(meta),
-	};
+  return {
+    plugin: async (ctx, id, event) => {
+      await handler.call(
+        new PluginContext(
+          ctx,
+          args.plugin,
+          args.pluginContextData,
+          args.onLog,
+          args.logLevel,
+        ),
+        id,
+        { event: event as ChangeEvent },
+      )
+    },
+    meta: bindingifyPluginHookMeta(meta),
+  }
 }
 
 export function bindingifyCloseWatcher(
-	plugin: Plugin,
-	options: NormalizedInputOptions,
-	pluginContextData: PluginContextData,
-): PluginHookWithBindingExt<BindingPluginOptions["closeWatcher"]> {
-	const hook = plugin.closeWatcher;
-	if (!hook) {
-		return {};
-	}
-	const { handler, meta } = normalizeHook(hook);
+  args: BindingifyPluginArgs,
+): PluginHookWithBindingExt<BindingPluginOptions['closeWatcher']> {
+  const hook = args.plugin.closeWatcher
+  if (!hook) {
+    return {}
+  }
+  const { handler, meta } = normalizeHook(hook)
 
-	return {
-		plugin: async (ctx) => {
-			await handler.call(
-				new PluginContext(options, ctx, plugin, pluginContextData),
-			);
-		},
-		meta: bindingifyPluginHookMeta(meta),
-	};
+  return {
+    plugin: async (ctx) => {
+      await handler.call(
+        new PluginContext(
+          ctx,
+          args.plugin,
+          args.pluginContextData,
+          args.onLog,
+          args.logLevel,
+        ),
+      )
+    },
+    meta: bindingifyPluginHookMeta(meta),
+  }
 }
