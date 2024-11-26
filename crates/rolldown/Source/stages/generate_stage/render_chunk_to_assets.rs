@@ -2,7 +2,7 @@ use std::path::Path;
 
 use futures::future::try_join_all;
 use indexmap::IndexSet;
-use oxc::index::{index_vec, IndexVec};
+use oxc_index::{index_vec, IndexVec};
 use rolldown_common::{
   Asset, InstantiationKind, ModuleRenderArgs, ModuleRenderOutput, Output, OutputAsset, OutputChunk,
   SourceMapType,
@@ -41,7 +41,7 @@ impl<'a> GenerateStage<'a> {
     let (mut instantiated_chunks, index_chunk_to_assets) =
       self.instantiate_chunks(chunk_graph, &mut errors, &mut warnings).await?;
 
-    render_chunks(self.plugin_driver, &mut instantiated_chunks).await?;
+    render_chunks(self.plugin_driver, &mut instantiated_chunks, self.options).await?;
 
     augment_chunk_hash(self.plugin_driver, &mut instantiated_chunks).await?;
 

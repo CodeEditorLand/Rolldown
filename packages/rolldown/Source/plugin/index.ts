@@ -18,7 +18,7 @@ import type { TransformPluginContext } from './transform-plugin-context'
 import type { NormalizedOutputOptions } from '../options/normalized-output-options'
 import type { LogLevel } from '../log/logging'
 import type { RollupLog } from '../rollup'
-import type { MinimalPluginContext } from '../log/logger'
+import type { MinimalPluginContext } from './minimal-plugin-context'
 import { InputOptions, OutputOptions } from '..'
 import { BuiltinPlugin } from '../builtin-plugin/constructors'
 import { ParallelPlugin } from './parallel-plugin'
@@ -300,8 +300,10 @@ export interface Plugin<A = any> extends OutputPlugin, Partial<PluginHooks> {
 }
 
 export type RolldownPlugin<A = any> = Plugin<A> | BuiltinPlugin | ParallelPlugin
-export type RolldownPluginOption<A = any> = NullValue<RolldownPlugin<A>> | false
-// A recursive type definition for `RolldownPlugin`, this type is used internally for `config.plugins`
-export type RolldownPluginRec<A = any> =
-  | RolldownPluginOption<A>
-  | RolldownPluginOption<A>[]
+export type RolldownPluginOption<A = any> = MaybePromise<
+  NullValue<RolldownPlugin<A>> | false | RolldownPluginOption[]
+>
+export type RolldownOutputPlugin = OutputPlugin | BuiltinPlugin
+export type RolldownOutputPluginOption = MaybePromise<
+  NullValue<RolldownOutputPlugin> | false | RolldownOutputPluginOption[]
+>

@@ -4,16 +4,16 @@ use super::task_context::TaskContextMeta;
 use crate::module_loader::task_context::TaskContext;
 use crate::type_alias::IndexEcmaAst;
 use arcstr::ArcStr;
-use oxc::index::IndexVec;
 use oxc::semantic::{ScopeId, SymbolTable};
 use oxc::transformer::ReplaceGlobalDefinesConfig;
+use oxc_index::IndexVec;
 use rolldown_common::dynamic_import_usage::DynamicImportExportsUsage;
 use rolldown_common::side_effects::{DeterminedSideEffects, HookSideEffects};
 use rolldown_common::{
   EcmaRelated, EntryPoint, EntryPointKind, ExternalModule, ImportKind, ImportRecordIdx,
-  ImporterRecord, Module, ModuleId, ModuleIdx, ModuleLoaderMsg, ModuleTable, ModuleType,
-  NormalModuleTaskResult, ResolvedId, RuntimeModuleBrief, RuntimeModuleTaskResult, SymbolRefDb,
-  SymbolRefDbForModule, RUNTIME_MODULE_ID,
+  ImporterRecord, Module, ModuleId, ModuleIdx, ModuleInfo, ModuleLoaderMsg, ModuleTable,
+  ModuleType, NormalModuleTaskResult, ResolvedId, RuntimeModuleBrief, RuntimeModuleTaskResult,
+  SymbolRefDb, SymbolRefDbForModule, RUNTIME_MODULE_ID,
 };
 use rolldown_error::{BuildDiagnostic, BuildResult};
 use rolldown_fs::OsFileSystem;
@@ -77,7 +77,7 @@ impl ModuleLoader {
     plugin_driver: SharedPluginDriver,
     fs: OsFileSystem,
     resolver: SharedResolver,
-  ) -> anyhow::Result<Self> {
+  ) -> BuildResult<Self> {
     // 1024 should be enough for most cases
     // over 1024 pending tasks are insane
     let (tx, rx) = tokio::sync::mpsc::channel(1024);
@@ -86,15 +86,12 @@ impl ModuleLoader {
       replace_global_define_config: if options.define.is_empty() {
         None
       } else {
-        Some(ReplaceGlobalDefinesConfig::new(&options.define).map_err(|errs| {
-          // TODO: maybe we should give better diagnostics here. since oxc return
-          // `Vec<OxcDiagnostic>`
-          anyhow::format_err!(
-            "Failed to generate defines config from {:?}. Got {:#?}",
-            options.define,
-            errs
-          )
-        })?)
+        ReplaceGlobalDefinesConfig::new(&options.define).map(Some).map_err(|errs| {
+          errs
+            .into_iter()
+            .map(|err| BuildDiagnostic::invalid_define_config(err.message.to_string()))
+            .collect::<Vec<BuildDiagnostic>>()
+        })?
       },
     };
     let common_data = Arc::new(TaskContext {
@@ -110,7 +107,7 @@ impl ModuleLoader {
     let symbols = SymbolRefDb::default();
     let runtime_id = intermediate_normal_modules.alloc_ecma_module_idx();
 
-    let task = RuntimeModuleTask::new(runtime_id, tx.clone());
+    let task = RuntimeModuleTask::new(runtime_id, tx.clone(), Arc::clone(&options));
 
     #[cfg(target_family = "wasm")]
     {
@@ -179,6 +176,20 @@ impl ModuleLoader {
               },
             }
           };
+
+          let id = ModuleId::new(&resolved_id.id);
+          self.shared_context.plugin_driver.set_module_info(
+            &id.clone(),
+            Arc::new(ModuleInfo {
+              code: None,
+              id,
+              is_entry: false,
+              importers: vec![],
+              dynamic_importers: vec![],
+              imported_ids: vec![],
+              dynamically_imported_ids: vec![],
+            }),
+          );
 
           self.symbol_ref_db.store_local_db(
             idx,
@@ -327,10 +338,36 @@ impl ModuleLoader {
           self.remaining -= 1;
         }
         ModuleLoaderMsg::RuntimeNormalModuleDone(task_result) => {
-          let RuntimeModuleTaskResult { local_symbol_ref_db, mut module, runtime, ast } =
-            task_result;
+          let RuntimeModuleTaskResult {
+            local_symbol_ref_db,
+            mut module,
+            runtime,
+            ast,
+            raw_import_records,
+            resolved_deps,
+          } = task_result;
+          let import_records: IndexVec<ImportRecordIdx, rolldown_common::ResolvedImportRecord> =
+            raw_import_records
+              .into_iter_enumerated()
+              .zip(resolved_deps)
+              .map(|((_rec_idx, raw_rec), info)| {
+                let id =
+                  self.try_spawn_new_task(info, None, false, raw_rec.asserted_module_type.clone());
+                // Dynamic imported module will be considered as an entry
+                self.intermediate_normal_modules.importers[id]
+                  .push(ImporterRecord { kind: raw_rec.kind, importer_path: module.id.clone() });
+
+                if matches!(raw_rec.kind, ImportKind::DynamicImport)
+                  && !user_defined_entry_ids.contains(&id)
+                {
+                  dynamic_import_entry_ids.insert(id);
+                }
+                raw_rec.into_resolved(id)
+              })
+              .collect::<IndexVec<ImportRecordIdx, _>>();
           let ast_idx = self.intermediate_normal_modules.index_ecma_ast.push((ast, module.idx));
           module.ecma_ast_idx = Some(ast_idx);
+          module.import_records = import_records;
           self.intermediate_normal_modules.modules[self.runtime_id] = Some(module.into());
 
           self.symbol_ref_db.store_local_db(self.runtime_id, local_symbol_ref_db);

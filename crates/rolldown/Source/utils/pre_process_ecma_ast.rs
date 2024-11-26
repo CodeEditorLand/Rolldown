@@ -2,9 +2,9 @@ use std::path::Path;
 
 use itertools::Itertools;
 use oxc::ast::VisitMut;
-use oxc::diagnostics::{OxcDiagnostic, Severity as OxcSeverity};
+use oxc::diagnostics::Severity as OxcSeverity;
 use oxc::minifier::{CompressOptions, Compressor};
-use oxc::semantic::{ScopeTree, SemanticBuilder, Stats, SymbolTable};
+use oxc::semantic::{SemanticBuilder, Stats};
 use oxc::transformer::{
   ESTarget as OxcESTarget, InjectGlobalVariables, ReplaceGlobalDefines, ReplaceGlobalDefinesConfig,
   TransformOptions, Transformer,
@@ -12,11 +12,12 @@ use oxc::transformer::{
 
 use rolldown_common::{ESTarget, NormalizedBundlerOptions};
 use rolldown_ecmascript::{EcmaAst, WithMutFields};
-use rolldown_error::{BuildDiagnostic, Severity};
+use rolldown_error::{BuildDiagnostic, BuildResult, Severity};
 
 use crate::types::oxc_parse_type::OxcParseType;
 
 use super::ecma_visitors::EnsureSpanUniqueness;
+use super::parse_to_ecma_ast::ParseToEcmaAstResult;
 use super::tweak_ast_for_scanning::PreProcessor;
 
 #[derive(Default)]
@@ -39,8 +40,7 @@ impl PreProcessEcmaAst {
     replace_global_define_config: Option<&ReplaceGlobalDefinesConfig>,
     bundle_options: &NormalizedBundlerOptions,
     has_lazy_export: bool,
-  ) -> anyhow::Result<(EcmaAst, SymbolTable, ScopeTree, Vec<BuildDiagnostic>), Vec<OxcDiagnostic>>
-  {
+  ) -> BuildResult<ParseToEcmaAstResult> {
     let mut warning = vec![];
     let source = ast.source().clone();
     // Build initial semantic data and check for semantic errors.
@@ -56,12 +56,24 @@ impl PreProcessEcmaAst {
     }
 
     self.stats = semantic_ret.semantic.stats();
-    let (mut symbols, mut scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
+    let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
 
+    let (mut symbols, mut scopes) = ast.program.with_mut(|fields| {
+      let WithMutFields { allocator, program, .. } = fields;
+      // Use built-in define plugin.
+      if let Some(replace_global_define_config) = replace_global_define_config {
+        let ret = ReplaceGlobalDefines::new(allocator, replace_global_define_config.clone())
+          .build(symbols, scopes, program);
+        self.ast_changed = true;
+        (ret.symbols, ret.scopes)
+      } else {
+        (symbols, scopes)
+      }
+    });
     // Transform TypeScript and jsx.
     if !matches!(parse_type, OxcParseType::Js) || !matches!(bundle_options.target, ESTarget::EsNext)
     {
-      let ret = ast.program.with_mut(move |fields| {
+      let ret = ast.program.with_mut(|fields| {
         let target: OxcESTarget = bundle_options.target.into();
         let mut transformer_options = TransformOptions::from(target);
         match parse_type {
@@ -87,7 +99,9 @@ impl PreProcessEcmaAst {
         .filter(|item| matches!(item.severity, OxcSeverity::Error))
         .collect_vec();
       if !errors.is_empty() {
-        return Err(errors);
+        return Err(
+          BuildDiagnostic::from_oxc_diagnostics(errors, &source, path, &Severity::Error).into(),
+        );
       }
 
       symbols = ret.symbols;
@@ -95,16 +109,8 @@ impl PreProcessEcmaAst {
       self.ast_changed = true;
     }
 
-    ast.program.with_mut(|fields| -> anyhow::Result<(), Vec<OxcDiagnostic>> {
+    ast.program.with_mut(|fields| -> BuildResult<()> {
       let WithMutFields { allocator, program, .. } = fields;
-      // Use built-in define plugin.
-      if let Some(replace_global_define_config) = replace_global_define_config {
-        let ret = ReplaceGlobalDefines::new(allocator, replace_global_define_config.clone())
-          .build(symbols, scopes, program);
-        symbols = ret.symbols;
-        scopes = ret.scopes;
-        self.ast_changed = true;
-      }
       if !bundle_options.inject.is_empty() {
         // if the define replace something, we need to recreate the semantic data.
         // to correct the `root_unresolved_references`
@@ -146,8 +152,9 @@ impl PreProcessEcmaAst {
     ast.program.with_mut(|fields| {
       EnsureSpanUniqueness::new().visit_program(fields.program);
     });
+
     // NOTE: Recreate semantic data because AST is changed in the transformations above.
-    (symbols, scopes) = ast.program.with_dependent(|_owner, dep| {
+    let (symbol_table, scope_tree) = ast.program.with_dependent(|_owner, dep| {
       SemanticBuilder::new()
         // Required by `module.scope.get_child_ids` in `crates/rolldown/src/utils/renamer.rs`.
         .with_scope_tree_child_ids(true)
@@ -158,6 +165,6 @@ impl PreProcessEcmaAst {
         .into_symbol_table_and_scope_tree()
     });
 
-    Ok((ast, symbols, scopes, warning))
+    Ok(ParseToEcmaAstResult { ast, symbol_table, scope_tree, has_lazy_export, warning })
   }
 }

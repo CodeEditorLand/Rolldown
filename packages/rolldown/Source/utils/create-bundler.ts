@@ -4,10 +4,19 @@ import { TreeshakingOptionsSchema } from '../treeshake'
 import { bindingifyInputOptions } from './bindingify-input-options'
 import { bindingifyOutputOptions } from './bindingify-output-options'
 import { composeJsPlugins } from './compose-js-plugins'
-import { normalizePluginOption } from './normalize-plugin-option'
+import {
+  ANONYMOUS_OUTPUT_PLUGIN_PREFIX,
+  ANONYMOUS_PLUGIN_PREFIX,
+  checkOutputPluginOption,
+  normalizePluginOption,
+  normalizePlugins,
+} from './normalize-plugin-option'
 import { initializeParallelPlugins } from './initialize-parallel-plugins'
 import type { InputOptions } from '../options/input-options'
 import type { OutputOptions } from '../options/output-options'
+import { LOG_LEVEL_INFO } from '../log/logging'
+import { getLogger, getOnLog } from '../log/logger'
+import { getObjectPlugins } from '../plugin/plugin-driver'
 
 export async function createBundler(
   inputOptions: InputOptions,
@@ -19,8 +28,35 @@ export async function createBundler(
     TreeshakingOptionsSchema.parse(inputOptions.treeshake)
   }
 
-  // Convert `RolldownPluginRec` to `RolldownPlugin`
-  let plugins = await normalizePluginOption(inputOptions.plugins)
+  const inputPlugins = await normalizePluginOption(inputOptions.plugins)
+
+  const outputPlugins = await normalizePluginOption(outputOptions.plugins)
+
+  // The `outputOptions` hook is called with the input plugins and the output plugins
+  outputOptions = pluginDriver.callOutputOptionsHook(
+    [...inputPlugins, ...outputPlugins],
+    outputOptions,
+  )
+
+  const logLevel = inputOptions.logLevel || LOG_LEVEL_INFO
+  // Force `inputOptions.onLog` to `logHandler` because some rollup plugin hook tests use `options.onLog`.
+  const onLog = (inputOptions.onLog = getLogger(
+    getObjectPlugins(inputPlugins),
+    getOnLog(inputOptions, logLevel),
+    logLevel,
+  ))
+
+  let plugins = [
+    ...normalizePlugins(inputPlugins, ANONYMOUS_PLUGIN_PREFIX),
+    ...checkOutputPluginOption(
+      normalizePlugins(
+        await normalizePluginOption(outputOptions.plugins),
+        ANONYMOUS_OUTPUT_PLUGIN_PREFIX,
+      ),
+      onLog,
+    ),
+  ]
+
   if (inputOptions.experimental?.enableComposingJsPlugins ?? false) {
     plugins = composeJsPlugins(plugins)
   }
@@ -28,13 +64,13 @@ export async function createBundler(
   const parallelPluginInitResult = await initializeParallelPlugins(plugins)
 
   try {
-    outputOptions = pluginDriver.callOutputOptionsHook(plugins, outputOptions)
-
     // Convert `NormalizedInputOptions` to `BindingInputOptions`
     const bindingInputOptions = bindingifyInputOptions(
       plugins,
       inputOptions,
       outputOptions,
+      onLog,
+      logLevel,
     )
 
     // Convert `NormalizedOutputOptions` to `BindingInputOptions`

@@ -7,12 +7,14 @@ use crate::{
     hook_filter::{LoadHookFilter, ResolvedIdHookFilter, TransformHookFilter},
     hook_render_error::HookRenderErrorArgs,
     hook_transform_ast_args::HookTransformAstArgs,
+    hook_write_bundle_args::HookWriteBundleArgs,
   },
-  HookAddonArgs, HookBuildEndArgs, HookInjectionOutputReturn, HookLoadArgs, HookRenderChunkArgs,
+  HookAddonArgs, HookBuildEndArgs, HookBuildStartArgs, HookGenerateBundleArgs,
+  HookInjectionOutputReturn, HookLoadArgs, HookRenderChunkArgs, HookRenderStartArgs,
   HookResolveIdArgs, HookTransformArgs, Plugin, SharedTransformPluginContext,
 };
 use anyhow::Ok;
-use rolldown_common::{ModuleInfo, Output, RollupRenderedChunk, WatcherChangeKind};
+use rolldown_common::{ModuleInfo, RollupRenderedChunk, WatcherChangeKind};
 
 pub use crate::plugin::HookAugmentChunkHashReturn;
 pub use crate::plugin::HookLoadReturn;
@@ -38,7 +40,11 @@ pub trait Pluginable: Any + Debug + Send + Sync + 'static {
 
   // --- Build hooks ---
 
-  async fn call_build_start(&self, _ctx: &PluginContext) -> HookNoopReturn;
+  async fn call_build_start(
+    &self,
+    _ctx: &PluginContext,
+    _args: &HookBuildStartArgs,
+  ) -> HookNoopReturn;
 
   fn call_build_start_meta(&self) -> Option<PluginHookMeta>;
 
@@ -99,7 +105,11 @@ pub trait Pluginable: Any + Debug + Send + Sync + 'static {
 
   // --- Generate hooks ---
 
-  async fn call_render_start(&self, _ctx: &PluginContext) -> HookNoopReturn;
+  async fn call_render_start(
+    &self,
+    _ctx: &PluginContext,
+    _args: &HookRenderStartArgs,
+  ) -> HookNoopReturn;
 
   fn call_render_start_meta(&self) -> Option<PluginHookMeta>;
 
@@ -162,8 +172,7 @@ pub trait Pluginable: Any + Debug + Send + Sync + 'static {
   async fn call_generate_bundle(
     &self,
     _ctx: &PluginContext,
-    _bundle: &mut Vec<Output>,
-    _is_write: bool,
+    _args: &mut HookGenerateBundleArgs,
   ) -> HookNoopReturn;
 
   fn call_generate_bundle_meta(&self) -> Option<PluginHookMeta>;
@@ -171,7 +180,7 @@ pub trait Pluginable: Any + Debug + Send + Sync + 'static {
   async fn call_write_bundle(
     &self,
     _ctx: &PluginContext,
-    _bundle: &mut Vec<Output>,
+    _args: &mut HookWriteBundleArgs,
   ) -> HookNoopReturn;
 
   fn call_write_bundle_meta(&self) -> Option<PluginHookMeta>;
@@ -220,8 +229,12 @@ impl<T: Plugin> Pluginable for T {
     Plugin::name(self)
   }
 
-  async fn call_build_start(&self, ctx: &PluginContext) -> HookNoopReturn {
-    Plugin::build_start(self, ctx).await
+  async fn call_build_start(
+    &self,
+    ctx: &PluginContext,
+    args: &HookBuildStartArgs,
+  ) -> HookNoopReturn {
+    Plugin::build_start(self, ctx, args).await
   }
 
   fn call_build_start_meta(&self) -> Option<PluginHookMeta> {
@@ -297,8 +310,12 @@ impl<T: Plugin> Pluginable for T {
     Plugin::build_end_meta(self)
   }
 
-  async fn call_render_start(&self, ctx: &PluginContext) -> HookNoopReturn {
-    Plugin::render_start(self, ctx).await
+  async fn call_render_start(
+    &self,
+    ctx: &PluginContext,
+    args: &HookRenderStartArgs,
+  ) -> HookNoopReturn {
+    Plugin::render_start(self, ctx, args).await
   }
 
   fn call_render_start_meta(&self) -> Option<PluginHookMeta> {
@@ -392,10 +409,9 @@ impl<T: Plugin> Pluginable for T {
   async fn call_generate_bundle(
     &self,
     ctx: &PluginContext,
-    bundle: &mut Vec<Output>,
-    is_write: bool,
+    args: &mut HookGenerateBundleArgs,
   ) -> HookNoopReturn {
-    Plugin::generate_bundle(self, ctx, bundle, is_write).await
+    Plugin::generate_bundle(self, ctx, args).await
   }
 
   fn call_generate_bundle_meta(&self) -> Option<PluginHookMeta> {
@@ -405,9 +421,9 @@ impl<T: Plugin> Pluginable for T {
   async fn call_write_bundle(
     &self,
     ctx: &PluginContext,
-    bundle: &mut Vec<Output>,
+    args: &mut HookWriteBundleArgs,
   ) -> HookNoopReturn {
-    Plugin::write_bundle(self, ctx, bundle).await
+    Plugin::write_bundle(self, ctx, args).await
   }
 
   fn call_write_bundle_meta(&self) -> Option<PluginHookMeta> {

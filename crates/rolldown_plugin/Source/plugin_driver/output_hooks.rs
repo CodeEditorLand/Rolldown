@@ -2,14 +2,14 @@ use crate::types::hook_render_error::HookRenderErrorArgs;
 use crate::{HookAddonArgs, PluginDriver};
 use crate::{HookAugmentChunkHashReturn, HookNoopReturn, HookRenderChunkArgs};
 use anyhow::{Ok, Result};
-use rolldown_common::{Output, RollupRenderedChunk};
+use rolldown_common::{Output, RollupRenderedChunk, SharedNormalizedBundlerOptions};
 use rolldown_sourcemap::SourceMap;
 
 impl PluginDriver {
-  pub async fn render_start(&self) -> HookNoopReturn {
+  pub async fn render_start(&self, opts: &SharedNormalizedBundlerOptions) -> HookNoopReturn {
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_render_start_meta)
     {
-      plugin.call_render_start(ctx).await?;
+      plugin.call_render_start(ctx, &crate::HookRenderStartArgs { options: opts }).await?;
     }
     Ok(())
   }
@@ -114,20 +114,32 @@ impl PluginDriver {
     Ok(())
   }
 
-  pub async fn generate_bundle(&self, bundle: &mut Vec<Output>, is_write: bool) -> HookNoopReturn {
+  pub async fn generate_bundle(
+    &self,
+    bundle: &mut Vec<Output>,
+    is_write: bool,
+    opts: &SharedNormalizedBundlerOptions,
+  ) -> HookNoopReturn {
     for (_, plugin, ctx) in
       self.iter_plugin_with_context_by_order(&self.order_by_generate_bundle_meta)
     {
-      plugin.call_generate_bundle(ctx, bundle, is_write).await?;
+      let mut args = crate::HookGenerateBundleArgs { is_write, bundle, options: opts };
+      plugin.call_generate_bundle(ctx, &mut args).await?;
       ctx.file_emitter.add_additional_files(bundle);
     }
     Ok(())
   }
 
-  pub async fn write_bundle(&self, bundle: &mut Vec<Output>) -> HookNoopReturn {
+  pub async fn write_bundle(
+    &self,
+    bundle: &mut Vec<Output>,
+    opts: &SharedNormalizedBundlerOptions,
+  ) -> HookNoopReturn {
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_write_bundle_meta)
     {
-      plugin.call_write_bundle(ctx, bundle).await?;
+      let mut args = crate::HookWriteBundleArgs { bundle, options: opts };
+
+      plugin.call_write_bundle(ctx, &mut args).await?;
       ctx.file_emitter.add_additional_files(bundle);
     }
     Ok(())

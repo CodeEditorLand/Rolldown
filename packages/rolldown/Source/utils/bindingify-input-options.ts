@@ -1,7 +1,4 @@
 import { BindingLogLevel } from '../binding'
-import { LOG_LEVEL_INFO } from '../log/logging'
-import { getLogger, getOnLog } from '../log/logger'
-import { getObjectPlugins } from '../plugin/plugin-driver'
 import { bindingifyPlugin } from '../plugin/bindingify-plugin'
 import { PluginContextData } from '../plugin/plugin-context-data'
 import { bindingifyBuiltInPlugin } from '../builtin-plugin/utils'
@@ -9,28 +6,25 @@ import { BuiltinPlugin } from '../builtin-plugin/constructors'
 import { arraify, unsupported } from './misc'
 import { normalizedStringOrRegex } from './normalize-string-or-regex'
 import type { RolldownPlugin } from '..'
-import type { NormalizedInputOptions } from '../options/normalized-input-options'
-import type { NormalizedOutputOptions } from '../options/normalized-output-options'
+import type { InputOptions } from '../options/input-options'
+import type { OutputOptions } from '../options/output-options'
 import type {
   BindingWatchOption,
   BindingInputOptions,
   BindingInjectImportNamed,
   BindingInjectImportNamespace,
 } from '../binding'
+import { LogHandler } from '../rollup'
+import { LogLevelOption } from '../log/logging'
 
 export function bindingifyInputOptions(
   rawPlugins: RolldownPlugin[],
-  inputOptions: NormalizedInputOptions,
-  outputOptions: NormalizedOutputOptions,
+  inputOptions: InputOptions,
+  outputOptions: OutputOptions,
+  onLog: LogHandler,
+  logLevel: LogLevelOption,
 ): BindingInputOptions {
   const pluginContextData = new PluginContextData()
-  const logLevel = inputOptions.logLevel || LOG_LEVEL_INFO
-  // Force `inputOptions.onLog` to `logHandler` because some rollup plugin hook tests use `options.onLog`.
-  const onLog = (inputOptions.onLog = getLogger(
-    getObjectPlugins(rawPlugins),
-    getOnLog(inputOptions, logLevel),
-    logLevel,
-  ))
 
   const plugins = rawPlugins.map((plugin) => {
     if ('_parallel' in plugin) {
@@ -44,6 +38,8 @@ export function bindingifyInputOptions(
       inputOptions,
       outputOptions,
       pluginContextData,
+      onLog,
+      logLevel,
     )
   })
 
@@ -79,7 +75,7 @@ export function bindingifyInputOptions(
 }
 
 function bindingifyExternal(
-  external: NormalizedInputOptions['external'],
+  external: InputOptions['external'],
 ): BindingInputOptions['external'] {
   if (external) {
     if (typeof external === 'function') {
@@ -101,7 +97,7 @@ function bindingifyExternal(
 }
 
 function bindingifyResolve(
-  resolve: NormalizedInputOptions['resolve'],
+  resolve: InputOptions['resolve'],
 ): BindingInputOptions['resolve'] {
   if (resolve) {
     const { alias, extensionAlias, ...rest } = resolve
@@ -125,7 +121,7 @@ function bindingifyResolve(
 }
 
 function bindingifyInject(
-  inject: NormalizedInputOptions['inject'],
+  inject: InputOptions['inject'],
 ): BindingInputOptions['inject'] {
   if (inject) {
     return Object.entries(inject).map(
@@ -172,7 +168,7 @@ function bindingifyInject(
 }
 
 function bindingifyLogLevel(
-  logLevel: NormalizedInputOptions['logLevel'],
+  logLevel: InputOptions['logLevel'],
 ): BindingInputOptions['logLevel'] {
   switch (logLevel) {
     case 'silent':
@@ -189,7 +185,7 @@ function bindingifyLogLevel(
 }
 
 function bindingifyInput(
-  input: NormalizedInputOptions['input'],
+  input: InputOptions['input'],
 ): BindingInputOptions['input'] {
   if (input === undefined) {
     return []
@@ -208,9 +204,7 @@ function bindingifyInput(
   })
 }
 
-function bindingifyJsx(
-  input: NormalizedInputOptions['jsx'],
-): BindingInputOptions['jsx'] {
+function bindingifyJsx(input: InputOptions['jsx']): BindingInputOptions['jsx'] {
   if (input) {
     const mode = input.mode ?? 'classic'
     return {
@@ -230,7 +224,7 @@ function bindingifyJsx(
 }
 
 function bindingifyWatch(
-  watch: NormalizedInputOptions['watch'],
+  watch: InputOptions['watch'],
 ): BindingInputOptions['watch'] {
   if (watch) {
     let value = {
@@ -254,7 +248,7 @@ function bindingifyWatch(
 }
 
 function bindingifyTreeshakeOptions(
-  config: NormalizedInputOptions['treeshake'],
+  config: InputOptions['treeshake'],
 ): BindingInputOptions['treeshake'] {
   if (config === false) {
     return undefined

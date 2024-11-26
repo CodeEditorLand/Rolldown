@@ -28,7 +28,6 @@
 - crates/rolldown/tests/esbuild/importstar/import_namespace_undefined_property_side_effect_free_file
 - crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_common_js
 - crates/rolldown/tests/esbuild/loader/loader_json_no_bundle_iife
-- crates/rolldown/tests/esbuild/loader/loader_json_shared_with_multiple_entries_issue413
 ## should rewrite `require`
 - crates/rolldown/tests/esbuild/default/nested_require_without_call
 - crates/rolldown/tests/esbuild/default/require_without_call
@@ -43,9 +42,6 @@
 ## double module initialization
 - crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_main_implicit_main
 - crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_module_implicit_main
-## comments codegen
-- crates/rolldown/tests/esbuild/default/comment_preservation
-- crates/rolldown/tests/esbuild/default/comment_preservation_transform_jsx
 ## cjs module lexer can't recognize esbuild interop pattern
 - crates/rolldown/tests/esbuild/default/export_forms_iife
 - crates/rolldown/tests/esbuild/default/export_wildcard_fs_node_common_js
@@ -58,9 +54,6 @@
 ## Wrong impl
 - crates/rolldown/tests/esbuild/importstar/re_export_star_external_iife
 - crates/rolldown/tests/esbuild/importstar/re_export_star_iife_no_bundle
-## should inline variable
-- crates/rolldown/tests/esbuild/loader/loader_json_prototype
-- crates/rolldown/tests/esbuild/loader/loader_json_prototype_es5
 ## static class field lowering
 - crates/rolldown/tests/esbuild/ts/this_inside_function_ts
 - crates/rolldown/tests/esbuild/ts/this_inside_function_ts_no_bundle
@@ -102,8 +95,6 @@
 - crates/rolldown/tests/esbuild/default/argument_default_value_scope_no_bundle
 ## related to minifier
 - crates/rolldown/tests/esbuild/default/arguments_special_case_no_bundle
-## for `__require` diff, we don't have `ModePassThrough`
-- crates/rolldown/tests/esbuild/default/comment_preservation
 ## esbuild will wrap `Promise.resolve().then() for original specifier`
 - crates/rolldown/tests/esbuild/default/conditional_import
 ## We don't consider `require($expr)` as a import record
@@ -114,16 +105,6 @@
 - crates/rolldown/tests/esbuild/default/define_import_meta
 ## should warn when target do not support `imoprt.meta`
 - crates/rolldown/tests/esbuild/default/define_import_meta_es5
-## oxc define do not support optional chain
-- crates/rolldown/tests/esbuild/default/define_optional_chain
-## lowering optional chain
-- crates/rolldown/tests/esbuild/default/define_optional_chain_lowered
-## oxc define do not support  optional chain
-- crates/rolldown/tests/esbuild/default/define_optional_chain_lowered
-## define expr with optional chain
-- crates/rolldown/tests/esbuild/default/define_optional_chain_panic_issue3551
-## oxc define dont support this expr
-- crates/rolldown/tests/esbuild/default/define_this
 ## redundant `__toCommonJS`
 - crates/rolldown/tests/esbuild/default/export_forms_common_js
 ## Not sure if we needs to use `Object.define` pattern in iife
@@ -158,10 +139,6 @@
 - crates/rolldown/tests/esbuild/default/inject_import_meta
 ## generate wrong syntax when Exported is `StringLiteral`, and rest part of esbuild gen is weird since there is no need to rename
 - crates/rolldown/tests/esbuild/default/inject_no_bundle
-## different naming style
-- crates/rolldown/tests/esbuild/default/jsx_automatic_imports_common_js
-## wrong tree shaking result
-- crates/rolldown/tests/esbuild/default/mangle_no_quoted_props
 ## should read `tsconfig.json`
 - crates/rolldown/tests/esbuild/default/non_determinism_issue2537
 ## resolve alias
@@ -172,9 +149,7 @@
 - crates/rolldown/tests/esbuild/default/rename_private_identifiers_no_bundle
 ## `__require` rewrite
 - crates/rolldown/tests/esbuild/default/require_bad_argument_count
-## require json should not wrapped in `__esm`
-- crates/rolldown/tests/esbuild/default/require_json
-## require `.json`, the json file should not wrapped in `__esm`
+## wrong `export default require_entry()`;
 - crates/rolldown/tests/esbuild/default/require_shim_substitution
 ## should not reuse `__toESM(require('./foo'))`
 - crates/rolldown/tests/esbuild/default/string_export_names_common_js
@@ -220,9 +195,7 @@
 - crates/rolldown/tests/esbuild/loader/loader_file_relative_path_asset_names_css
 ## abs output base
 - crates/rolldown/tests/esbuild/loader/loader_file_relative_path_js
-## Wrong wrapkind, when json is imported by `require`
-- crates/rolldown/tests/esbuild/loader/loader_json_common_js_and_es6
-## json tree shaking
+## json partial namespace memberExpr used tree shaking
 - crates/rolldown/tests/esbuild/loader/loader_json_invalid_identifier_es6
 ## should treated it as cjs module
 - crates/rolldown/tests/esbuild/loader/loader_json_no_bundle
@@ -270,8 +243,6 @@
 - crates/rolldown/tests/esbuild/ts/ts_import_in_node_modules_name_collision_with_css
 ## resolve `mts` in ts
 - crates/rolldown/tests/esbuild/ts/ts_import_mts
-## commonjs json bundle
-- crates/rolldown/tests/esbuild/ts/ts_minified_bundle_common_js
 ## needs support target
 - crates/rolldown/tests/esbuild/ts/ts_namespace_keep_names_target_es2015
 ## controversial

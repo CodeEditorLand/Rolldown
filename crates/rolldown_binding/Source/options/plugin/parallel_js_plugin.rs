@@ -79,9 +79,10 @@ impl Plugin for ParallelJsPlugin {
   async fn build_start(
     &self,
     ctx: &rolldown_plugin::PluginContext,
+    args: &rolldown_plugin::HookBuildStartArgs<'_>,
   ) -> rolldown_plugin::HookNoopReturn {
     if self.first_plugin().build_start.is_some() {
-      self.run_all(|plugin| plugin.call_build_start(ctx)).await?;
+      self.run_all(|plugin| plugin.call_build_start(ctx, args)).await?;
     }
     Ok(())
   }
@@ -150,11 +151,10 @@ impl Plugin for ParallelJsPlugin {
   async fn generate_bundle(
     &self,
     ctx: &rolldown_plugin::PluginContext,
-    bundle: &mut Vec<rolldown_common::Output>,
-    is_write: bool,
+    args: &mut rolldown_plugin::HookGenerateBundleArgs<'_>,
   ) -> rolldown_plugin::HookNoopReturn {
     if self.first_plugin().generate_bundle.is_some() {
-      self.run_single(|plugin| plugin.call_generate_bundle(ctx, bundle, is_write)).await
+      self.run_single(|plugin| plugin.call_generate_bundle(ctx, args)).await
     } else {
       Ok(())
     }
@@ -163,10 +163,10 @@ impl Plugin for ParallelJsPlugin {
   async fn write_bundle(
     &self,
     ctx: &rolldown_plugin::PluginContext,
-    bundle: &mut Vec<rolldown_common::Output>,
+    args: &mut rolldown_plugin::HookWriteBundleArgs<'_>,
   ) -> rolldown_plugin::HookNoopReturn {
     if self.first_plugin().write_bundle.is_some() {
-      self.run_single(|plugin| plugin.call_write_bundle(ctx, bundle)).await
+      self.run_single(|plugin| plugin.call_write_bundle(ctx, args)).await
     } else {
       Ok(())
     }

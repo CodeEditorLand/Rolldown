@@ -1,4 +1,4 @@
-use oxc::index::IndexVec;
+use oxc_index::IndexVec;
 use rustc_hash::FxHashMap;
 
 use crate::{ImportRecordIdx, SymbolOrMemberExprRef, SymbolRef};
@@ -62,7 +62,7 @@ impl std::ops::DerefMut for StmtInfos {
   }
 }
 
-oxc::index::define_index_type! {
+oxc_index::define_index_type! {
   pub struct StmtInfoIdx = u32;
 }
 
@@ -93,6 +93,24 @@ impl StmtInfo {
       side_effect: self.side_effect,
       source: self.debug_label.clone().unwrap_or_else(|| "<Noop>".into()),
     }
+  }
+
+  #[must_use]
+  pub fn with_stmt_idx(mut self, stmt_idx: usize) -> Self {
+    self.stmt_idx = Some(stmt_idx);
+    self
+  }
+
+  #[must_use]
+  pub fn with_declared_symbols(mut self, declared_symbols: Vec<SymbolRef>) -> Self {
+    self.declared_symbols = declared_symbols;
+    self
+  }
+
+  #[must_use]
+  pub fn with_referenced_symbols(mut self, referenced_symbols: Vec<SymbolOrMemberExprRef>) -> Self {
+    self.referenced_symbols = referenced_symbols;
+    self
   }
 }
 

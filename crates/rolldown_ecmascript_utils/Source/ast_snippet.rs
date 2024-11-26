@@ -2,8 +2,8 @@ use oxc::{
   allocator::{self, Allocator, Box, IntoIn},
   ast::{
     ast::{
-      self, Argument, BindingIdentifier, Expression, FunctionType, ImportOrExportKind, NumberBase,
-      ObjectPropertyKind, PropertyKind, Statement, VariableDeclarationKind,
+      self, Argument, BindingIdentifier, Declaration, Expression, FunctionType, ImportOrExportKind,
+      NumberBase, ObjectPropertyKind, PropertyKind, Statement, VariableDeclarationKind,
     },
     AstBuilder, NONE,
   },
@@ -288,7 +288,7 @@ impl<'ast> AstSnippet<'ast> {
   pub fn commonjs_wrapper_stmt(
     &self,
     binding_name: PassedStr,
-    commonjs_name: PassedStr,
+    commonjs_expr: ast::Expression<'ast>,
     statements: allocator::Vec<'ast, Statement<'ast>>,
     ast_usage: EcmaModuleAstUsage,
     profiler_names: bool,
@@ -334,7 +334,8 @@ impl<'ast> AstSnippet<'ast> {
     }
 
     //  __commonJS(...)
-    let mut commonjs_call_expr = self.call_expr(commonjs_name);
+    let mut commonjs_call_expr =
+      self.builder.call_expression(SPAN, commonjs_expr, NONE, self.builder.vec(), false);
     if profiler_names {
       let obj_expr = self.builder.alloc_object_expression(
         SPAN,
@@ -383,7 +384,7 @@ impl<'ast> AstSnippet<'ast> {
   pub fn esm_wrapper_stmt(
     &self,
     binding_name: PassedStr,
-    esm_fn_name: PassedStr,
+    esm_fn_expr: ast::Expression<'ast>,
     statements: allocator::Vec<'ast, Statement<'ast>>,
     profiler_names: bool,
     stable_id: &str,
@@ -398,7 +399,8 @@ impl<'ast> AstSnippet<'ast> {
     let body = self.builder.function_body(SPAN, self.builder.vec(), statements);
 
     //  __esm(...)
-    let mut commonjs_call_expr = self.call_expr(esm_fn_name);
+    let mut esm_call_expr =
+      self.builder.call_expression(SPAN, esm_fn_expr, NONE, self.builder.vec(), false);
 
     if profiler_names {
       let obj_expr = self.builder.alloc_object_expression(
@@ -426,18 +428,18 @@ impl<'ast> AstSnippet<'ast> {
         )),
         None,
       );
-      commonjs_call_expr.arguments.push(ast::Argument::ObjectExpression(obj_expr));
+      esm_call_expr.arguments.push(ast::Argument::ObjectExpression(obj_expr));
     } else {
       let arrow_expr =
         self.builder.alloc_arrow_function_expression(SPAN, false, false, NONE, params, NONE, body);
-      commonjs_call_expr.arguments.push(ast::Argument::ArrowFunctionExpression(arrow_expr));
+      esm_call_expr.arguments.push(ast::Argument::ArrowFunctionExpression(arrow_expr));
     };
 
     // var init_foo = ...
 
     self.var_decl_stmt(
       binding_name,
-      ast::Expression::CallExpression(commonjs_call_expr.into_in(self.alloc())),
+      ast::Expression::CallExpression(esm_call_expr.into_in(self.alloc())),
     )
   }
 
@@ -748,19 +750,30 @@ impl<'ast> AstSnippet<'ast> {
   // If `node_mode` is false, using `__toESM(expr)`
   pub fn wrap_with_to_esm(
     &self,
-    to_esm_fn_name: PassedStr,
+    to_esm_fn_expr: Expression<'ast>,
     expr: Expression<'ast>,
     node_mode: bool,
   ) -> Expression<'ast> {
-    if node_mode {
-      self.alloc_call_expr_with_2arg_expr_expr(
-        to_esm_fn_name,
-        expr,
-        self.builder.expression_numeric_literal(SPAN, 1.0, "1", NumberBase::Decimal),
-      )
+    let args = if node_mode {
+      self.builder.vec_from_iter([
+        Argument::from(expr),
+        Argument::from(self.builder.expression_numeric_literal(
+          SPAN,
+          1.0,
+          "1",
+          NumberBase::Decimal,
+        )),
+      ])
     } else {
-      self.call_expr_with_arg_expr_expr(to_esm_fn_name, expr)
-    }
+      self.builder.vec1(Argument::from(expr))
+    };
+    ast::Expression::CallExpression(self.builder.alloc_call_expression(
+      SPAN,
+      to_esm_fn_expr,
+      NONE,
+      args,
+      false,
+    ))
   }
 
   /// convert `Expression` to
@@ -794,5 +807,43 @@ impl<'ast> AstSnippet<'ast> {
         expr,
       ),
     )
+  }
+
+  pub fn expr_without_parentheses(&self, mut expr: Expression<'ast>) -> Expression<'ast> {
+    while let Expression::ParenthesizedExpression(mut paren_expr) = expr {
+      expr = self.builder.move_expression(&mut paren_expr.expression);
+    }
+    expr
+  }
+
+  #[inline]
+  pub fn statement_module_declaration_export_named_declaration<T: AsRef<str>>(
+    &self,
+    declaration: Option<Declaration<'ast>>,
+    specifiers: &[(T /*local*/, T /*exported*/, bool /*legal ident*/)],
+  ) -> Statement<'ast> {
+    Statement::from(self.builder.module_declaration_export_named_declaration(
+      SPAN,
+      declaration,
+      {
+        let mut vec = self.builder.vec_with_capacity(specifiers.len());
+        for (local, exported, legal_ident) in specifiers {
+          vec.push(self.builder.export_specifier(
+            SPAN,
+            self.builder.module_export_name_identifier_reference(SPAN, local.as_ref()),
+            if *legal_ident {
+              self.builder.module_export_name_identifier_name(SPAN, exported.as_ref())
+            } else {
+              self.builder.module_export_name_string_literal(SPAN, exported.as_ref())
+            },
+            ImportOrExportKind::Value,
+          ));
+        }
+        vec
+      },
+      None,
+      ImportOrExportKind::Value,
+      NONE,
+    ))
   }
 }
