@@ -10,7 +10,7 @@
 	"devDependencies": {
 		"@playform/build": "0.1.9",
 		"rolldown": "workspace:*",
-		"unplugin-isolated-decl": "^0.8.3"
+		"unplugin-isolated-decl": "0.8.3"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [
