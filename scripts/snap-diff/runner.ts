@@ -43,6 +43,7 @@ type Stats = {
 	failed: number;
 	total: number;
 };
+
 export async function run(includeList: string[], debugConfig: DebugConfig) {
 	let aggregatedStats: AggregateStats = {
 		stats: {

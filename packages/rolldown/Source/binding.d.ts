@@ -1,6 +1,7 @@
 type MaybePromise<T> = T | Promise<T>;
 type Nullable<T> = T | null | undefined;
 type VoidNullable<T = void> = T | null | undefined | void;
+
 export type BindingStringOrRegex = string | RegExp;
 
 export interface RenderedModule {

@@ -5,6 +5,7 @@ import { builders as b, NodePath, Scope, traverse } from "estree-toolkit";
 export type RewriteConfig = {
 	topLevelVar: boolean;
 };
+
 export const defaultRewriteConfig: RewriteConfig = {
 	topLevelVar: true,
 };

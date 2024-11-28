@@ -57,6 +57,7 @@ import { defineConfig } from "./utils/define-config";
 import { Watcher } from "./watcher";
 
 export { defineConfig, rolldown, watch };
+
 export const VERSION: string = version;
 
 export type {
@@ -118,4 +119,5 @@ export type {
 	RolldownOutputChunk as OutputChunk,
 	RolldownOutputAsset as OutputAsset,
 };
+
 export type { RollupError, RollupLog, LoggingFunction } from "./rollup";

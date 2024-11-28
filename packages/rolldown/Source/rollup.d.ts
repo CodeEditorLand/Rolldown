@@ -41,6 +41,7 @@ export interface RollupLog {
 }
 
 export type LogLevel = "warn" | "info" | "debug";
+
 export type LogLevelOption = LogLevel | "silent";
 
 export type SourceMapSegment =
@@ -373,9 +374,11 @@ export type AddonHookFunction = (
 	this: PluginContext,
 	chunk: RenderedChunk,
 ) => string | Promise<string>;
+
 export type AddonHook = string | AddonHookFunction;
 
 export type ChangeEvent = "create" | "update" | "delete";
+
 export type WatchChangeHook = (
 	this: PluginContext,
 	id: string,
@@ -1119,7 +1122,9 @@ interface AcornNode {
 }
 
 export function defineConfig(options: RollupOptions): RollupOptions;
+
 export function defineConfig(options: RollupOptions[]): RollupOptions[];
+
 export function defineConfig(
 	optionsFunction: RollupOptionsFunction,
 ): RollupOptionsFunction;
