@@ -324,7 +324,7 @@
 - crates/rolldown/tests/esbuild/ts/ts_namespace_keep_names_target_es2015
 ## controversial
 - crates/rolldown/tests/esbuild/ts/ts_prefer_js_over_ts_inside_node_modules
-## we have similar output as webpack but different with esbuild, because of https://github.com/evanw/esbuild/commit/54ae9962ba18eafc0fc3f1c8c76641def9b08aa0
+## we have similar output as webpack but different with esbuild, because of HTTPS://github.com/evanw/esbuild/commit/54ae9962ba18eafc0fc3f1c8c76641def9b08aa0
 - crates/rolldown/tests/esbuild/ts/ts_prefer_js_over_ts_inside_node_modules
 ## enum inline
 - crates/rolldown/tests/esbuild/ts/ts_sibling_enum

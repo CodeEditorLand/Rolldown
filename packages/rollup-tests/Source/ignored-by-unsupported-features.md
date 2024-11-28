@@ -268,7 +268,7 @@
  - rollup@function@relative-external-include-once-two-external: includes a relative external module only once (two external deps)
  - rollup@function@relative-external-include-once-up: includes a relative external module only once (from upper directory too)
  - rollup@function@relative-external-include-once: includes a relative external module only once
- - rollup@function@external-directory-import: handles using ../ as external import (#4349) (makeAbsoluteExternalsRelative normlized the external id to absolute path, and renormalize to renderPath https://github.com/rollup/rollup/blob/master/src/ExternalChunk.ts#L51)
+ - rollup@function@external-directory-import: handles using ../ as external import (#4349) (makeAbsoluteExternalsRelative normlized the external id to absolute path, and renormalize to renderPath HTTPS://github.com/rollup/rollup/blob/master/src/ExternalChunk.ts#L51)
  - rollup@function@configure-relative-external-module: allows a nonexistent relative module to be configured as external
  - rollup@form@make-absolute-externals-relative@make-relative-false: does not normalize external paths when set to false
  - rollup@form@make-absolute-externals-relative@make-relative-relative: only normalizes external paths that were originally relative when set to "ifRelativeSource"
