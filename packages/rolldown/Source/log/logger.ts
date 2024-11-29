@@ -37,6 +37,7 @@ export function getLogger(
     if (logPriority < minimalPriority) {
       return
     }
+
     for (const plugin of getSortedPlugins('onLog', plugins)) {
       if (skipped.has(plugin)) continue
 
@@ -75,6 +76,7 @@ export function getLogger(
         }
       }
     }
+
     onLog(level, log)
   }
 
@@ -95,6 +97,7 @@ export const getOnLog = (
         if (level === LOG_LEVEL_ERROR) {
           return error(normalizeLog(handledLog))
         }
+
         if (logLevelPriority[level] >= minimalPriority) {
           defaultOnLog(level, normalizeLog(handledLog))
         }
@@ -133,9 +136,11 @@ const defaultPrintLog: LogHandler = (level, log) => {
     case LOG_LEVEL_WARN: {
       return console.warn(message)
     }
+
     case LOG_LEVEL_DEBUG: {
       return console.debug(message)
     }
+
     default: {
       return console.info(message)
     }

@@ -4,24 +4,35 @@ import { normalizeErrors } from "./utils/error";
 
 export class Watcher {
 	closed: boolean;
+
 	controller: AbortController;
+
 	inner: BindingWatcher;
+
 	stopWorkers?: () => Promise<void>;
+
 	listeners: Map<
 		WatcherEvent,
 		Array<(...parameters: any[]) => MaybePromise<void>>
 	> = new Map();
+
 	constructor(inner: BindingWatcher, stopWorkers?: () => Promise<void>) {
 		this.closed = false;
+
 		this.controller = new AbortController();
+
 		this.inner = inner;
+
 		this.stopWorkers = stopWorkers;
 	}
 
 	async close() {
 		this.closed = true;
+
 		await this.stopWorkers?.();
+
 		await this.inner.close();
+
 		this.controller.abort();
 	}
 
@@ -32,21 +43,26 @@ export class Watcher {
 			change: { event: ChangeEvent },
 		) => MaybePromise<void>,
 	): this;
+
 	on(
 		event: "event",
 		listener: (data: RollupWatcherEvent) => MaybePromise<void>,
 	): this;
+
 	on(event: "restart" | "close", listener: () => MaybePromise<void>): this;
+
 	on(
 		event: WatcherEvent,
 		listener: (...parameters: any[]) => MaybePromise<void>,
 	): this {
 		const listeners = this.listeners.get(event);
+
 		if (listeners) {
 			listeners.push(listener);
 		} else {
 			this.listeners.set(event, [listener]);
 		}
+
 		return this;
 	}
 
@@ -54,6 +70,7 @@ export class Watcher {
 	// So here we need to avoid main process exit util the user call `watcher.close()`.
 	watch() {
 		const timer = setInterval(() => {}, 1e9 /* Low power usage */);
+
 		this.controller.signal.addEventListener("abort", () => {
 			clearInterval(timer);
 		});
@@ -63,6 +80,7 @@ export class Watcher {
 				const listeners = this.listeners.get(
 					event.eventKind() as WatcherEvent,
 				);
+
 				if (listeners) {
 					switch (event.eventKind()) {
 						case "close":
@@ -70,44 +88,54 @@ export class Watcher {
 							for (const listener of listeners) {
 								await listener();
 							}
+
 							break;
 
 						case "event":
 							for (const listener of listeners) {
 								const code = event.bundleEventKind();
+
 								switch (code) {
 									case "BUNDLE_END":
 										const { duration, output } =
 											event.bundleEndData();
+
 										await listener({
 											code: "BUNDLE_END",
 											duration,
 											output: [output], // rolldown doesn't support arraying configure output
 										});
+
 										break;
 
 									case "ERROR":
 										const errors = event.errors();
+
 										await listener({
 											code: "ERROR",
 											error: normalizeErrors(errors),
 										});
+
 										break;
 
 									default:
 										await listener({ code });
+
 										break;
 								}
 							}
+
 							break;
 
 						case "change":
 							for (const listener of listeners) {
 								const { path, kind } = event.watchChangeData();
+
 								await listener(path, {
 									event: kind as ChangeEvent,
 								});
 							}
+
 							break;
 
 						default:
@@ -130,6 +158,7 @@ export type RollupWatcherEvent =
 	  }
 	| {
 			code: "BUNDLE_END";
+
 			duration: number;
 			// input?: InputOption
 			output: readonly string[];
@@ -138,5 +167,6 @@ export type RollupWatcherEvent =
 	| { code: "END" }
 	| {
 			code: "ERROR";
+
 			error: Error /* the error is not compilable with rollup * /  /**  result: RollupBuild | null **/;
 	  };

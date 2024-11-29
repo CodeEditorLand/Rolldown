@@ -11,8 +11,10 @@ export function normalizedStringOrRegex(
 	if (!pattern) {
 		return undefined;
 	}
+
 	if (!Array.isArray(pattern)) {
 		pattern = [pattern];
 	}
+
 	return pattern;
 }

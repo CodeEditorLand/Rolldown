@@ -29,6 +29,7 @@ function defaultResolveFunction(
 	) {
 		return true;
 	}
+
 	if (resolver && typeof resolver === "object") {
 		if (
 			isRegExp(resolver[esbuildFilename]) &&
@@ -36,6 +37,7 @@ function defaultResolveFunction(
 		) {
 			return true;
 		}
+
 		if (resolver[esbuildFilename] == rolldownFilename) {
 			return true;
 		}
@@ -44,7 +46,9 @@ function defaultResolveFunction(
 	if (esbuildFilename === "/out.js" && /entry\.js/.test(rolldownFilename)) {
 		return true;
 	}
+
 	let extractedCaseName = /\/out\/(.*)/.exec(esbuildFilename)?.[1];
+
 	if (extractedCaseName === rolldownFilename) {
 		return true;
 	}
@@ -53,6 +57,7 @@ function defaultResolveFunction(
 export async function diffCase(
 	esbuildSnap: {
 		name: string;
+
 		sourceList: Array<{ name: string; content: string }>;
 	},
 	rolldownSnap: Array<{ filename: string; content: string }> | undefined,
@@ -61,9 +66,13 @@ export async function diffCase(
 ): Promise<
 	| {
 			esbuildName: string;
+
 			rolldownName: string;
+
 			esbuild: string;
+
 			rolldown: string;
+
 			diff: string;
 	  }[]
 	| "bypass"
@@ -73,18 +82,26 @@ export async function diffCase(
 	if (!rolldownSnap) {
 		return "missing";
 	}
+
 	let diffList = [];
+
 	for (let esbuildSource of esbuildSnap.sourceList) {
 		let rewriteConfig: any = {};
+
 		let customResolver: Resolver | undefined;
+
 		let configPath = path.join(caseDir, "diff.config.js");
+
 		if (fs.existsSync(configPath)) {
 			try {
 				const mod = (await import(configPath)).default;
+
 				rewriteConfig = mod.rewrite ?? {};
+
 				customResolver = mod.resolver;
 			} catch {}
 		}
+
 		let matchedSource = rolldownSnap.find((rolldownSource) => {
 			if (
 				defaultResolveFunction(
@@ -95,21 +112,28 @@ export async function diffCase(
 			) {
 				return true;
 			}
+
 			return rolldownSnap.find((snap) => {
 				return snap.filename == esbuildSource.name;
 			});
 		}) ?? { content: "", filename: "" };
+
 		let esbuildContent = esbuildSource.content;
+
 		let rolldownContent = matchedSource.content;
+
 		try {
 			esbuildContent = rewriteEsbuild(esbuildSource.content);
+
 			rolldownContent = rewriteRolldown(matchedSource.content, {
 				...defaultRewriteConfig,
 				...rewriteConfig,
 			});
 		} catch (err) {
 			console.error(esbuildSnap.name);
+
 			console.error(esbuildSource.name);
+
 			if (
 				debugConfig?.debug &&
 				(esbuildSource.name.endsWith(".mjs") ||
@@ -128,9 +152,12 @@ export async function diffCase(
 				esbuildSource.name,
 				matchedSource.filename,
 			);
+
 			let formatDiff = "";
+
 			if (structuredPatch.hunks.length > 0) {
 				formatDiff = diff.formatPatch(structuredPatch);
+
 				diffList.push({
 					esbuildName: esbuildSource.name,
 					rolldownName: matchedSource.filename,
@@ -141,8 +168,10 @@ export async function diffCase(
 			}
 		}
 	}
+
 	if (diffList.length === 0) {
 		return "same";
 	}
+
 	return diffList;
 }

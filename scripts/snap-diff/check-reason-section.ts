@@ -9,14 +9,19 @@ function ensureReasonSection() {
 		dot: false,
 		cwd: workspaceDir,
 	});
+
 	for (let entry of entries) {
 		// skip `lower` since they both have same reason
 		if (entry.startsWith("crates/rolldown/tests/esbuild/lower")) {
 			continue;
 		}
+
 		const entryAbPath = path.resolve(workspaceDir, entry);
+
 		let content = fs.readFileSync(entryAbPath, "utf-8");
+
 		let reasons = extractReason(content);
+
 		if (reasons.length === 0) {
 			console.log(`entry: `, entry);
 		}

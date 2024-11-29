@@ -31,16 +31,22 @@ export function getLogHandler(
 	if (logLevelPriority[level] < logLevelPriority[logLevel]) {
 		return noop;
 	}
+
 	return (log, pos) => {
 		if (pos != null) {
 			logger(LOG_LEVEL_WARN, logInvalidLogPosition(pluginName));
 		}
+
 		log = normalizeLog(log);
+
 		if (log.code && !log.pluginCode) {
 			log.pluginCode = log.code;
 		}
+
 		log.code = code;
+
 		log.plugin = pluginName;
+
 		logger(level, log);
 	};
 }

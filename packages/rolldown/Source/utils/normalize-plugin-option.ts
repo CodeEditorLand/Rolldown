@@ -39,9 +39,11 @@ export function normalizePlugins<T extends RolldownPlugin>(
     if ('_parallel' in plugin) {
       continue
     }
+
     if (plugin instanceof BuiltinPlugin) {
       continue
     }
+
     if (!plugin.name) {
       plugin.name = `${anonymousPrefix}${index + 1}`
     }

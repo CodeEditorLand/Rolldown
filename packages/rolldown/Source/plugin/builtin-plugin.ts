@@ -23,6 +23,7 @@ export class BuiltinPlugin {
 		public options?: unknown,
 	) {
 		this.name = name;
+
 		this.options = options;
 	}
 }
@@ -78,6 +79,7 @@ export class AliasPlugin extends BuiltinPlugin {
 export class TransformPlugin extends BuiltinPlugin {
 	constructor(config?: TransformPluginConfig) {
 		let normalizedConfig = normalizeEcmaTransformPluginConfig(config);
+
 		super(BindingBuiltinPluginName.TransformPlugin, normalizedConfig);
 	}
 }
@@ -223,6 +225,7 @@ export function makeBuiltinPluginCallable(plugin: BuiltinPlugin) {
 	} = {
 		_original: callablePlugin,
 	};
+
 	for (const key in callablePlugin) {
 		if (key === "name") {
 			wrappedPlugin[key] = callablePlugin[key];
@@ -234,6 +237,7 @@ export function makeBuiltinPluginCallable(plugin: BuiltinPlugin) {
 			};
 		}
 	}
+
 	return wrappedPlugin as BindingCallableBuiltinPluginLike & {
 		_original: BindingCallableBuiltinPlugin;
 	};

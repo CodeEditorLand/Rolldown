@@ -29,15 +29,22 @@ export const options = Object.fromEntries(
 			hint: config?.hint,
 		} as {
 			type: "boolean" | "string";
+
 			multiple: boolean;
+
 			short?: string;
+
 			default?: boolean | string | string[];
+
 			hint?: string;
+
 			description: string;
 		};
+
 		if (config && config?.abbreviation) {
 			result.short = config?.abbreviation;
 		}
+
 		if (config && config.reverse) {
 			if (result.description.startsWith("enable")) {
 				result.description = result.description.replace(
@@ -48,6 +55,7 @@ export const options = Object.fromEntries(
 				result.description = `disable ${result.description}`;
 			}
 		}
+
 		key = camelCaseToKebabCase(key);
 		// add 'no-' prefix for need reverse options
 		return [config?.reverse ? `no-${key}` : key, result];
@@ -69,19 +77,26 @@ export function parseCliArguments() {
 		.filter((token) => token.kind === "option")
 		.forEach((option) => {
 			let negative = false;
+
 			if (option.name.startsWith("no-")) {
 				// stripe `no-` prefix
 				const name = kebabCaseToCamelCase(option.name.substring(3));
+
 				if (name in flattenedSchema) {
 					// Remove the `no-` in values
 					delete values[option.name];
+
 					option.name = name;
+
 					negative = true;
 				}
 			}
+
 			delete values[option.name]; // Strip the kebab-case options.
 			option.name = kebabCaseToCamelCase(option.name);
+
 			let originalType = flattenedSchema[option.name];
+
 			if (!originalType) {
 				logger.error(
 					`Invalid option: ${option.rawName}. We will ignore this option.`,
@@ -89,7 +104,9 @@ export function parseCliArguments() {
 				// We will refuse to handle the invalid option, as it may cause unexpected behavior.
 				process.exit(1);
 			}
+
 			let type = getSchemaType(originalType);
+
 			if (type === "string" && typeof option.value !== "string") {
 				let opt = option as { name: string };
 				// We should use the default value.
@@ -97,6 +114,7 @@ export function parseCliArguments() {
 					alias,
 					opt.name,
 				)?.value as OptionConfig;
+
 				Object.defineProperty(values, opt.name, {
 					value: defaultValue.default ?? "",
 					enumerable: true,
@@ -107,6 +125,7 @@ export function parseCliArguments() {
 				const [key, value] = option.value
 					.split(",")
 					.map((x) => x.split("="))[0];
+
 				if (!values[option.name]) {
 					Object.defineProperty(values, option.name, {
 						value: {},
@@ -115,6 +134,7 @@ export function parseCliArguments() {
 						writable: true,
 					});
 				}
+
 				if (key && value) {
 					// TODO support multiple entries.
 					Object.defineProperty(values[option.name], key, {

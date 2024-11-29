@@ -8,6 +8,7 @@ export type TransformPluginConfig = Omit<
 	"include" | "exclude"
 > & {
 	include?: TransformPattern;
+
 	exclude?: TransformPattern;
 };
 
@@ -17,6 +18,7 @@ export function normalizeEcmaTransformPluginConfig(
 	if (!config) {
 		return undefined;
 	}
+
 	let normalizedConfig: BindingTransformPluginConfig = {
 		jsxInject: config?.jsxInject,
 		exclude: normalizedStringOrRegex(config.exclude),

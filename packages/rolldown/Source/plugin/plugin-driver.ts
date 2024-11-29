@@ -102,12 +102,15 @@ export function getObjectPlugins(plugins: RolldownPlugin[]): Plugin[] {
     if (!plugin) {
       return undefined
     }
+
     if ('_parallel' in plugin) {
       return undefined
     }
+
     if (plugin instanceof BuiltinPlugin) {
       return undefined
     }
+
     return plugin
   }) as Plugin[]
 }
@@ -127,6 +130,7 @@ export function getSortedPlugins(
           pre.push(plugin)
           continue
         }
+
         if (hook.order === 'post') {
           post.push(plugin)
           continue

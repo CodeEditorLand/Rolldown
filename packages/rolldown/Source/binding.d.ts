@@ -6,92 +6,143 @@ export type BindingStringOrRegex = string | RegExp;
 
 export interface RenderedModule {
 	readonly code: string | null;
+
 	renderedLength: number;
 }
 
 export declare class BindingBundleEndEventData {
 	output: string;
+
 	duration: number;
 }
 
 export declare class BindingCallableBuiltinPlugin {
 	constructor(plugin: BindingBuiltinPlugin);
+
 	resolveId(
 		id: string,
 		importer?: string | undefined | null,
 		options?: BindingHookJsResolveIdOptions | undefined | null,
 	): Promise<BindingHookJsResolveIdOutput | null>;
+
 	load(id: string): Promise<BindingHookJsLoadOutput | null>;
+
 	watchChange(path: string, event: BindingJsWatchChangeEvent): Promise<void>;
 }
 
 export declare class BindingLog {
 	code: string;
+
 	message: string;
 }
 
 export declare class BindingModuleInfo {
 	id: string;
+
 	importers: Array<string>;
+
 	dynamicImporters: Array<string>;
+
 	importedIds: Array<string>;
+
 	dynamicallyImportedIds: Array<string>;
+
 	isEntry: boolean;
+
 	get code(): string | null;
 }
 
 export declare class BindingNormalizedOptions {
 	get input(): Array<string> | Record<string, string>;
+
 	get cwd(): string | null;
+
 	get platform(): "node" | "browser" | "neutral";
+
 	get shimMissingExports(): boolean;
+
 	get name(): string | null;
+
 	get cssEntryFilenames(): string | undefined;
+
 	get cssChunkFilenames(): string | undefined;
+
 	get entryFilenames(): string | undefined;
+
 	get chunkFilenames(): string | undefined;
+
 	get assetFilenames(): string;
+
 	get dir(): string | null;
+
 	get file(): string | null;
+
 	get format(): "es" | "cjs" | "app" | "iife" | "umd";
+
 	get exports(): "default" | "named" | "none" | "auto";
+
 	get esModule(): boolean | "if-default-prop";
+
 	get inlineDynamicImports(): boolean;
+
 	get sourcemap(): boolean | "inline" | "hidden";
+
 	get banner(): string | undefined | null | undefined;
+
 	get footer(): string | undefined | null | undefined;
+
 	get intro(): string | undefined | null | undefined;
+
 	get outro(): string | undefined | null | undefined;
+
 	get externalLiveBindings(): boolean;
 }
 
 export declare class BindingOutputAsset {
 	get fileName(): string;
+
 	get originalFileName(): string | null;
+
 	get source(): BindingAssetSource;
+
 	get name(): string | null;
 }
 
 export declare class BindingOutputChunk {
 	get isEntry(): boolean;
+
 	get isDynamicEntry(): boolean;
+
 	get facadeModuleId(): string | null;
+
 	get moduleIds(): Array<string>;
+
 	get exports(): Array<string>;
+
 	get fileName(): string;
+
 	get modules(): Record<string, RenderedModule>;
+
 	get imports(): Array<string>;
+
 	get dynamicImports(): Array<string>;
+
 	get code(): string;
+
 	get map(): string | null;
+
 	get sourcemapFileName(): string | null;
+
 	get preliminaryFileName(): string;
+
 	get name(): string;
 }
 
 export declare class BindingOutputs {
 	get chunks(): Array<BindingOutputChunk>;
+
 	get assets(): Array<BindingOutputAsset>;
+
 	get errors(): Array<unknown>;
 }
 
@@ -101,15 +152,21 @@ export declare class BindingPluginContext {
 		sideEffects: BindingHookSideEffects | undefined,
 		fn: () => void,
 	): Promise<void>;
+
 	resolve(
 		specifier: string,
 		importer?: string | undefined | null,
 		extraOptions?: BindingPluginContextResolveOptions | undefined | null,
 	): Promise<BindingPluginContextResolvedId | null>;
+
 	emitFile(file: BindingEmittedAsset): string;
+
 	getFileName(referenceId: string): string;
+
 	getModuleInfo(moduleId: string): BindingModuleInfo | null;
+
 	getModuleIds(): Array<string>;
+
 	addWatchFile(file: string): void;
 }
 
@@ -123,19 +180,25 @@ export declare class BindingTransformPluginContext {
 
 export declare class BindingWatcher {
 	close(): Promise<void>;
+
 	start(listener: (data: BindingWatcherEvent) => void): Promise<void>;
 }
 
 export declare class BindingWatcherChangeData {
 	path: string;
+
 	kind: string;
 }
 
 export declare class BindingWatcherEvent {
 	eventKind(): string;
+
 	watchChangeData(): BindingWatcherChangeData;
+
 	bundleEndData(): BindingBundleEndEventData;
+
 	bundleEventKind(): string;
+
 	errors(): Array<unknown>;
 }
 
@@ -145,22 +208,31 @@ export declare class Bundler {
 		outputOptions: BindingOutputOptions,
 		parallelPluginsRegistry?: ParallelJsPluginRegistry | undefined | null,
 	);
+
 	write(): Promise<BindingOutputs>;
+
 	generate(): Promise<BindingOutputs>;
+
 	scan(): Promise<BindingOutputs>;
+
 	close(): Promise<void>;
+
 	watch(): Promise<BindingWatcher>;
+
 	get closed(): boolean;
 }
 
 export declare class ParallelJsPluginRegistry {
 	id: number;
+
 	workerCount: number;
+
 	constructor(workerCount: number);
 }
 
 export interface AliasItem {
 	find: string;
+
 	replacements: Array<string>;
 }
 
@@ -178,12 +250,15 @@ export interface ArrowFunctionsOptions {
 
 export interface BindingAdvancedChunksOptions {
 	minSize?: number;
+
 	minShareCount?: number;
+
 	groups?: Array<BindingMatchGroup>;
 }
 
 export interface BindingAliasPluginAlias {
 	find: BindingStringOrRegex;
+
 	replacement: string;
 }
 
@@ -197,14 +272,19 @@ export interface BindingAssetSource {
 
 export interface BindingBuildImportAnalysisPluginConfig {
 	preloadCode: string;
+
 	insertPreload: boolean;
+
 	optimizeModulePreloadRelativePaths: boolean;
+
 	renderBuiltUrl: boolean;
+
 	isRelativeBase: boolean;
 }
 
 export interface BindingBuiltinPlugin {
 	__name: BindingBuiltinPluginName;
+
 	options?: unknown;
 }
 
@@ -225,30 +305,39 @@ export type BindingBuiltinPluginName =
 
 export interface BindingEmittedAsset {
 	name?: string;
+
 	fileName?: string;
+
 	originalFileName?: string;
+
 	source: BindingAssetSource;
 }
 
 export interface BindingExperimentalOptions {
 	strictExecutionOrder?: boolean;
+
 	disableLiveBindings?: boolean;
+
 	viteMode?: boolean;
 }
 
 export interface BindingGeneralHookFilter {
 	include?: Array<BindingStringOrRegex>;
+
 	exclude?: Array<BindingStringOrRegex>;
 }
 
 export interface BindingGlobImportPluginConfig {
 	root?: string;
+
 	restoreQueryExtension?: boolean;
 }
 
 export interface BindingHookJsLoadOutput {
 	code: string;
+
 	map?: string;
+
 	sideEffects: boolean | "no-treeshake";
 }
 
@@ -258,31 +347,41 @@ export interface BindingHookJsResolveIdOptions {
 
 export interface BindingHookJsResolveIdOutput {
 	id: string;
+
 	external?: boolean;
+
 	sideEffects: boolean | "no-treeshake";
 }
 
 export interface BindingHookLoadOutput {
 	code: string;
+
 	sideEffects?: BindingHookSideEffects;
+
 	map?: BindingSourcemap;
+
 	moduleType?: string;
 }
 
 export interface BindingHookRenderChunkOutput {
 	code: string;
+
 	map?: BindingSourcemap;
 }
 
 export interface BindingHookResolveIdExtraArgs {
 	custom?: number;
+
 	isEntry: boolean;
+
 	kind: "import" | "dynamic-import" | "require-call";
 }
 
 export interface BindingHookResolveIdOutput {
 	id: string;
+
 	external?: boolean;
+
 	sideEffects?: BindingHookSideEffects;
 }
 
@@ -294,26 +393,35 @@ export declare enum BindingHookSideEffects {
 
 export interface BindingHookTransformOutput {
 	code?: string;
+
 	sideEffects?: BindingHookSideEffects;
+
 	map?: BindingSourcemap;
+
 	moduleType?: string;
 }
 
 export interface BindingInjectImportNamed {
 	tagNamed: true;
+
 	imported: string;
+
 	alias?: string;
+
 	from: string;
 }
 
 export interface BindingInjectImportNamespace {
 	tagNamespace: true;
+
 	alias: string;
+
 	from: string;
 }
 
 export interface BindingInputItem {
 	name?: string;
+
 	import: string;
 }
 
@@ -325,36 +433,59 @@ export interface BindingInputOptions {
 				importer: string | undefined,
 				isResolved: boolean,
 		  ) => boolean);
+
 	input: Array<BindingInputItem>;
+
 	plugins: (BindingBuiltinPlugin | BindingPluginOptions | undefined)[];
+
 	resolve?: BindingResolveOptions;
+
 	shimMissingExports?: boolean;
+
 	platform?: "node" | "browser" | "neutral";
+
 	logLevel: BindingLogLevel;
+
 	onLog: (logLevel: "debug" | "warn" | "info", log: BindingLog) => void;
+
 	cwd: string;
+
 	treeshake?: BindingTreeshake;
+
 	moduleTypes?: Record<string, string>;
+
 	define?: Array<[string, string]>;
+
 	dropLabels?: Array<string>;
+
 	inject?: Array<BindingInjectImportNamed | BindingInjectImportNamespace>;
+
 	experimental?: BindingExperimentalOptions;
+
 	profilerNames?: boolean;
+
 	jsx?: JsxOptions;
+
 	watch?: BindingWatchOption;
 }
 
 export interface BindingJsonPluginConfig {
 	stringify?: boolean;
+
 	isBuild?: boolean;
 }
 
 export interface BindingJsonSourcemap {
 	file?: string;
+
 	mappings?: string;
+
 	sourceRoot?: string;
+
 	sources?: Array<string | undefined | null>;
+
 	sourcesContent?: Array<string | undefined | null>;
+
 	names?: Array<string>;
 }
 
@@ -371,14 +502,19 @@ export declare enum BindingLogLevel {
 
 export interface BindingManifestPluginConfig {
 	root: string;
+
 	outPath: string;
 }
 
 export interface BindingMatchGroup {
 	name: string;
+
 	test?: BindingStringOrRegex;
+
 	priority?: number;
+
 	minSize?: number;
+
 	minShareCount?: number;
 }
 
@@ -388,54 +524,87 @@ export interface BindingModulePreloadPolyfillPluginConfig {
 
 export interface BindingModuleSideEffectsRule {
 	test?: RegExp | undefined;
+
 	sideEffects: boolean;
+
 	external?: boolean | undefined;
 }
 
 export interface BindingNotifyOption {
 	pollInterval?: number;
+
 	compareContents?: boolean;
 }
 
 export interface BindingOutputOptions {
 	name?: string;
+
 	assetFileNames?: string;
+
 	entryFileNames?: string | ((chunk: PreRenderedChunk) => string);
+
 	chunkFileNames?: string | ((chunk: PreRenderedChunk) => string);
+
 	cssEntryFileNames?: string | ((chunk: PreRenderedChunk) => string);
+
 	cssChunkFileNames?: string | ((chunk: PreRenderedChunk) => string);
+
 	banner?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>;
+
 	dir?: string;
+
 	file?: string;
+
 	esModule?: boolean | "if-default-prop";
+
 	exports?: "default" | "named" | "none" | "auto";
+
 	extend?: boolean;
+
 	externalLiveBindings?: boolean;
+
 	footer?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>;
+
 	format?: "es" | "cjs" | "iife" | "umd";
+
 	globals?: Record<string, string> | ((name: string) => string);
+
 	hashCharacters?: "base64" | "base36" | "hex";
+
 	inlineDynamicImports?: boolean;
+
 	intro?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>;
+
 	outro?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>;
+
 	plugins: (BindingBuiltinPlugin | BindingPluginOptions | undefined)[];
+
 	sourcemap?: "file" | "inline" | "hidden";
+
 	sourcemapIgnoreList?: (source: string, sourcemapPath: string) => boolean;
+
 	sourcemapDebugIds?: boolean;
+
 	sourcemapPathTransform?: (source: string, sourcemapPath: string) => string;
+
 	minify?: boolean;
+
 	advancedChunks?: BindingAdvancedChunksOptions;
+
 	comments?: "none" | "preserve-legal";
 }
 
 export interface BindingPluginContextResolvedId {
 	id: string;
+
 	external: boolean;
 }
 
 export interface BindingPluginContextResolveOptions {
 	importKind?: "import" | "dynamic-import" | "require-call";
+
 	skipSelf?: boolean;
+
 	custom?: number;
 }
 
@@ -445,98 +614,141 @@ export interface BindingPluginHookMeta {
 
 export interface BindingPluginOptions {
 	name: string;
+
 	buildStart?: (
 		ctx: BindingPluginContext,
 		opts: BindingNormalizedOptions,
 	) => MaybePromise<VoidNullable>;
+
 	buildStartMeta?: BindingPluginHookMeta;
+
 	resolveId?: (
 		ctx: BindingPluginContext,
 		specifier: string,
 		importer: Nullable<string>,
 		options: BindingHookResolveIdExtraArgs,
 	) => MaybePromise<VoidNullable<BindingHookResolveIdOutput>>;
+
 	resolveIdMeta?: BindingPluginHookMeta;
+
 	resolveIdFilter?: BindingGeneralHookFilter;
+
 	resolveDynamicImport?: (
 		ctx: BindingPluginContext,
 		specifier: string,
 		importer: Nullable<string>,
 	) => MaybePromise<VoidNullable<BindingHookResolveIdOutput>>;
+
 	resolveDynamicImportMeta?: BindingPluginHookMeta;
+
 	load?: (
 		ctx: BindingPluginContext,
 		id: string,
 	) => MaybePromise<VoidNullable<BindingHookLoadOutput>>;
+
 	loadMeta?: BindingPluginHookMeta;
+
 	loadFilter?: BindingGeneralHookFilter;
+
 	transform?: (
 		ctx: BindingTransformPluginContext,
 		id: string,
 		code: string,
 		module_type: BindingTransformHookExtraArgs,
 	) => MaybePromise<VoidNullable<BindingHookTransformOutput>>;
+
 	transformMeta?: BindingPluginHookMeta;
+
 	transformFilter?: BindingTransformHookFilter;
+
 	moduleParsed?: (
 		ctx: BindingPluginContext,
 		module: BindingModuleInfo,
 	) => MaybePromise<VoidNullable>;
+
 	moduleParsedMeta?: BindingPluginHookMeta;
+
 	buildEnd?: (
 		ctx: BindingPluginContext,
 		error: Nullable<string>,
 	) => MaybePromise<VoidNullable>;
+
 	buildEndMeta?: BindingPluginHookMeta;
+
 	renderChunk?: (
 		ctx: BindingPluginContext,
 		code: string,
 		chunk: RenderedChunk,
 		opts: BindingNormalizedOptions,
 	) => MaybePromise<VoidNullable<BindingHookRenderChunkOutput>>;
+
 	renderChunkMeta?: BindingPluginHookMeta;
+
 	augmentChunkHash?: (
 		ctx: BindingPluginContext,
 		chunk: RenderedChunk,
 	) => MaybePromise<void | string>;
+
 	augmentChunkHashMeta?: BindingPluginHookMeta;
+
 	renderStart?: (
 		ctx: BindingPluginContext,
 		opts: BindingNormalizedOptions,
 	) => void;
+
 	renderStartMeta?: BindingPluginHookMeta;
+
 	renderError?: (ctx: BindingPluginContext, error: string) => void;
+
 	renderErrorMeta?: BindingPluginHookMeta;
+
 	generateBundle?: (
 		ctx: BindingPluginContext,
 		bundle: BindingOutputs,
 		isWrite: boolean,
 		opts: BindingNormalizedOptions,
 	) => MaybePromise<VoidNullable<JsChangedOutputs>>;
+
 	generateBundleMeta?: BindingPluginHookMeta;
+
 	writeBundle?: (
 		ctx: BindingPluginContext,
 		bundle: BindingOutputs,
 		opts: BindingNormalizedOptions,
 	) => MaybePromise<VoidNullable<JsChangedOutputs>>;
+
 	writeBundleMeta?: BindingPluginHookMeta;
+
 	closeBundle?: (ctx: BindingPluginContext) => MaybePromise<VoidNullable>;
+
 	closeBundleMeta?: BindingPluginHookMeta;
+
 	watchChange?: (
 		ctx: BindingPluginContext,
 		path: string,
 		event: string,
 	) => MaybePromise<VoidNullable>;
+
 	watchChangeMeta?: BindingPluginHookMeta;
+
 	closeWatcher?: (ctx: BindingPluginContext) => MaybePromise<VoidNullable>;
+
 	closeWatcherMeta?: BindingPluginHookMeta;
+
 	banner?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void;
+
 	bannerMeta?: BindingPluginHookMeta;
+
 	footer?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void;
+
 	footerMeta?: BindingPluginHookMeta;
+
 	intro?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void;
+
 	introMeta?: BindingPluginHookMeta;
+
 	outro?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void;
+
 	outroMeta?: BindingPluginHookMeta;
 }
 
@@ -547,28 +759,43 @@ export declare enum BindingPluginOrder {
 
 export interface BindingPluginWithIndex {
 	index: number;
+
 	plugin: BindingPluginOptions;
 }
 
 export interface BindingReplacePluginConfig {
 	values: Record<string, string>;
+
 	delimiters?: [string, string];
+
 	preventAssignment?: boolean;
+
 	objectGuards?: boolean;
+
 	sourcemap?: boolean;
 }
 
 export interface BindingResolveOptions {
 	alias?: Array<AliasItem>;
+
 	aliasFields?: Array<Array<string>>;
+
 	conditionNames?: Array<string>;
+
 	exportsFields?: Array<Array<string>>;
+
 	extensions?: Array<string>;
+
 	extensionAlias?: Array<ExtensionAliasItem>;
+
 	mainFields?: Array<string>;
+
 	mainFiles?: Array<string>;
+
 	modules?: Array<string>;
+
 	symlinks?: boolean;
+
 	tsconfigFilename?: string;
 }
 
@@ -582,61 +809,90 @@ export interface BindingTransformHookExtraArgs {
 
 export interface BindingTransformHookFilter {
 	code?: BindingGeneralHookFilter;
+
 	moduleType?: Array<string>;
+
 	id?: BindingGeneralHookFilter;
 }
 
 export interface BindingTransformPluginConfig {
 	include?: Array<BindingStringOrRegex>;
+
 	exclude?: Array<BindingStringOrRegex>;
+
 	jsxInject?: string;
+
 	targets?: string;
 }
 
 export interface BindingTreeshake {
 	moduleSideEffects: boolean | BindingModuleSideEffectsRule[];
+
 	annotations?: boolean;
 }
 
 export interface BindingViteResolvePluginConfig {
 	resolveOptions: BindingViteResolvePluginResolveOptions;
+
 	environmentConsumer: string;
+
 	environmentName: string;
+
 	external: true | string[];
+
 	noExternal: true | string[];
+
 	finalizeBareSpecifier?: (
 		resolvedId: string,
 		rawId: string,
 		importer: string | null | undefined,
 	) => VoidNullable<string>;
+
 	finalizeOtherSpecifiers?: (
 		resolvedId: string,
 		rawId: string,
 	) => VoidNullable<string>;
+
 	runtime: string;
 }
 
 export interface BindingViteResolvePluginResolveOptions {
 	isBuild: boolean;
+
 	isProduction: boolean;
+
 	asSrc: boolean;
+
 	preferRelative: boolean;
+
 	isRequire?: boolean;
+
 	root: string;
+
 	scan: boolean;
+
 	mainFields: Array<string>;
+
 	conditions: Array<string>;
+
 	externalConditions: Array<string>;
+
 	extensions: Array<string>;
+
 	tryIndex: boolean;
+
 	tryPrefix?: string;
+
 	preserveSymlinks: boolean;
 }
 
 export interface BindingWatchOption {
 	skipWrite?: boolean;
+
 	notify?: BindingNotifyOption;
+
 	include?: Array<BindingStringOrRegex>;
+
 	exclude?: Array<BindingStringOrRegex>;
 }
 
@@ -647,6 +903,7 @@ export interface Es2015Options {
 
 export interface ExtensionAliasItem {
 	target: string;
+
 	replacements: Array<string>;
 }
 
@@ -667,42 +924,63 @@ export interface IsolatedDeclarationsOptions {
 	 * See <https://www.typescriptlang.org/tsconfig/#stripInternal>
 	 */
 	stripInternal?: boolean;
+
 	sourcemap?: boolean;
 }
 
 export interface IsolatedDeclarationsResult {
 	code: string;
+
 	map?: SourceMap;
+
 	errors: Array<string>;
 }
 
 export interface JsChangedOutputs {
 	chunks: Array<JsOutputChunk>;
+
 	assets: Array<JsOutputAsset>;
+
 	deleted: Array<string>;
 }
 
 export interface JsOutputAsset {
 	name?: string;
+
 	originalFileName?: string;
+
 	filename: string;
+
 	source: BindingAssetSource;
 }
 
 export interface JsOutputChunk {
 	name: string;
+
 	isEntry: boolean;
+
 	isDynamicEntry: boolean;
+
 	facadeModuleId?: string;
+
 	moduleIds: Array<string>;
+
 	exports: Array<string>;
+
 	filename: string;
+
 	modules: Record<string, RenderedModule>;
+
 	imports: Array<string>;
+
 	dynamicImports: Array<string>;
+
 	code: string;
+
 	map?: BindingSourcemap;
+
 	sourcemapFilename?: string;
+
 	preliminaryFilename: string;
 }
 
@@ -803,10 +1081,15 @@ export interface JsxOptions {
 
 export interface PreRenderedChunk {
 	name: string;
+
 	isEntry: boolean;
+
 	isDynamicEntry: boolean;
+
 	facadeModuleId?: string;
+
 	moduleIds: Array<string>;
+
 	exports: Array<string>;
 }
 
@@ -823,6 +1106,7 @@ export interface ReactRefreshOptions {
 	 * @default `$RefreshSig$`.
 	 */
 	refreshSig?: string;
+
 	emitFullSignatures?: boolean;
 }
 
@@ -833,25 +1117,41 @@ export declare function registerPlugins(
 
 export interface RenderedChunk {
 	name: string;
+
 	isEntry: boolean;
+
 	isDynamicEntry: boolean;
+
 	facadeModuleId?: string;
+
 	moduleIds: Array<string>;
+
 	exports: Array<string>;
+
 	fileName: string;
+
 	modules: Record<string, RenderedModule>;
+
 	imports: Array<string>;
+
 	dynamicImports: Array<string>;
 }
 
 export interface SourceMap {
 	file?: string;
+
 	mappings: string;
+
 	names: Array<string>;
+
 	sourceRoot?: string;
+
 	sources: Array<string>;
+
 	sourcesContent?: Array<string>;
+
 	version: number;
+
 	x_google_ignoreList?: Array<number>;
 }
 
@@ -964,9 +1264,13 @@ export interface TransformResult {
 
 export interface TypeScriptOptions {
 	jsxPragma?: string;
+
 	jsxPragmaFrag?: string;
+
 	onlyRemoveTypeImports?: boolean;
+
 	allowNamespaces?: boolean;
+
 	allowDeclareFields?: boolean;
 	/**
 	 * Also generate a `.d.ts` declaration file for TypeScript files.

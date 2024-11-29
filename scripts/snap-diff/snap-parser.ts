@@ -6,18 +6,25 @@ export function parseEsbuildSnap(source: string) {
 	let cases = source.split(
 		"================================================================================",
 	);
+
 	return cases.map(parseEsbuildCase);
 }
 
 function parseEsbuildCase(source: string): {
 	name: string;
+
 	sourceList: { name: string; content: string }[];
 } {
 	let lines = source.trimStart().split("\n");
+
 	let [name, ...rest] = lines;
+
 	let trimmedName = name.slice(4);
+
 	let normalizedName = snakeCase(trimmedName);
+
 	let content = rest.join("\n");
+
 	return { name: normalizedName, sourceList: parseContent(content) };
 }
 
@@ -27,6 +34,7 @@ function parseContent(content: string) {
 		/----------\s*(.+?)\s*----------\s*([\s\S]*?)(?=----------|$)/g;
 
 	const result = [];
+
 	let match;
 
 	// Use regex to find all matches in the input
@@ -48,6 +56,7 @@ export function parseRolldownSnap(source: string | undefined) {
 	if (!source) {
 		return undefined;
 	}
+
 	let match;
 	// strip `---source---` block
 	while ((match = /---\n([\s\S]+?)\n---/.exec(source))) {
@@ -58,41 +67,55 @@ export function parseRolldownSnap(source: string | undefined) {
 	const processor = unified().use(remarkParse);
 
 	const parseTree = processor.parse(source);
+
 	const tree: any = processor.runSync(parseTree);
 
 	let i = 0;
+
 	let inAsset = false;
+
 	let ret = [];
+
 	while (i < tree.children.length) {
 		let child = tree.children[i];
+
 		if (child.type === "heading" && child.depth === 1) {
 			let content = source.slice(
 				child.position.start.offset,
 				child.position.end.offset,
 			);
+
 			if (content.trim().slice(1).trim() === "Assets") {
 				inAsset = true;
 			} else {
 				inAsset = false;
 			}
 		}
+
 		if (inAsset && child.type === "heading" && child.depth === 2) {
 			let content = source.slice(
 				child.position.start.offset,
 				child.position.end.offset,
 			);
+
 			let filename = content.trim().slice(2).trim();
+
 			let codeBlock = tree.children[i + 1];
+
 			if (codeBlock.type === "code") {
 				ret.push({
 					filename,
 					content: codeBlock.value,
 				});
+
 				i += 2;
+
 				continue;
 			}
 		}
+
 		i++;
 	}
+
 	return ret;
 }

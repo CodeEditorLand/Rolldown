@@ -1,5 +1,6 @@
 type AliasPluginAlias = {
 	find: string | RegExp;
+
 	replacement: string;
 };
 

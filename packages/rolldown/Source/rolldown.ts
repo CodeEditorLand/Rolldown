@@ -16,9 +16,13 @@ export const watch = async (input: WatchOptions): Promise<Watcher> => {
 		input,
 		input.output || {},
 	);
+
 	const bindingWatcher = await bundler.watch();
+
 	const watcher = new Watcher(bindingWatcher, stopWorkers);
+
 	watcher.watch();
+
 	return watcher;
 };
 
@@ -29,7 +33,10 @@ export const watch = async (input: WatchOptions): Promise<Watcher> => {
  */
 export const experimental_scan = async (input: InputOptions): Promise<void> => {
 	const { bundler, stopWorkers } = await createBundler(input, {});
+
 	const output = await bundler.scan();
+
 	handleOutputErrors(output);
+
 	await stopWorkers?.();
 };

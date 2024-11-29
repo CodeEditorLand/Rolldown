@@ -22,15 +22,18 @@ export function bindingifyInputOptions(
 	outputOptions: NormalizedOutputOptions,
 ): BindingInputOptions {
 	const pluginContextData = new PluginContextData();
+
 	return {
 		input: bindingifyInput(options.input),
 		plugins: options.plugins.map((plugin) => {
 			if ("_parallel" in plugin) {
 				return undefined;
 			}
+
 			if (plugin instanceof BuiltinPlugin) {
 				return bindingifyBuiltInPlugin(plugin);
 			}
+
 			return bindingifyPlugin(
 				plugin,
 				options,
@@ -42,18 +45,23 @@ export function bindingifyInputOptions(
 		external: options.external
 			? (function bindingifyExternal() {
 					const external = options.external;
+
 					if (typeof external === "function") {
 						return (id, importer, isResolved) => {
 							if (id.startsWith("\0")) return false;
+
 							return external(id, importer, isResolved) ?? false;
 						};
 					}
+
 					const externalArr = arraify(external);
+
 					return (id, _importer, _isResolved) => {
 						return externalArr.some((pat) => {
 							if (pat instanceof RegExp) {
 								return pat.test(id);
 							}
+
 							return id === pat;
 						});
 					};
@@ -153,10 +161,13 @@ function bindingifyLogLevel(
 	switch (logLevel) {
 		case "silent":
 			return BindingLogLevel.Silent;
+
 		case "warn":
 			return BindingLogLevel.Warn;
+
 		case "info":
 			return BindingLogLevel.Info;
+
 		case "debug":
 			return BindingLogLevel.Debug;
 
@@ -186,6 +197,7 @@ function bindingifyJsx(
 ): BindingInputOptions["jsx"] {
 	if (input) {
 		const mode = input.mode ?? "classic";
+
 		return {
 			runtime: mode,
 			importSource:
@@ -211,17 +223,20 @@ function bindingifyWatch(
 			include: normalizedStringOrRegex(watch.include),
 			exclude: normalizedStringOrRegex(watch.exclude),
 		} as BindingWatchOption;
+
 		if (watch.notify) {
 			value.notify = {
 				pollInterval: watch.notify.pollInterval,
 				compareContents: watch.notify.compareContents,
 			};
 		}
+
 		if (watch.chokidar) {
 			unsupported(
 				"The watch chokidar option is deprecated, please use notify options instead of it.",
 			);
 		}
+
 		return value;
 	}
 }

@@ -16,10 +16,15 @@ export function rewriteRolldown(code: string, config: RewriteConfig) {
 		sourceType: "module",
 		allowReturnOutsideFunction: true,
 	});
+
 	let programScope: Scope | null | undefined;
+
 	let collapsedAssertArgs: acorn.Expression[] = [];
+
 	let pathToRemove: NodePath<any, any>[] = [];
+
 	let isLastExpressionStatementAssert = false;
+
 	traverse(ast, {
 		$: { scope: true },
 		Program: {
@@ -30,6 +35,7 @@ export function rewriteRolldown(code: string, config: RewriteConfig) {
 				for (let p of pathToRemove) {
 					p.remove();
 				}
+
 				if (collapsedAssertArgs.length) {
 					let consoleLogStmt = b.expressionStatement(
 						b.callExpression(
@@ -40,13 +46,16 @@ export function rewriteRolldown(code: string, config: RewriteConfig) {
 							collapsedAssertArgs as any,
 						),
 					);
+
 					path.node?.body.push(consoleLogStmt);
 				}
 			},
 		},
 		ImportDeclaration(path) {
 			let sourceList = ["assert", "node:assert"];
+
 			let node = path.node as acorn.ImportDeclaration;
+
 			if (
 				node.source.value &&
 				sourceList.includes(node.source.value.toString())
@@ -61,15 +70,21 @@ export function rewriteRolldown(code: string, config: RewriteConfig) {
 			// only if there is already a 'use strict'
 			if (node.directive === "use strict") {
 				pathToRemove.push(path);
+
 				return;
 			}
+
 			if (path.scope === programScope) {
 				if (node.expression.type === "CallExpression") {
 					let arg = extractAssertArgument(node.expression);
+
 					if (arg) {
 						isLastExpressionStatementAssert = true;
+
 						collapsedAssertArgs.push(arg);
+
 						pathToRemove.push(path);
+
 						return;
 					}
 				}
@@ -79,6 +94,7 @@ export function rewriteRolldown(code: string, config: RewriteConfig) {
 					collapsedAssertArgs.length
 				) {
 					isLastExpressionStatementAssert = false;
+
 					let consoleLogStmt = b.expressionStatement(
 						b.callExpression(
 							b.memberExpression(
@@ -88,6 +104,7 @@ export function rewriteRolldown(code: string, config: RewriteConfig) {
 							collapsedAssertArgs as any,
 						),
 					);
+
 					path.insertBefore([consoleLogStmt]);
 				}
 			}
@@ -98,11 +115,13 @@ export function rewriteRolldown(code: string, config: RewriteConfig) {
 			}
 			// related to https://esbuild.github.io/faq/#top-level-var
 			let node = path.node as acorn.VariableDeclaration;
+
 			if (path.scope === programScope) {
 				node.kind = "var";
 			}
 		},
 	});
+
 	return gen.generate(ast, {
 		indent: "    ",
 	});
@@ -116,6 +135,7 @@ function extractAssertArgument(
 	// extract assert.equal(test, 1)
 	// extract assert.deepEqual(test, 1)
 	let assertProperties = ["equal", "strictEqual", "deepEqual"];
+
 	if (
 		callee.type === "MemberExpression" &&
 		callee.object.type === "Identifier" &&
@@ -124,6 +144,7 @@ function extractAssertArgument(
 		assertProperties.includes(callee.property.name)
 	) {
 		let args = node.arguments;
+
 		return args[0] as acorn.Expression;
 	}
 }
@@ -134,6 +155,7 @@ export function rewriteEsbuild(code: string) {
 		sourceType: "module",
 		allowReturnOutsideFunction: true,
 	});
+
 	return gen.generate(ast, {
 		indent: "    ",
 	});

@@ -15,6 +15,7 @@ export function normalizeErrors(rawErrors: unknown[]) {
       summary += '\n...'
       break
     }
+
     summary += getErrorMessage(errors[i]) + '\n'
   }
   const wrapper = new Error(summary)

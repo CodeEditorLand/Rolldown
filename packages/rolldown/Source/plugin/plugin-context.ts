@@ -90,6 +90,7 @@ export class PluginContext extends MinimalPluginContext {
         if (loadPromise) {
           return loadPromise
         }
+
         let resolveFn
         // TODO: If is not resolved, we need to set a time to avoid waiting.
         const promise = new Promise<void>((resolve, _) => {
@@ -106,6 +107,7 @@ export class PluginContext extends MinimalPluginContext {
           // If the load module has failed, avoid it re-load using unresolved promise.
           data.loadModulePromiseMap.delete(id)
         }
+
         return promise
       }
 
@@ -113,6 +115,7 @@ export class PluginContext extends MinimalPluginContext {
       await createLoadModulePromise()
       return data.getModuleInfo(id, context)!
     }
+
     this.resolve = async (source, importer, options) => {
       let receipt: number | undefined = undefined
       if (options != null) {
@@ -130,6 +133,7 @@ export class PluginContext extends MinimalPluginContext {
       const info = data.getModuleOption(res.id) || ({} as ModuleOptions)
       return { ...res, ...info }
     }
+
     this.emitFile = (file: EmittedAsset): string => {
       if (file.type !== 'asset') {
         return unimplemented(
@@ -142,6 +146,7 @@ export class PluginContext extends MinimalPluginContext {
         source: bindingAssetSource(file.source),
       })
     }
+
     this.getFileName = context.getFileName.bind(context)
     this.getModuleInfo = (id: string) => data.getModuleInfo(id, context)
     this.getModuleIds = () => data.getModuleIds(context)

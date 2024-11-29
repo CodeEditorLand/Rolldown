@@ -84,6 +84,7 @@ export function augmentCodeLocation(
     if (!location) {
       return
     }
+
     const { line, column } = location
     properties.loc = { column, file: id, line }
   }

@@ -5,9 +5,13 @@ import type { HasProperty, IsPropertiesEqual, TypeAssert } from "./assert";
 
 export interface RolldownOutputAsset {
 	type: "asset";
+
 	fileName: string;
+
 	originalFileName: string | null;
+
 	source: AssetSource;
+
 	name: string | undefined;
 }
 
@@ -17,10 +21,15 @@ function _assertRolldownOutputAsset() {
 
 export interface SourceMap {
 	file: string;
+
 	mappings: string;
+
 	names: string[];
+
 	sources: string[];
+
 	sourcesContent: string[];
+
 	version: number;
 	// TODO
 	// toString(): string
@@ -29,21 +38,35 @@ export interface SourceMap {
 
 export interface RolldownOutputChunk {
 	type: "chunk";
+
 	code: string;
+
 	name: string;
+
 	isEntry: boolean;
+
 	exports: string[];
+
 	fileName: string;
+
 	modules: {
 		[id: string]: RenderedModule;
 	};
+
 	imports: string[];
+
 	dynamicImports: string[];
+
 	facadeModuleId: string | null;
+
 	isDynamicEntry: boolean;
+
 	moduleIds: string[];
+
 	map: SourceMap | null;
+
 	sourcemapFileName: string | null;
+
 	preliminaryFileName: string;
 }
 

@@ -2,12 +2,19 @@ import { BindingSourcemap } from "../binding";
 
 export interface ExistingRawSourceMap {
 	file?: string | null;
+
 	mappings: string;
+
 	names?: string[];
+
 	sources?: (string | null)[];
+
 	sourcesContent?: (string | null)[];
+
 	sourceRoot?: string;
+
 	version?: number; // make it optional to compat { mappings: '' }
+
 	x_google_ignoreList?: number[];
 }
 
@@ -17,6 +24,7 @@ export function bindingifySourcemap(
 	map?: SourceMapInput,
 ): undefined | BindingSourcemap {
 	if (map == null) return;
+
 	return {
 		inner:
 			typeof map === "string"

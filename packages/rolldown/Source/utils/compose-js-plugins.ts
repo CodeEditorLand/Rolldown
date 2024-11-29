@@ -73,6 +73,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
           }
           break
         }
+
         case 'load': {
           const handlers = batchedHooks.load ?? []
           batchedHooks.load = handlers
@@ -81,6 +82,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
           }
           break
         }
+
         case 'transform': {
           const handlers = batchedHooks.transform ?? []
           batchedHooks.transform = handlers
@@ -89,6 +91,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
           }
           break
         }
+
         case 'resolveId': {
           const handlers = batchedHooks.resolveId ?? []
           batchedHooks.resolveId = handlers
@@ -97,6 +100,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
           }
           break
         }
+
         case 'buildEnd': {
           const handlers = batchedHooks.buildEnd ?? []
           batchedHooks.buildEnd = handlers
@@ -105,6 +109,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
           }
           break
         }
+
         case 'renderChunk': {
           const handlers = batchedHooks.renderChunk ?? []
           batchedHooks.renderChunk = handlers
@@ -113,6 +118,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
           }
           break
         }
+
         case 'banner':
         case 'footer':
         case 'intro':
@@ -123,6 +129,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
           }
           break
         }
+
         case 'closeBundle': {
           const handlers = batchedHooks.closeBundle ?? []
           batchedHooks.closeBundle = handlers
@@ -225,7 +232,9 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
 
       for (
         let handlerIdx = 0;
+
         handlerIdx < batchedHandlers.length;
+
         handlerIdx++
       ) {
         const [handler, plugin] = batchedHandlers[handlerIdx]
@@ -270,6 +279,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
             )
           }
         }
+
         break
       }
       case 'load': {
@@ -288,6 +298,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
             }
           }
         }
+
         break
       }
       case 'transform': {
@@ -304,6 +315,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
               code = newCode
               moduleSideEffects = newModuleSideEffects ?? undefined
             }
+
             for (const [handler, plugin] of batchedHandlers) {
               const { handler: handlerFn } = normalizeHook(handler)
               const result = await handlerFn.call(
@@ -322,12 +334,14 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
                 }
               }
             }
+
             return {
               code,
               moduleSideEffects,
             }
           }
         }
+
         break
       }
       case 'buildEnd': {
@@ -345,6 +359,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
             )
           }
         }
+
         break
       }
       case 'renderChunk': {
@@ -365,6 +380,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
             }
           }
         }
+
         break
       }
       case 'banner':
@@ -388,9 +404,11 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
                 )
               }
             }
+
             return ret.join('\n')
           }
         }
+
         break
       }
       case 'closeBundle': {
@@ -405,6 +423,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
             )
           }
         }
+
         break
       }
       case 'watchChange': {
@@ -423,6 +442,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
             )
           }
         }
+
         break
       }
       case 'closeWatcher': {
@@ -437,6 +457,7 @@ function createComposedPlugin(plugins: Plugin[]): Plugin {
             )
           }
         }
+
         break
       }
       default: {
@@ -505,6 +526,7 @@ export function composeJsPlugins(plugins: RolldownPlugin[]): RolldownPlugin[] {
           // push the only plugin in toBeComposed
           newPlugins.push(toBeComposed[0])
         }
+
         toBeComposed.length = 0
       }
       // push the plugin that is not composable
@@ -521,6 +543,7 @@ export function composeJsPlugins(plugins: RolldownPlugin[]): RolldownPlugin[] {
     } else {
       newPlugins.push(toBeComposed[0])
     }
+
     toBeComposed.length = 0
   }
 

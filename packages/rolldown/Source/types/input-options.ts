@@ -37,47 +37,77 @@ export type ModuleTypes = Record<
 
 export interface JsxOptions {
 	mode?: "classic" | "automatic";
+
 	factory?: string;
+
 	fragment?: string;
+
 	importSource?: string;
+
 	jsxImportSource?: string;
+
 	refresh?: boolean;
+
 	development?: boolean;
 }
 
 export interface WatchOptions {
 	skipWrite?: boolean;
+
 	notify?: {
 		pollInterval?: number;
+
 		compareContents?: boolean;
 	};
+
 	include?: StringOrRegExp | StringOrRegExp[];
+
 	exclude?: StringOrRegExp | StringOrRegExp[];
+
 	chokidar?: any;
 }
 
 export interface InputOptions {
 	input?: InputOption;
+
 	plugins?: RolldownPluginRec[];
+
 	external?: ExternalOption;
+
 	resolve?: {
 		alias?: Record<string, string>;
+
 		aliasFields?: string[][];
+
 		conditionNames?: string[];
+
 		extensionAlias?: Record<string, string[]>;
+
 		exportsFields?: string[][];
+
 		extensions?: string[];
+
 		mainFields?: string[];
+
 		mainFiles?: string[];
+
 		modules?: string[];
+
 		symlinks?: boolean;
+
 		tsconfigFilename?: string;
 	};
+
 	cwd?: string;
+
 	platform?: "node" | "browser" | "neutral";
+
 	shimMissingExports?: boolean;
+
 	treeshake?: boolean | TreeshakingOptions;
+
 	logLevel?: LogLevelOption;
+
 	onLog?: (
 		level: LogLevel,
 		log: RollupLog,
@@ -86,18 +116,24 @@ export interface InputOptions {
 			log: RollupLogWithString,
 		) => void,
 	) => void;
+
 	onwarn?: (
 		warning: RollupLog,
 		defaultHandler: (
 			warning: RollupLogWithString | (() => RollupLogWithString),
 		) => void,
 	) => void;
+
 	moduleTypes?: ModuleTypes;
+
 	experimental?: {
 		enableComposingJsPlugins?: boolean;
+
 		strictExecutionOrder?: boolean;
+
 		disableLiveBindings?: boolean;
 	};
+
 	define?: Record<string, string>;
 	/**
 	 * Inject import statements on demand.
@@ -123,15 +159,21 @@ export interface InputOptions {
 	 * ```
 	 */
 	inject?: Record<string, string | [string, string]>;
+
 	profilerNames?: boolean;
+
 	jsx?: JsxOptions;
+
 	watch?: WatchOptions | false;
+
 	dropLabels?: string[];
 }
 
 interface OverwriteInputOptionsForCli {
 	external?: string[];
+
 	inject?: Record<string, string>;
+
 	treeshake?: boolean;
 }
 

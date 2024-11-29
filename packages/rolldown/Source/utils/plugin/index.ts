@@ -7,6 +7,7 @@ export const isPluginHookName = (function () {
 	const PLUGIN_HOOK_NAMES_SET = new Set(
 		ENUMERATED_PLUGIN_HOOK_NAMES as readonly string[],
 	);
+
 	return function isPluginHookName(
 		hookName: string,
 	): hookName is PluginHookNames {

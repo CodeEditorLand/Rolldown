@@ -84,6 +84,7 @@ async function watchInner(
             `Found ${colors.bold(changedFile.map(relativeId).join(', '))} changed, rebuilding...`,
           )
         }
+
         changedFile.length = 0
         break
 
@@ -155,6 +156,7 @@ function collectOutputLayoutAdjustmentSizes(entries: OutputEntry[]) {
     if (entry.fileName.length > longest) {
       longest = entry.fileName.length
     }
+
     if (entry.size > biggestSize) {
       biggestSize = entry.size
     }
@@ -193,6 +195,7 @@ function printOutputEntries(
     if (!filtered.length) {
       continue
     }
+
     for (const entry of filtered.sort((a, z) => a.size - z.size)) {
       // output format: `path/to/xxx type | size: y.yy kB`
       let log = colors.dim(withTrailingSlash(distPath))

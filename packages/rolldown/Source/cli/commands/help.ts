@@ -54,6 +54,7 @@ export function showHelp() {
         if (options[a].short && !options[b].short) {
           return -1
         }
+
         if (!options[a].short && options[b].short) {
           return 1
         }
@@ -70,12 +71,15 @@ export function showHelp() {
         if (short) {
           optionStr += `-${short}, `
         }
+
         if (type === 'string') {
           optionStr += `<${hint ?? option}>`
         }
+
         if (description && description.length > 0) {
           description = description[0].toUpperCase() + description.slice(1)
         }
+
         return (
           cyan(optionStr.padEnd(30)) +
           description +

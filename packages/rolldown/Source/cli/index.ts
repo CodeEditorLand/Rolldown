@@ -11,17 +11,20 @@ async function main() {
 
 	if (cliOptions.config) {
 		await bundleWithConfig(cliOptions.config, cliOptions);
+
 		return;
 	}
 
 	if ("input" in cliOptions.input) {
 		// If input is specified, we will bundle with the input options
 		await bundleWithCliOptions(cliOptions);
+
 		return;
 	}
 
 	if (cliOptions.version) {
 		logger.log(`rolldown v${version}`);
+
 		return;
 	}
 
@@ -30,5 +33,6 @@ async function main() {
 
 main().catch((err) => {
 	console.error(err);
+
 	process.exit(1);
 });

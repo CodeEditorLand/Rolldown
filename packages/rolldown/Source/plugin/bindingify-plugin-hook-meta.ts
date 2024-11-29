@@ -15,11 +15,14 @@ function bindingPluginOrder(
 	switch (order) {
 		case "post":
 			return BindingPluginOrder.Post;
+
 		case "pre":
 			return BindingPluginOrder.Pre;
+
 		case null:
 		case undefined:
 			return undefined;
+
 		default:
 			throw new Error(`Unknown plugin order: ${order}`);
 	}
@@ -27,6 +30,8 @@ function bindingPluginOrder(
 
 export type PluginHookWithBindingExt<T, F = undefined> = {
 	plugin?: T;
+
 	meta?: BindingPluginHookMeta;
+
 	filter?: F;
 };

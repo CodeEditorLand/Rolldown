@@ -162,6 +162,7 @@ export function collectChangedBundle(
     if (changed.deleted.has(key) || !changed.updated.has(key)) {
       continue
     }
+
     const item = bundle[key]
     if (item.type === 'asset') {
       assets.push({

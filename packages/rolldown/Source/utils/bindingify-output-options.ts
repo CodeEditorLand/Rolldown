@@ -68,6 +68,7 @@ function bindingifyAddon(
     if (typeof configAddon === 'function') {
       return configAddon(chunk)
     }
+
     return configAddon || ''
   }
 }
@@ -82,16 +83,20 @@ function bindingifyFormat(
     case 'module': {
       return 'es'
     }
+
     case 'cjs':
     case 'commonjs': {
       return 'cjs'
     }
+
     case 'iife': {
       return 'iife'
     }
+
     case 'umd': {
       return 'umd'
     }
+
     default:
       unimplemented(`output.format: ${format}`)
   }

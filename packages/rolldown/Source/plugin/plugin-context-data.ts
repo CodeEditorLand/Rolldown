@@ -30,6 +30,7 @@ export class PluginContextData {
       this.moduleOptionMap.set(id, raw)
       return raw
     }
+
     return option
   }
 
@@ -39,6 +40,7 @@ export class PluginContextData {
       const info = transformModuleInfo(bindingInfo, this.getModuleOption(id))
       return info
     }
+
     return null
   }
 

@@ -30,9 +30,11 @@ export function bindingifyInputOptions(
     if ('_parallel' in plugin) {
       return undefined
     }
+
     if (plugin instanceof BuiltinPlugin) {
       return bindingifyBuiltInPlugin(plugin)
     }
+
     return bindingifyPlugin(
       plugin,
       inputOptions,
@@ -84,12 +86,14 @@ function bindingifyExternal(
         return external(id, importer, isResolved) ?? false
       }
     }
+
     const externalArr = arraify(external)
     return (id, _importer, _isResolved) => {
       return externalArr.some((pat) => {
         if (pat instanceof RegExp) {
           return pat.test(id)
         }
+
         return id === pat
       })
     }
@@ -238,11 +242,13 @@ function bindingifyWatch(
         compareContents: watch.notify.compareContents,
       }
     }
+
     if (watch.chokidar) {
       unsupported(
         'The watch chokidar option is deprecated, please use notify options instead of it.',
       )
     }
+
     return value
   }
 }

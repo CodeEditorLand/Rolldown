@@ -23,6 +23,7 @@ export function normalizeOutputOptions(
 		esModule,
 		file,
 	} = opts;
+
 	return {
 		dir: dir,
 		file,
@@ -95,9 +96,11 @@ const getAddon = <T extends "banner" | "footer" | "intro" | "outro">(
 ): NormalizedOutputOptions[T] => {
 	return async (chunk) => {
 		const configAddon = config[name];
+
 		if (typeof configAddon === "function") {
 			return configAddon(chunk);
 		}
+
 		return configAddon || "";
 	};
 };

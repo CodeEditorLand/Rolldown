@@ -1,6 +1,8 @@
 function spaces(index: number): string {
 	let result = "";
+
 	while (index--) result += " ";
+
 	return result;
 }
 
@@ -20,6 +22,7 @@ export function getCodeFrame(
 	let lines = source.split("\n");
 	// Needed if a plugin did not generate correct sourcemaps
 	if (line > lines.length) return "";
+
 	const maxLineLength = Math.max(
 		tabsToSpaces(lines[line - 1].slice(0, column)).length +
 			MIN_CHARACTERS_SHOWN_AFTER_LOCATION +
@@ -28,11 +31,14 @@ export function getCodeFrame(
 	);
 
 	const frameStart = Math.max(0, line - 3);
+
 	let frameEnd = Math.min(line + 2, lines.length);
 
 	lines = lines.slice(frameStart, frameEnd);
+
 	while (!/\S/.test(lines[lines.length - 1])) {
 		lines.pop();
+
 		frameEnd -= 1;
 	}
 
@@ -43,12 +49,15 @@ export function getCodeFrame(
 			const isErrorLine = frameStart + index + 1 === line;
 
 			let lineNumber = String(index + frameStart + 1);
+
 			while (lineNumber.length < digits) lineNumber = ` ${lineNumber}`;
 
 			let displayedLine = tabsToSpaces(sourceLine);
+
 			if (displayedLine.length > maxLineLength) {
 				displayedLine = `${displayedLine.slice(0, maxLineLength - ELLIPSIS.length)}${ELLIPSIS}`;
 			}
+
 			if (isErrorLine) {
 				const indicator =
 					spaces(
@@ -56,6 +65,7 @@ export function getCodeFrame(
 							2 +
 							tabsToSpaces(sourceLine.slice(0, column)).length,
 					) + "^";
+
 				return `${lineNumber}: ${displayedLine}\n${indicator}`;
 			}
 

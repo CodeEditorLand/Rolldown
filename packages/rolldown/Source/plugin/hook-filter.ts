@@ -5,6 +5,7 @@ export type StringFilter =
 	| MaybeArray<StringOrRegExp>
 	| {
 			include?: MaybeArray<StringOrRegExp>;
+
 			exclude?: MaybeArray<StringOrRegExp>;
 	  };
 
@@ -47,6 +48,8 @@ export interface HookFilter {
 	 * ```
 	 */
 	id?: StringFilter;
+
 	moduleType?: ModuleTypeFilter;
+
 	code?: StringFilter;
 }

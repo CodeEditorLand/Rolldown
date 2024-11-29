@@ -26,6 +26,7 @@ export function bindingifyOutputOptions(
 		globals,
 		file,
 	} = outputOptions;
+
 	return {
 		dir,
 		// Handle case: rollup/test/sourcemaps/samples/sourcemap-file-hashed/_config.js
@@ -34,10 +35,13 @@ export function bindingifyOutputOptions(
 			switch (format) {
 				case "es":
 					return "es";
+
 				case "cjs":
 					return "cjs";
+
 				case "iife":
 					return "iife";
+
 				case "umd":
 					return "umd";
 			}
@@ -99,6 +103,7 @@ function bindingifyEsModule(
 		case false:
 		case "if-default-prop":
 			return esModule;
+
 		default:
 			throw new Error(`unknown esModule: ${esModule}`);
 	}

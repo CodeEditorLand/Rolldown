@@ -10,6 +10,7 @@ export function unimplemented(info?: string): never {
 	if (info) {
 		throw new Error(`unimplemented: ${info}`);
 	}
+
 	throw new Error("unimplemented");
 }
 
@@ -17,6 +18,7 @@ export function unreachable(info?: string): never {
 	if (info) {
 		throw new Error(`unreachable: ${info}`);
 	}
+
 	throw new Error("unreachable");
 }
 

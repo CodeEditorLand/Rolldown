@@ -7,14 +7,17 @@ export function normalizeTreeshakeOptions(
 	if (config === false) {
 		return undefined;
 	}
+
 	if (config === true || config === undefined) {
 		return {
 			moduleSideEffects: true,
 		};
 	}
+
 	let normalizedConfig: NormalizedTreeshakingOptions = {
 		moduleSideEffects: true,
 	};
+
 	if (config.moduleSideEffects === undefined) {
 		normalizedConfig.moduleSideEffects = true;
 	} else if (config.moduleSideEffects === "no-external") {
@@ -25,5 +28,6 @@ export function normalizeTreeshakeOptions(
 	} else {
 		normalizedConfig.moduleSideEffects = config.moduleSideEffects;
 	}
+
 	return normalizedConfig;
 }

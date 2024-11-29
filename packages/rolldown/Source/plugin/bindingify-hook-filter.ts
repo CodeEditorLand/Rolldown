@@ -12,6 +12,7 @@ export function bindingifyStringFilter(
 	if (typeof matcher === "string" || matcher instanceof RegExp) {
 		return { include: [matcher] };
 	}
+
 	if (Array.isArray(matcher)) {
 		return { include: matcher };
 	}
@@ -44,9 +45,11 @@ export function bindingifyTransformFilter(
 	if (!filterOption) {
 		return undefined;
 	}
+
 	const { id, code, moduleType } = filterOption;
 
 	let moduleTypeRet: ModuleType[] | undefined;
+
 	if (moduleType) {
 		if (Array.isArray(moduleType)) {
 			moduleTypeRet = moduleType;

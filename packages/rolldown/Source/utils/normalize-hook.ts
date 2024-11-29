@@ -9,7 +9,9 @@ export function normalizeHook<Hook extends ObjectHook<AnyFn | string>>(
 		Hook extends ObjectHook<infer RawHook, infer CustomOptions>
 			? {
 					handler: RawHook;
+
 					options: CustomOptions;
+
 					meta: ObjectHookMeta;
 				}
 			: never;
@@ -22,6 +24,7 @@ export function normalizeHook<Hook extends ObjectHook<AnyFn | string>>(
 		} as Return;
 	} else if (typeof hook === "object" && hook !== null) {
 		const { handler, order, ...options } = hook;
+
 		return {
 			handler,
 			options,

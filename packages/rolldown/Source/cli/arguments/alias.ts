@@ -2,9 +2,13 @@ import { CliOptions } from "./schema";
 
 export interface OptionConfig {
 	abbreviation?: string;
+
 	description?: string;
+
 	default?: string | boolean;
+
 	hint?: string;
+
 	reverse?: boolean;
 }
 

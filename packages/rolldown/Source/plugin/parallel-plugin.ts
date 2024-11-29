@@ -4,6 +4,7 @@ export type ParallelPlugin = {
 	/** @internal */
 	_parallel: {
 		fileUrl: string;
+
 		options: unknown;
 	};
 };

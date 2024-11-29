@@ -15,12 +15,15 @@ const { registryId, pluginInfos, threadNumber } = workerData as WorkerData;
 		const plugins = await Promise.all(
 			pluginInfos.map(async (pluginInfo) => {
 				const pluginModule = await import(pluginInfo.fileUrl);
+
 				const definePluginImpl = pluginModule.default as ReturnType<
 					typeof defineParallelPluginImplementation
 				>;
+
 				const plugin = await definePluginImpl(pluginInfo.options, {
 					threadNumber,
 				});
+
 				return {
 					index: pluginInfo.index,
 					// TODO(sapphi-red): support inputOptions and outputOptions

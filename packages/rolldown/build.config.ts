@@ -50,6 +50,7 @@ export default defineBuildConfig({
 					absolute: true,
 				},
 			);
+
 			const wasiShims = globSync(
 				["./src/*.wasi.js", "./src/*.wasi.cjs", "./src/*.mjs"],
 				{
@@ -64,14 +65,21 @@ export default defineBuildConfig({
 			// Move the binary file to dist
 			binaryFiles.forEach((file) => {
 				const fileName = nodePath.basename(file);
+
 				console.log("[build:done] Copying", file, "to ./dist/shared");
+
 				nodeFs.copyFileSync(file, `./dist/shared/${fileName}`);
+
 				console.log(`[build:done] Cleaning ${file}`);
+
 				nodeFs.rmSync(file);
 			});
+
 			wasiShims.forEach((file) => {
 				const fileName = nodePath.basename(file);
+
 				console.log("[build:done] Copying", file, "to ./dist/shared");
+
 				nodeFs.copyFileSync(file, `./dist/shared/${fileName}`);
 			});
 		},

@@ -49,6 +49,7 @@ export class MinimalPluginContext {
     this.error = (e): never => {
       return error(logPluginError(normalizeLog(e), pluginName))
     }
+
     this.meta = {
       rollupVersion: '4.23.0',
       rolldownVersion: VERSION,

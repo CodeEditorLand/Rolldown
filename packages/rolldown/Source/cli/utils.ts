@@ -32,10 +32,13 @@ function createTestingLogger() {
 		"trace",
 		"verbose",
 	];
+
 	const ret: Record<string, any> = Object.create(null);
+
 	for (const type of types) {
 		ret[type] = console.log;
 	}
+
 	return ret;
 }
 
@@ -44,13 +47,16 @@ export async function ensureConfig(configPath: string): Promise<ConfigExport> {
 	const fileUrl = pathToFileURL(configPath).toString();
 
 	let configExports: { default?: ConfigExport };
+
 	try {
 		configExports = await import(fileUrl);
 	} catch (err) {
 		let errorMessage = "Error happened while loading config.";
+
 		if (!isSupportedFormat(configPath)) {
 			errorMessage += ` Unsupported config format. Expected: \`${SUPPORTED_CONFIG_FORMATS.join(",")}\` but got \`${nodePath.extname(configPath)}\``;
 		}
+
 		throw new Error(errorMessage, { cause: err });
 	}
 
@@ -65,5 +71,6 @@ const SUPPORTED_CONFIG_FORMATS = [".js", ".mjs", ".cjs"];
  */
 function isSupportedFormat(configPath: string): boolean {
 	const ext = nodePath.extname(configPath);
+
 	return SUPPORTED_CONFIG_FORMATS.includes(ext);
 }

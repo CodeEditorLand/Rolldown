@@ -29,6 +29,7 @@ export class RolldownBuild {
 		if (this.#bundler) {
 			this.#bundler.stopWorkers?.();
 		}
+
 		return (this.#bundler = await createBundler(
 			this.#inputOptions,
 			outputOptions,
@@ -37,13 +38,17 @@ export class RolldownBuild {
 
 	async generate(outputOptions: OutputOptions = {}): Promise<RolldownOutput> {
 		const { bundler } = await this.#getBundlerWithStopWorker(outputOptions);
+
 		const output = await bundler.generate();
+
 		return transformToRollupOutput(output);
 	}
 
 	async write(outputOptions: OutputOptions = {}): Promise<RolldownOutput> {
 		const { bundler } = await this.#getBundlerWithStopWorker(outputOptions);
+
 		const output = await bundler.write();
+
 		return transformToRollupOutput(output);
 	}
 
@@ -51,7 +56,9 @@ export class RolldownBuild {
 		const { bundler, stopWorkers } = await this.#getBundlerWithStopWorker(
 			{},
 		);
+
 		await stopWorkers?.();
+
 		await bundler.close();
 	}
 

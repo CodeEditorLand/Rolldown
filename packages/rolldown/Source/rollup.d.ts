@@ -9,7 +9,9 @@ type PartialNull<T> = {
 
 export interface RollupError extends RollupLog {
 	name?: string;
+
 	stack?: string;
+
 	watchFiles?: string[];
 }
 
@@ -17,26 +19,45 @@ export type RollupWarning = RollupLog;
 
 export interface RollupLog {
 	binding?: string;
+
 	cause?: unknown;
+
 	code?: string;
+
 	exporter?: string;
+
 	frame?: string;
+
 	hook?: string;
+
 	id?: string;
+
 	ids?: string[];
+
 	loc?: {
 		column: number;
+
 		file?: string;
+
 		line: number;
 	};
+
 	message: string;
+
 	meta?: any;
+
 	names?: string[];
+
 	plugin?: string;
+
 	pluginCode?: unknown;
+
 	pos?: number;
+
 	reexporter?: string;
+
 	stack?: string;
+
 	url?: string;
 }
 
@@ -51,41 +72,63 @@ export type SourceMapSegment =
 
 export interface ExistingDecodedSourceMap {
 	file?: string;
+
 	readonly mappings: SourceMapSegment[][];
+
 	names: string[];
+
 	sourceRoot?: string;
+
 	sources: string[];
+
 	sourcesContent?: (string | null)[];
+
 	version: number;
+
 	x_google_ignoreList?: number[];
 }
 
 export interface ExistingRawSourceMap {
 	file?: string;
+
 	mappings: string;
+
 	names: string[];
+
 	sourceRoot?: string;
+
 	sources: string[];
+
 	sourcesContent?: (string | null)[];
+
 	version: number;
+
 	x_google_ignoreList?: number[];
 }
 
 export type DecodedSourceMapOrMissing =
 	| {
 			missing: true;
+
 			plugin: string;
 	  }
 	| (ExistingDecodedSourceMap & { missing?: false });
 
 export interface SourceMap {
 	file: string;
+
 	mappings: string;
+
 	names: string[];
+
 	sources: string[];
+
 	sourcesContent: (string | null)[];
+
 	version: number;
+
 	toString(): string;
+
 	toUrl(): string;
 }
 
@@ -97,40 +140,57 @@ export type SourceMapInput =
 
 interface ModuleOptions {
 	assertions: Record<string, string>;
+
 	meta: CustomPluginOptions;
+
 	moduleSideEffects: boolean | "no-treeshake";
+
 	syntheticNamedExports: boolean | string;
 }
 
 export interface SourceDescription extends Partial<PartialNull<ModuleOptions>> {
 	ast?: AcornNode;
+
 	code: string;
+
 	map?: SourceMapInput;
 }
 
 export interface TransformModuleJSON {
 	ast?: AcornNode;
+
 	code: string;
 	// note if plugins use new this.cache to opt-out auto transform cache
 	customTransformCache: boolean;
+
 	originalCode: string;
+
 	originalSourcemap: ExistingDecodedSourceMap | null;
+
 	sourcemapChain: DecodedSourceMapOrMissing[];
+
 	transformDependencies: string[];
 }
 
 export interface ModuleJSON extends TransformModuleJSON, ModuleOptions {
 	ast: AcornNode;
+
 	dependencies: string[];
+
 	id: string;
+
 	resolvedIds: ResolvedIdMap;
+
 	transformFiles: EmittedFile[] | undefined;
 }
 
 export interface PluginCache {
 	delete(id: string): boolean;
+
 	get<T = any>(id: string): T;
+
 	has(id: string): boolean;
+
 	set<T = any>(id: string, value: T): void;
 }
 
@@ -140,36 +200,55 @@ export type LoggingFunction = (
 
 export interface MinimalPluginContext {
 	debug: LoggingFunction;
+
 	error: (error: RollupError | string) => never;
+
 	info: LoggingFunction;
+
 	meta: PluginContextMeta;
+
 	warn: LoggingFunction;
 }
 
 export interface EmittedAsset {
 	fileName?: string;
+
 	name?: string;
+
 	needsCodeReference?: boolean;
+
 	source?: string | Uint8Array;
+
 	type: "asset";
 }
 
 export interface EmittedChunk {
 	fileName?: string;
+
 	id: string;
+
 	implicitlyLoadedAfterOneOf?: string[];
+
 	importer?: string;
+
 	name?: string;
+
 	preserveSignature?: PreserveEntrySignaturesOption;
+
 	type: "chunk";
 }
 
 export interface EmittedPrebuiltChunk {
 	code: string;
+
 	exports?: string[];
+
 	fileName: string;
+
 	map?: SourceMap;
+
 	sourcemapFileName?: string;
+
 	type: "prebuilt-chunk";
 }
 
@@ -179,23 +258,39 @@ export type EmitFile = (emittedFile: EmittedFile) => string;
 
 interface ModuleInfo extends ModuleOptions {
 	ast: AcornNode | null;
+
 	code: string | null;
+
 	dynamicImporters: readonly string[];
+
 	dynamicallyImportedIdResolutions: readonly ResolvedId[];
+
 	dynamicallyImportedIds: readonly string[];
+
 	exportedBindings: Record<string, string[]> | null;
+
 	exports: string[] | null;
+
 	hasDefaultExport: boolean | null;
 	/** @deprecated Use `moduleSideEffects` instead */
 	hasModuleSideEffects: boolean | "no-treeshake";
+
 	id: string;
+
 	implicitlyLoadedAfterOneOf: readonly string[];
+
 	implicitlyLoadedBefore: readonly string[];
+
 	importedIdResolutions: readonly ResolvedId[];
+
 	importedIds: readonly string[];
+
 	importers: readonly string[];
+
 	isEntry: boolean;
+
 	isExternal: boolean;
+
 	isIncluded: boolean | null;
 }
 
@@ -212,15 +307,25 @@ type LoggingFunctionWithPosition = (
 
 export interface PluginContext extends MinimalPluginContext {
 	addWatchFile: (id: string) => void;
+
 	cache: PluginCache;
+
 	debug: LoggingFunction;
+
 	emitFile: EmitFile;
+
 	error: (error: RollupError | string) => never;
+
 	getFileName: (fileReferenceId: string) => string;
+
 	getModuleIds: () => IterableIterator<string>;
+
 	getModuleInfo: GetModuleInfo;
+
 	getWatchFiles: () => string[];
+
 	info: LoggingFunction;
+
 	load: (
 		options: { id: string; resolveDependencies?: boolean } & Partial<
 			PartialNull<ModuleOptions>
@@ -228,32 +333,42 @@ export interface PluginContext extends MinimalPluginContext {
 	) => Promise<ModuleInfo>;
 	/** @deprecated Use `this.getModuleIds` instead */
 	moduleIds: IterableIterator<string>;
+
 	parse: (input: string, options?: any) => AcornNode;
+
 	resolve: (
 		source: string,
 		importer?: string,
 		options?: {
 			assertions?: Record<string, string>;
+
 			custom?: CustomPluginOptions;
+
 			isEntry?: boolean;
+
 			skipSelf?: boolean;
 		},
 	) => Promise<ResolvedId | null>;
+
 	setAssetSource: (
 		assetReferenceId: string,
 		source: string | Uint8Array,
 	) => void;
+
 	warn: LoggingFunction;
 }
 
 export interface PluginContextMeta {
 	rollupVersion: string;
+
 	watchMode: boolean;
 }
 
 export interface ResolvedId extends ModuleOptions {
 	external: boolean | "absolute";
+
 	id: string;
+
 	resolvedBy: string;
 }
 
@@ -263,7 +378,9 @@ export interface ResolvedIdMap {
 
 interface PartialResolvedId extends Partial<PartialNull<ModuleOptions>> {
 	external?: boolean | "absolute" | "relative";
+
 	id: string;
+
 	resolvedBy?: string;
 }
 
@@ -280,7 +397,9 @@ export type ResolveIdHook = (
 	importer: string | undefined,
 	options: {
 		assertions: Record<string, string>;
+
 		custom?: CustomPluginOptions;
+
 		isEntry: boolean;
 	},
 ) => ResolveIdResult;
@@ -289,11 +408,17 @@ export type ShouldTransformCachedModuleHook = (
 	this: PluginContext,
 	options: {
 		ast: AcornNode;
+
 		code: string;
+
 		id: string;
+
 		meta: CustomPluginOptions;
+
 		moduleSideEffects: boolean | "no-treeshake";
+
 		resolvedSources: ResolvedIdMap;
+
 		syntheticNamedExports: boolean | string;
 	},
 ) => boolean | NullValue;
@@ -314,12 +439,16 @@ export type LoadHook = (this: PluginContext, id: string) => LoadResult;
 
 export interface TransformPluginContext extends PluginContext {
 	debug: LoggingFunctionWithPosition;
+
 	error: (
 		error: RollupError | string,
 		pos?: number | { column: number; line: number },
 	) => never;
+
 	getCombinedSourcemap: () => SourceMap;
+
 	info: LoggingFunctionWithPosition;
+
 	warn: LoggingFunctionWithPosition;
 }
 
@@ -353,7 +482,9 @@ export type ResolveImportMetaHook = (
 	property: string | null,
 	options: {
 		chunkId: string;
+
 		format: InternalModuleFormat;
+
 		moduleId: string;
 	},
 ) => string | NullValue;
@@ -362,10 +493,15 @@ export type ResolveFileUrlHook = (
 	this: PluginContext,
 	options: {
 		chunkId: string;
+
 		fileName: string;
+
 		format: InternalModuleFormat;
+
 		moduleId: string;
+
 		referenceId: string;
+
 		relativePath: string;
 	},
 ) => string | NullValue;
@@ -409,54 +545,79 @@ export interface FunctionPluginHooks {
 		this: PluginContext,
 		chunk: RenderedChunk,
 	) => string | void;
+
 	buildEnd: (this: PluginContext, error?: Error) => void;
+
 	buildStart: (this: PluginContext, options: NormalizedInputOptions) => void;
+
 	closeBundle: (this: PluginContext) => void;
+
 	closeWatcher: (this: PluginContext) => void;
+
 	generateBundle: (
 		this: PluginContext,
 		options: NormalizedOutputOptions,
 		bundle: OutputBundle,
 		isWrite: boolean,
 	) => void;
+
 	load: LoadHook;
+
 	moduleParsed: ModuleParsedHook;
+
 	onLog: (
 		this: MinimalPluginContext,
 		level: LogLevel,
 		log: RollupLog,
 	) => boolean | NullValue;
+
 	options: (
 		this: MinimalPluginContext,
 		options: InputOptions,
 	) => InputOptions | NullValue;
+
 	outputOptions: (
 		this: PluginContext,
 		options: OutputOptions,
 	) => OutputOptions | NullValue;
+
 	renderChunk: RenderChunkHook;
+
 	renderDynamicImport: (
 		this: PluginContext,
 		options: {
 			customResolution: string | null;
+
 			format: InternalModuleFormat;
+
 			moduleId: string;
+
 			targetModuleId: string | null;
 		},
 	) => { left: string; right: string } | NullValue;
+
 	renderError: (this: PluginContext, error?: Error) => void;
+
 	renderStart: (
 		this: PluginContext,
 		outputOptions: NormalizedOutputOptions,
 		inputOptions: NormalizedInputOptions,
 	) => void;
+
 	resolveDynamicImport: ResolveDynamicImportHook;
+
 	resolveFileUrl: ResolveFileUrlHook;
+
 	resolveId: ResolveIdHook;
+
 	resolveImportMeta: ResolveImportMetaHook;
+
 	shouldTransformCachedModule: ShouldTransformCachedModuleHook;
+
 	transform: TransformHook;
+
 	watchChange: WatchChangeHook;
+
 	writeBundle: (
 		this: PluginContext,
 		options: NormalizedOutputOptions,
@@ -545,7 +706,9 @@ export interface OutputPlugin
 	extends Partial<{ [K in OutputPluginHooks]: PluginHooks[K] }>,
 		Partial<{ [K in AddonHooks]: ObjectHook<AddonHook> }> {
 	cacheKey?: string;
+
 	name: string;
+
 	version?: string;
 }
 
@@ -558,22 +721,30 @@ export type TreeshakingPreset = "smallest" | "safest" | "recommended";
 
 export interface NormalizedTreeshakingOptions {
 	annotations: boolean;
+
 	correctVarValueBeforeDeclaration: boolean;
+
 	manualPureFunctions: readonly string[];
+
 	moduleSideEffects: HasModuleSideEffects;
+
 	propertyReadSideEffects: boolean | "always";
+
 	tryCatchDeoptimization: boolean;
+
 	unknownGlobalSideEffects: boolean;
 }
 
 export interface TreeshakingOptions
 	extends Partial<Omit<NormalizedTreeshakingOptions, "moduleSideEffects">> {
 	moduleSideEffects?: ModuleSideEffectsOption;
+
 	preset?: TreeshakingPreset;
 }
 
 interface ManualChunkMeta {
 	getModuleIds: () => IterableIterator<string>;
+
 	getModuleInfo: GetModuleInfo;
 }
 export type GetManualChunk = (
@@ -642,38 +813,59 @@ export type InputPluginOption = MaybePromise<
 
 export interface InputOptions {
 	acorn?: Record<string, unknown>;
+
 	acornInjectPlugins?:
 		| ((...arguments_: any[]) => unknown)[]
 		| ((...arguments_: any[]) => unknown);
+
 	cache?: boolean | RollupCache;
+
 	context?: string;
+
 	experimentalCacheExpiry?: number;
+
 	experimentalLogSideEffects?: boolean;
+
 	external?: ExternalOption;
 	/** @deprecated Use the "inlineDynamicImports" output option instead. */
 	inlineDynamicImports?: boolean;
+
 	input?: InputOption;
+
 	logLevel?: LogLevelOption;
+
 	makeAbsoluteExternalsRelative?: boolean | "ifRelativeSource";
 	/** @deprecated Use the "manualChunks" output option instead. */
 	manualChunks?: ManualChunksOption;
+
 	maxParallelFileOps?: number;
 	/** @deprecated Use the "maxParallelFileOps" option instead. */
 	maxParallelFileReads?: number;
+
 	moduleContext?:
 		| ((id: string) => string | NullValue)
 		| { [id: string]: string };
+
 	onLog?: LogHandlerWithDefault;
+
 	onwarn?: WarningHandlerWithDefault;
+
 	perf?: boolean;
+
 	plugins?: InputPluginOption;
+
 	preserveEntrySignatures?: PreserveEntrySignaturesOption;
 	/** @deprecated Use the "preserveModules" output option instead. */
 	preserveModules?: boolean;
+
 	preserveSymlinks?: boolean;
+
 	shimMissingExports?: boolean;
+
 	strictDeprecations?: boolean;
+
 	treeshake?: boolean | TreeshakingPreset | TreeshakingOptions;
+
 	watch?: WatcherOptions | false;
 }
 
@@ -683,33 +875,53 @@ export interface InputOptionsWithPlugins extends InputOptions {
 
 export interface NormalizedInputOptions {
 	acorn: Record<string, unknown>;
+
 	acornInjectPlugins: (() => unknown)[];
+
 	cache: false | undefined | RollupCache;
+
 	context: string;
+
 	experimentalCacheExpiry: number;
+
 	experimentalLogSideEffects: boolean;
+
 	external: IsExternal;
 	/** @deprecated Use the "inlineDynamicImports" output option instead. */
 	inlineDynamicImports: boolean | undefined;
+
 	input: string[] | { [entryAlias: string]: string };
+
 	logLevel: LogLevelOption;
+
 	makeAbsoluteExternalsRelative: boolean | "ifRelativeSource";
 	/** @deprecated Use the "manualChunks" output option instead. */
 	manualChunks: ManualChunksOption | undefined;
+
 	maxParallelFileOps: number;
 	/** @deprecated Use the "maxParallelFileOps" option instead. */
 	maxParallelFileReads: number;
+
 	moduleContext: (id: string) => string;
+
 	onLog: LogHandler;
+
 	onwarn: (warning: RollupLog) => void;
+
 	perf: boolean;
+
 	plugins: Plugin[];
+
 	preserveEntrySignatures: PreserveEntrySignaturesOption;
 	/** @deprecated Use the "preserveModules" output option instead. */
 	preserveModules: boolean | undefined;
+
 	preserveSymlinks: boolean;
+
 	shimMissingExports: boolean;
+
 	strictDeprecations: boolean;
+
 	treeshake: false | NormalizedTreeshakingOptions;
 }
 
@@ -732,9 +944,13 @@ type GeneratedCodePreset = "es5" | "es2015";
 
 interface NormalizedGeneratedCodeOptions {
 	arrowFunctions: boolean;
+
 	constBindings: boolean;
+
 	objectShorthand: boolean;
+
 	reservedNamesAsProps: boolean;
+
 	symbols: boolean;
 }
 
@@ -756,33 +972,41 @@ export type GetInterop = (id: string | null) => InteropType;
 export type AmdOptions = (
 	| {
 			autoId?: false;
+
 			id: string;
 	  }
 	| {
 			autoId: true;
+
 			basePath?: string;
+
 			id?: undefined;
 	  }
 	| {
 			autoId?: false;
+
 			id?: undefined;
 	  }
 ) & {
 	define?: string;
+
 	forceJsExtensionForImports?: boolean;
 };
 
 export type NormalizedAmdOptions = (
 	| {
 			autoId: false;
+
 			id?: string;
 	  }
 	| {
 			autoId: true;
+
 			basePath: string;
 	  }
 ) & {
 	define: string;
+
 	forceJsExtensionForImports: boolean;
 };
 
@@ -794,118 +1018,204 @@ type OutputPluginOption = MaybePromise<
 
 export interface OutputOptions {
 	amd?: AmdOptions;
+
 	assetFileNames?: string | ((chunkInfo: PreRenderedAsset) => string);
+
 	banner?: string | AddonFunction;
+
 	chunkFileNames?: string | ((chunkInfo: PreRenderedChunk) => string);
+
 	compact?: boolean;
 	// only required for bundle.write
 	dir?: string;
 	/** @deprecated Use the "renderDynamicImport" plugin hook instead. */
 	dynamicImportFunction?: string;
+
 	dynamicImportInCjs?: boolean;
+
 	entryFileNames?: string | ((chunkInfo: PreRenderedChunk) => string);
+
 	esModule?: boolean | "if-default-prop";
 	/** @deprecated This option is no longer needed and ignored. */
 	experimentalDeepDynamicChunkOptimization?: boolean;
+
 	experimentalMinChunkSize?: number;
+
 	exports?: "default" | "named" | "none" | "auto";
+
 	extend?: boolean;
+
 	externalImportAssertions?: boolean;
+
 	externalLiveBindings?: boolean;
 	// only required for bundle.write
 	file?: string;
+
 	footer?: string | AddonFunction;
+
 	format?: ModuleFormat;
+
 	freeze?: boolean;
+
 	generatedCode?: GeneratedCodePreset | GeneratedCodeOptions;
+
 	globals?: GlobalsOption;
+
 	hoistTransitiveImports?: boolean;
+
 	indent?: string | boolean;
+
 	inlineDynamicImports?: boolean;
+
 	interop?: InteropType | GetInterop;
+
 	intro?: string | AddonFunction;
+
 	manualChunks?: ManualChunksOption;
+
 	minifyInternalExports?: boolean;
+
 	name?: string;
 	/** @deprecated Use "generatedCode.symbols" instead. */
 	namespaceToStringTag?: boolean;
+
 	noConflict?: boolean;
+
 	outro?: string | AddonFunction;
+
 	paths?: OptionsPaths;
+
 	plugins?: OutputPluginOption;
 	/** @deprecated Use "generatedCode.constBindings" instead. */
 	preferConst?: boolean;
+
 	preserveModules?: boolean;
+
 	preserveModulesRoot?: string;
+
 	sanitizeFileName?: boolean | ((fileName: string) => string);
+
 	sourcemap?: boolean | "inline" | "hidden";
+
 	sourcemapBaseUrl?: string;
+
 	sourcemapExcludeSources?: boolean;
+
 	sourcemapFile?: string;
+
 	sourcemapFileNames?: string | ((chunkInfo: PreRenderedChunk) => string);
+
 	sourcemapIgnoreList?: boolean | SourcemapIgnoreListOption;
+
 	sourcemapPathTransform?: SourcemapPathTransformOption;
+
 	strict?: boolean;
+
 	systemNullSetters?: boolean;
+
 	validate?: boolean;
 }
 
 export interface NormalizedOutputOptions {
 	amd: NormalizedAmdOptions;
+
 	assetFileNames: string | ((chunkInfo: PreRenderedAsset) => string);
+
 	banner: AddonFunction;
+
 	chunkFileNames: string | ((chunkInfo: PreRenderedChunk) => string);
+
 	compact: boolean;
+
 	dir: string | undefined;
 	/** @deprecated Use the "renderDynamicImport" plugin hook instead. */
 	dynamicImportFunction: string | undefined;
+
 	dynamicImportInCjs: boolean;
+
 	entryFileNames: string | ((chunkInfo: PreRenderedChunk) => string);
+
 	esModule: boolean | "if-default-prop";
 	/** @deprecated This option is no longer needed and ignored. */
 	experimentalDeepDynamicChunkOptimization: boolean;
+
 	experimentalMinChunkSize: number;
+
 	exports: "default" | "named" | "none" | "auto";
+
 	extend: boolean;
+
 	externalImportAssertions: boolean;
+
 	externalLiveBindings: boolean;
+
 	file: string | undefined;
+
 	footer: AddonFunction;
+
 	format: InternalModuleFormat;
+
 	freeze: boolean;
+
 	generatedCode: NormalizedGeneratedCodeOptions;
+
 	globals: GlobalsOption;
+
 	hoistTransitiveImports: boolean;
+
 	indent: true | string;
+
 	inlineDynamicImports: boolean;
+
 	interop: GetInterop;
+
 	intro: AddonFunction;
+
 	manualChunks: ManualChunksOption;
+
 	minifyInternalExports: boolean;
+
 	name: string | undefined;
 	/** @deprecated Use "generatedCode.symbols" instead. */
 	namespaceToStringTag: boolean;
+
 	noConflict: boolean;
+
 	outro: AddonFunction;
+
 	paths: OptionsPaths;
+
 	plugins: OutputPlugin[];
 	/** @deprecated Use "generatedCode.constBindings" instead. */
 	preferConst: boolean;
+
 	preserveModules: boolean;
+
 	preserveModulesRoot: string | undefined;
+
 	sanitizeFileName: (fileName: string) => string;
+
 	sourcemap: boolean | "inline" | "hidden";
+
 	sourcemapBaseUrl: string | undefined;
+
 	sourcemapExcludeSources: boolean;
+
 	sourcemapFile: string | undefined;
+
 	sourcemapFileNames:
 		| string
 		| ((chunkInfo: PreRenderedChunk) => string)
 		| undefined;
+
 	sourcemapIgnoreList: SourcemapIgnoreListOption;
+
 	sourcemapPathTransform: SourcemapPathTransformOption | undefined;
+
 	strict: boolean;
+
 	systemNullSetters: boolean;
+
 	validate: boolean;
 }
 
@@ -920,53 +1230,77 @@ export interface SerializedTimings {
 
 export interface PreRenderedAsset {
 	name: string | undefined;
+
 	originalFileName: string | null;
+
 	source: string | Uint8Array;
+
 	type: "asset";
 }
 
 export interface OutputAsset extends PreRenderedAsset {
 	fileName: string;
+
 	needsCodeReference: boolean;
 }
 
 export interface RenderedModule {
 	readonly code: string | null;
+
 	originalLength: number;
+
 	removedExports: string[];
+
 	renderedExports: string[];
+
 	renderedLength: number;
 }
 
 export interface PreRenderedChunk {
 	exports: string[];
+
 	facadeModuleId: string | null;
+
 	isDynamicEntry: boolean;
+
 	isEntry: boolean;
+
 	isImplicitEntry: boolean;
+
 	moduleIds: string[];
+
 	name: string;
+
 	type: "chunk";
 }
 
 export interface RenderedChunk extends PreRenderedChunk {
 	dynamicImports: string[];
+
 	fileName: string;
+
 	implicitlyLoadedBefore: string[];
+
 	importedBindings: {
 		[imported: string]: string[];
 	};
+
 	imports: string[];
+
 	modules: {
 		[id: string]: RenderedModule;
 	};
+
 	referencedFiles: string[];
 }
 
 export interface OutputChunk extends RenderedChunk {
 	code: string;
+
 	map: SourceMap | null;
+
 	sourcemapFileName: string | null;
+
 	preliminaryFileName: string;
 }
 
@@ -976,6 +1310,7 @@ export interface SerializablePluginCache {
 
 export interface RollupCache {
 	modules: ModuleJSON[];
+
 	plugins?: Record<string, SerializablePluginCache>;
 }
 
@@ -985,11 +1320,17 @@ export interface RollupOutput {
 
 export interface RollupBuild {
 	cache: RollupCache | undefined;
+
 	close: () => Promise<void>;
+
 	closed: boolean;
+
 	generate: (outputOptions: OutputOptions) => Promise<RollupOutput>;
+
 	getTimings?: () => SerializedTimings;
+
 	watchFiles: string[];
+
 	write: (options: OutputOptions) => Promise<RollupOutput>;
 }
 
@@ -1006,24 +1347,39 @@ export function rollup(options: RollupOptions): Promise<RollupBuild>;
 
 export interface ChokidarOptions {
 	alwaysStat?: boolean;
+
 	atomic?: boolean | number;
+
 	awaitWriteFinish?:
 		| {
 				pollInterval?: number;
+
 				stabilityThreshold?: number;
 		  }
 		| boolean;
+
 	binaryInterval?: number;
+
 	cwd?: string;
+
 	depth?: number;
+
 	disableGlobbing?: boolean;
+
 	followSymlinks?: boolean;
+
 	ignoreInitial?: boolean;
+
 	ignorePermissionErrors?: boolean;
+
 	ignored?: any;
+
 	interval?: number;
+
 	persistent?: boolean;
+
 	useFsEvents?: boolean;
+
 	usePolling?: boolean;
 }
 
@@ -1036,15 +1392,21 @@ export type RollupWatchHooks =
 
 export interface WatcherOptions {
 	buildDelay?: number;
+
 	chokidar?: ChokidarOptions;
+
 	clearScreen?: boolean;
+
 	exclude?: string | RegExp | (string | RegExp)[];
+
 	include?: string | RegExp | (string | RegExp)[];
+
 	skipWrite?: boolean;
 }
 
 export interface RollupWatchOptions extends InputOptions {
 	output?: OutputOptions | OutputOptions[];
+
 	watch?: WatcherOptions | false;
 }
 
@@ -1057,6 +1419,7 @@ export interface AwaitingEventEmitter<
 	T extends { [event: string]: (...parameters: any) => any },
 > {
 	close(): Promise<void>;
+
 	emit<K extends keyof T>(
 		event: K,
 		...parameters: Parameters<T[K]>
@@ -1087,7 +1450,9 @@ export interface AwaitingEventEmitter<
 			...parameters: Parameters<T[K]>
 		) => Promise<ReturnType<T[K]>>,
 	): this;
+
 	removeAllListeners(): this;
+
 	removeListenersForCurrentRun(): this;
 }
 
@@ -1096,9 +1461,13 @@ export type RollupWatcherEvent =
 	| { code: "BUNDLE_START"; input?: InputOption; output: readonly string[] }
 	| {
 			code: "BUNDLE_END";
+
 			duration: number;
+
 			input?: InputOption;
+
 			output: readonly string[];
+
 			result: RollupBuild;
 	  }
 	| { code: "END" }
@@ -1106,8 +1475,11 @@ export type RollupWatcherEvent =
 
 export type RollupWatcher = AwaitingEventEmitter<{
 	change: (id: string, change: { event: ChangeEvent }) => void;
+
 	close: () => void;
+
 	event: (event: RollupWatcherEvent) => void;
+
 	restart: () => void;
 }>;
 
@@ -1117,7 +1489,9 @@ export function watch(
 
 interface AcornNode {
 	end: number;
+
 	start: number;
+
 	type: string;
 }
 
