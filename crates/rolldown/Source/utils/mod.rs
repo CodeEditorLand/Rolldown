@@ -33,6 +33,7 @@ pub fn finalize_normal_module(
 ) {
   ast.program.with_mut(|fields| {
     let (oxc_program, alloc) = (fields.program, fields.allocator);
+
     let mut finalizer = ScopeHoistingFinalizer {
       alloc,
       ctx,
@@ -40,7 +41,9 @@ pub fn finalize_normal_module(
       snippet: AstSnippet::new(alloc),
       comments: oxc_program.comments.take_in(alloc),
     };
+
     finalizer.visit_program(oxc_program);
+
     oxc_program.comments = finalizer.comments.take_in(alloc);
   });
 }

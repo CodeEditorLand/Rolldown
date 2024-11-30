@@ -12,6 +12,7 @@ fn bench_concat_string(c: &mut Criterion) {
   // Mix of String and str
   group.bench_function("mixed_types_concat", |b| {
     let mime_ext_string = mime_ext.to_string();
+
     b.iter(|| black_box(concat_string!("data:", mime_ext_string, ";base64,", base64)));
   });
   group.bench_function("mixed_types_format", |b| {

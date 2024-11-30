@@ -36,6 +36,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
       // But we don't care about them in this method. This method is only used to check if a `IdentifierReference` from user code is a global variable.
       return false;
     };
+
     self.scope.is_unresolved(reference_id)
   }
 
@@ -45,6 +46,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
 
   pub fn canonical_name_for_runtime(&self, name: &str) -> &Rstr {
     let sym_ref = self.ctx.runtime.resolve_symbol(name);
+
     self.canonical_name_for(sym_ref)
   }
 
@@ -60,10 +62,13 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     rec_id: ImportRecordIdx,
   ) -> bool {
     let rec = &self.ctx.module.import_records[rec_id];
+
     let Module::Normal(importee) = &self.ctx.modules[rec.resolved_module] else {
       return true;
     };
+
     let importee_linking_info = &self.ctx.linking_infos[importee.idx];
+
     match importee_linking_info.wrap_kind {
       WrapKind::None => {
         // Remove this statement by ignoring it
@@ -96,6 +101,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
             should_consider_node_esm_spec,
           ),
         );
+
         return false;
       }
       // Replace the import statement with `init_foo()` if `ImportDeclaration` is not a plain import
@@ -121,9 +127,11 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
             false,
           )),
         );
+
         return false;
       }
     }
+
     true
   }
 
@@ -138,8 +146,11 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     }
 
     let mut canonical_ref = self.ctx.symbol_db.canonical_ref_for(symbol_ref);
+
     let mut canonical_symbol = self.ctx.symbol_db.get(canonical_ref);
+
     let namespace_alias = &canonical_symbol.namespace_alias;
+
     if let Some(ns_alias) = namespace_alias {
       canonical_ref = ns_alias.namespace_ref;
       canonical_symbol = self.ctx.symbol_db.get(canonical_ref);
@@ -179,6 +190,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
             self.snippet.id_ref_expr(self.canonical_name_for(canonical_ref), SPAN)
           }
         }
+
         _ => self.snippet.id_ref_expr(self.canonical_name_for(canonical_ref), SPAN),
       }
     };
@@ -208,6 +220,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     match decl {
       ast::Declaration::VariableDeclaration(var_decl) => {
         let mut seq_expr = ast::SequenceExpression::dummy(self.alloc);
+
         var_decl.declarations.iter_mut().for_each(|var_decl| {
           var_decl.id.binding_identifiers().iter().for_each(|id| {
             hoisted_names.push(id.name.clone());
@@ -215,6 +228,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
           // Turn `var ... = ...` to `... = ...`
           if let Some(init_expr) = &mut var_decl.init {
             let left = var_decl.id.take_in(self.alloc).into_assignment_target(self.alloc);
+
             seq_expr.expressions.push(ast::Expression::AssignmentExpression(
               ast::AssignmentExpression {
                 left,
@@ -225,6 +239,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
             ));
           };
         });
+
         if seq_expr.expressions.is_empty() {
           None
         } else {
@@ -253,6 +268,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     let export_all_externals_rec_ids = &self.ctx.linking_info.star_exports_from_external_modules;
 
     let mut re_export_external_stmts: Option<_> = None;
+
     if !export_all_externals_rec_ids.is_empty() {
       // construct `__reExport(exports, foo_exports)`
       let re_export_fn_name = self.canonical_name_for_runtime("__reExport");
@@ -260,14 +276,18 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
         OutputFormat::Esm => {
           let stmts = export_all_externals_rec_ids.iter().copied().flat_map(|idx| {
             let rec = &self.ctx.module.import_records[idx];
+
             let importee_namespace_name = self.canonical_name_for(rec.namespace_ref);
+
             let m = self.ctx.modules.get(rec.resolved_module);
+
             let Some(Module::External(module)) = m else {
               return vec![];
             };
             // Insert `import * as ns from 'ext'`external module in esm format
             // Insert `__reExport(exports, ns)`
             let importee_name = &module.name;
+
             vec![
               self.snippet.import_star_stmt(importee_name, importee_namespace_name),
               self.snippet.builder.statement_expression(
@@ -282,13 +302,17 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
           });
           re_export_external_stmts = Some(stmts.collect::<Vec<_>>());
         }
+
         OutputFormat::Cjs | OutputFormat::Iife | OutputFormat::Umd => {
           let stmts = export_all_externals_rec_ids.iter().copied().map(|idx| {
             // Insert `__reExport(exports, require('ext'))`
             let importer_namespace_name =
               self.canonical_name_for(self.ctx.module.namespace_object_ref);
+
             let rec = &self.ctx.module.import_records[idx];
+
             let importee = &self.ctx.modules[rec.resolved_module];
+
             let stmt: ast::Statement = self
               .snippet
               .alloc_call_expr_with_2arg_expr_expr(
@@ -305,6 +329,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
           });
           re_export_external_stmts = Some(stmts.collect());
         }
+
         OutputFormat::App => unreachable!(),
       }
     };
@@ -317,6 +342,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
 
     // construct `{ prop_name: () => returned, ... }`
     let mut arg_obj_expr = ast::ObjectExpression::dummy(self.alloc);
+
     arg_obj_expr.properties.reserve_exact(exports_len);
 
     self.ctx.linking_info.canonical_exports().for_each(|(export, resolved_export)| {
@@ -341,10 +367,13 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
 
     // construct `__export(ns_name, { prop_name: () => returned, ... })`
     let mut export_call_expr = self.snippet.call_expr(self.canonical_name_for_runtime("__export"));
+
     export_call_expr.arguments.push(ast::Argument::from(self.snippet.id_ref_expr(var_name, SPAN)));
+
     export_call_expr
       .arguments
       .push(ast::Argument::ObjectExpression(arg_obj_expr.into_in(self.alloc)));
+
     let export_call_stmt = ast::Statement::ExpressionStatement(
       ast::ExpressionStatement {
         expression: ast::Expression::CallExpression(export_call_expr.into_in(self.alloc)),
@@ -352,7 +381,9 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
       }
       .into_in(self.alloc),
     );
+
     let mut ret = vec![decl_stmt, export_call_stmt];
+
     ret.extend(re_export_external_stmts.unwrap_or_default());
 
     ret
@@ -412,6 +443,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
                 );
               Some(ast::Expression::StaticMemberExpression(require_path_to_file_url_href))
             }
+
             _ => {
               // If we don't support polyfill `import.meta.url` in this platform and format, we just keep it as it is
               // so users may handle it in their own way.
@@ -420,9 +452,11 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
           };
           return new_expr;
         }
+
         _ => {}
       }
     }
+
     None
   }
 
@@ -446,6 +480,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     }
 
     let span = expr.span();
+
     let first_arg_string_literal =
       expr.arguments.first_mut().and_then(|arg| arg.as_expression_mut()).and_then(
         |item| match item {
@@ -455,24 +490,33 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
       )?;
 
     let &rec_idx = self.ctx.module.new_url_references.get(&span)?;
+
     let rec = &self.ctx.module.import_records[rec_idx];
 
     let importee = &self.ctx.modules[rec.resolved_module].as_normal()?;
+
     let chunk_idx = &self.ctx.chunk_graph.module_to_chunk[importee.idx]?;
+
     let chunk = &self.ctx.chunk_graph.chunk_table[*chunk_idx];
+
     let asset_filename = &chunk.asset_absolute_preliminary_filenames[&importee.idx];
+
     let cur_chunk_idx =
       self.ctx.chunk_graph.module_to_chunk[self.ctx.id].expect("This module should be in a chunk");
+
     let current_chunk_filename = &self.ctx.chunk_graph.chunk_table[cur_chunk_idx]
       .absolute_preliminary_filename
       .as_ref()
       .expect("This chunk should have a filename");
 
     let importer_dir = current_chunk_filename.as_path().parent().unwrap();
+
     let importee_filename = asset_filename;
+
     let import_path = importee_filename.relative(importer_dir).as_path().expect_to_slash();
 
     first_arg_string_literal.value = self.snippet.atom(&import_path);
+
     None
   }
 }

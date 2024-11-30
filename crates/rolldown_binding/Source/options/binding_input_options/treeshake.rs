@@ -37,6 +37,7 @@ impl TryFrom<BindingTreeshake> for rolldown::TreeshakeOptions {
       Either::A(value) => ModuleSideEffects::Boolean(value),
       Either::B(rules) => {
         let mut ret = Vec::with_capacity(rules.len());
+
         for rule in rules {
           let test = match rule.test {
             Some(test) => Some(HybridRegex::try_from(test)?),
@@ -48,6 +49,7 @@ impl TryFrom<BindingTreeshake> for rolldown::TreeshakeOptions {
             external: rule.external,
           });
         }
+
         ModuleSideEffects::ModuleSideEffectsRules(ret)
       }
     };

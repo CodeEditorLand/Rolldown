@@ -43,6 +43,7 @@ impl BuildEvent for CommonJsVariableInEsm {
       CjsExportSpan::Module(_) => "module",
       CjsExportSpan::Exports(_) => "exports",
     };
+
     format!("The CommonJS `{variable}` variable is treated as a global variable in an ECMAScript module and may not work as expected")
   }
 
@@ -50,6 +51,7 @@ impl BuildEvent for CommonJsVariableInEsm {
     let filename = opts.stabilize_path(&self.filename);
 
     let file_id = diagnostic.add_file(filename, self.source.clone());
+
     diagnostic.add_label(
       &file_id,
       self.cjs_export_ident_span.start()..self.cjs_export_ident_span.end(),

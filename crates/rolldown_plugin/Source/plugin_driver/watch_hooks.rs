@@ -8,6 +8,7 @@ impl PluginDriver {
     {
       plugin.call_watch_change(ctx, path, event).await?;
     }
+
     Ok(())
   }
 
@@ -17,6 +18,7 @@ impl PluginDriver {
     {
       plugin.call_close_watcher(ctx).await?;
     }
+
     Ok(())
   }
 }

@@ -42,7 +42,9 @@ impl IntermediateNormalModules {
 
   pub fn alloc_ecma_module_idx(&mut self) -> ModuleIdx {
     let id = self.modules.push(None);
+
     self.importers.push(Vec::new());
+
     id
   }
 }
@@ -94,6 +96,7 @@ impl ModuleLoader {
         })?
       },
     };
+
     let common_data = Arc::new(TaskContext {
       options: Arc::clone(&options),
       tx: tx.clone(),
@@ -104,7 +107,9 @@ impl ModuleLoader {
     });
 
     let mut intermediate_normal_modules = IntermediateNormalModules::new();
+
     let symbols = SymbolRefDb::default();
+
     let runtime_id = intermediate_normal_modules.alloc_ecma_module_idx();
 
     let task = RuntimeModuleTask::new(runtime_id, tx.clone(), Arc::clone(&options));
@@ -166,6 +171,7 @@ impl ModuleLoader {
                 rolldown_common::ModuleSideEffects::Boolean(false) => {
                   DeterminedSideEffects::UserDefined(false)
                 }
+
                 _ => {
                   if resolved_id.is_external_without_side_effects {
                     DeterminedSideEffects::UserDefined(false)
@@ -248,10 +254,13 @@ impl ModuleLoader {
     self.shared_context.plugin_driver.set_context_load_modules_tx(Some(self.tx.clone())).await;
 
     let mut errors = vec![];
+
     let mut all_warnings: Vec<BuildDiagnostic> = vec![];
 
     let entries_count = user_defined_entries.len() + /* runtime */ 1;
+
     self.intermediate_normal_modules.modules.reserve(entries_count);
+
     self.intermediate_normal_modules.index_ecma_ast.reserve(entries_count);
 
     // Store the already consider as entry module
@@ -270,9 +279,11 @@ impl ModuleLoader {
       .collect::<Vec<_>>();
 
     let mut dynamic_import_entry_ids = FxHashSet::default();
+
     let mut dynamic_import_exports_usage_pairs = vec![];
 
     let mut runtime_brief: Option<RuntimeModuleBrief> = None;
+
     while self.remaining > 0 {
       let Some(msg) = self.rx.recv().await else {
         break;
@@ -298,11 +309,13 @@ impl ModuleLoader {
               .zip(resolved_deps)
               .map(|((rec_idx, raw_rec), info)| {
                 let normal_module = module.as_normal().unwrap();
+
                 let owner = ModuleTaskOwner::new(
                   normal_module.source.clone(),
                   normal_module.stable_id.as_str().into(),
                   raw_rec.span,
                 );
+
                 let id = self.try_spawn_new_task(
                   info,
                   Some(owner),
@@ -319,11 +332,13 @@ impl ModuleLoader {
                 if let Some(usage) = dynamic_import_rec_exports_usage.remove(&rec_idx) {
                   dynamic_import_exports_usage_pairs.push((id, usage));
                 }
+
                 if matches!(raw_rec.kind, ImportKind::DynamicImport)
                   && !user_defined_entry_ids.contains(&id)
                 {
                   dynamic_import_entry_ids.insert(id);
                 }
+
                 raw_rec.into_resolved(id)
               })
               .collect::<IndexVec<ImportRecordIdx, _>>();
@@ -331,12 +346,15 @@ impl ModuleLoader {
           module.set_import_records(import_records);
           if let Some(EcmaRelated { ast, symbols, .. }) = ecma_related {
             let ast_idx = self.intermediate_normal_modules.index_ecma_ast.push((ast, module.idx()));
+
             module.set_ecma_ast_idx(ast_idx);
+
             self.symbol_ref_db.store_local_db(module_idx, symbols);
           }
           self.intermediate_normal_modules.modules[module_idx] = Some(module);
           self.remaining -= 1;
         }
+
         ModuleLoaderMsg::RuntimeNormalModuleDone(task_result) => {
           let RuntimeModuleTaskResult {
             local_symbol_ref_db,
@@ -362,6 +380,7 @@ impl ModuleLoader {
                 {
                   dynamic_import_entry_ids.insert(id);
                 }
+
                 raw_rec.into_resolved(id)
               })
               .collect::<IndexVec<ImportRecordIdx, _>>();
@@ -374,9 +393,11 @@ impl ModuleLoader {
           runtime_brief = Some(runtime);
           self.remaining -= 1;
         }
+
         ModuleLoaderMsg::FetchModule(resolve_id) => {
           self.try_spawn_new_task(resolve_id, None, false, None);
         }
+
         ModuleLoaderMsg::BuildErrors(e) => {
           errors.extend(e);
           self.remaining -= 1;
@@ -399,9 +420,11 @@ impl ModuleLoader {
             occ.get_mut().merge(usage);
           }
         };
+
         acc
       },
     );
+
     self.shared_context.plugin_driver.set_context_load_modules_tx(None).await;
 
     let modules: IndexVec<ModuleIdx, Module> = self
@@ -412,6 +435,7 @@ impl ModuleLoader {
       .enumerate()
       .map(|(id, mut module)| {
         let id = ModuleIdx::from(id);
+
         if let Some(module) = module.as_normal_mut() {
           // Note: (Compat to rollup)
           // The `dynamic_importers/importers` should be added after `module_parsed` hook.
@@ -430,6 +454,7 @@ impl ModuleLoader {
               .set_module_info(&module.id, Arc::new(module.to_module_info()));
           }
         }
+
         module
       })
       .collect();

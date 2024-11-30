@@ -35,30 +35,35 @@ pub(crate) fn to_glob_pattern(expr: &Expression) -> anyhow::Result<Option<String
 
   if glob.starts_with('*') {
     let expr = expr_to_str(expr);
+
     return Err(
       anyhow::format_err!("invalid import \"{expr}\". It cannot be statically analyzed. Variable dynamic imports must start with ./ and be limited to a specific directory. {EXAMPLE_CODE}"));
   }
 
   if glob.starts_with('/') {
     let expr = expr_to_str(expr);
+
     return Err(
       anyhow::format_err!("invalid import \"{expr}\". Variable absolute imports are not supported, imports must start with ./ in the static part of the import. {EXAMPLE_CODE}"));
   }
 
   if !glob.starts_with("./") && !glob.starts_with("../") {
     let expr = expr_to_str(expr);
+
     return Err(
       anyhow::format_err!("invalid import \"{expr}\". Variable bare imports are not supported, imports must start with ./ in the static part of the import. {EXAMPLE_CODE}"));
   }
 
   if OWN_DIRECTORY_STAR_REGEX.is_match(&glob) {
     let expr = expr_to_str(expr);
+
     return Err(
       anyhow::format_err!("invalid import \"{expr}\". Variable imports cannot import their own directory, place imports in a separate directory or make the import filename more specific. {EXAMPLE_CODE}"));
   }
 
   if Path::new(&glob).extension().is_none() {
     let expr = expr_to_str(expr);
+
     return Err(
       anyhow::format_err!("invalid import \"{expr}\". A file extension must be included in the static part of the import. {EXAMPLE_CODE}"),
     );
@@ -89,6 +94,7 @@ fn template_literal_to_glob(node: &TemplateLiteral) -> anyhow::Result<String> {
 
   for (index, quasi) in node.quasis.iter().enumerate() {
     glob += &sanitize_string(&quasi.value.raw)?;
+
     if let Some(expr) = node.expressions.get(index) {
       glob += &expr_to_glob(expr)?;
     }
@@ -154,144 +160,198 @@ mod tests {
   #[test]
   fn template_literal_with_variable_filename() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./foo/${bar}.js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./foo/*.js");
   }
 
   #[test]
   fn external() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`https://some.cdn.com/package/${version}/index.js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert!(glob.is_none());
   }
 
   #[test]
   fn external_leaves_bare_module_specifiers_starting_with_https_in_tact() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("'http_utils'");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert!(glob.is_none());
   }
 
   #[test]
   fn data_uri() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`data:${bar}`");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert!(glob.is_none());
   }
 
   #[test]
   fn template_literal_with_dot_prefixed_suffix() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./${bar}.entry.js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./*.entry.js");
   }
 
   #[test]
   fn template_literal_with_variable_directory() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./foo/${bar}/x.js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./foo/*/x.js");
   }
 
   #[test]
   fn template_literal_with_multiple_variables() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./${foo}/${bar}.js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./*/*.js");
   }
 
   #[test]
   fn dynamic_expression_with_variable_filename() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("'./foo/'.concat(bar,'.js')");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./foo/*.js");
   }
 
   #[test]
   fn dynamic_expression_with_variable_directory() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("'./foo/'.concat(bar, '/x.js')");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./foo/*/x.js");
   }
 
   #[test]
   fn dynamic_expression_with_multiple_variables() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("'./'.concat(foo, '/').concat(bar,'.js')");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./*/*.js");
   }
 
   #[test]
   fn string_concatenation() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("'./foo/' + bar + '.js'");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./foo/*.js");
   }
 
   #[test]
   fn string_concatenation_and_template_literals_combined() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("'./' + `foo/${bar}` + '.js'");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./foo/*.js");
   }
 
   #[test]
   fn string_literal_in_a_template_literal_expression() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`${'./foo/'}${bar}.js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./foo/*.js");
   }
 
   #[test]
   fn multiple_variables_are_collapsed_into_a_single_star() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./foo/${bar}${baz}/${x}${y}.js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
+
     assert_eq!(glob.unwrap(), "./foo/*/*.js");
   }
 
   #[test]
   fn throws_when_dynamic_import_contains_a_star() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./*${foo}.js`");
+
     let err = to_glob_pattern(&ast).unwrap_err();
+
     assert_eq!(err.to_string(), "A dynamic import cannot contain * characters.");
   }
 
   #[test]
   fn throws_when_dynamic_import_contains_a_non_add_operator() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("'foo' - 'bar.js'");
+
     let err = to_glob_pattern(&ast).unwrap_err().to_string();
+
     assert_eq!(err, "\"-\" operator is not supported.");
   }
 
   #[test]
   fn throws_when_dynamic_import_is_a_single_variable() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("foo");
+
     let err = to_glob_pattern(&ast).unwrap_err().to_string();
+
     assert_eq!(err, "invalid import \"foo\". It cannot be statically analyzed. Variable dynamic imports must start with ./ and be limited to a specific directory. For example: import(`./foo/${bar}.js`).");
   }
 
   #[test]
   fn throws_when_dynamic_import_starts_with_a_variable() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`${folder}/foo.js`");
+
     let err = to_glob_pattern(&ast).unwrap_err().to_string();
+
     assert_eq!(err,
       "invalid import \"`${folder}/foo.js`\". It cannot be statically analyzed. Variable dynamic imports must start with ./ and be limited to a specific directory. For example: import(`./foo/${bar}.js`)."
     );
@@ -300,8 +360,11 @@ mod tests {
   #[test]
   fn throws_when_dynamic_import_starts_with_a_slash() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`/foo/${bar}.js`");
+
     let err = to_glob_pattern(&ast).unwrap_err().to_string();
+
     assert_eq!(err,
       "invalid import \"`/foo/${bar}.js`\". Variable absolute imports are not supported, imports must start with ./ in the static part of the import. For example: import(`./foo/${bar}.js`)."
     );
@@ -310,8 +373,11 @@ mod tests {
   #[test]
   fn throws_when_dynamic_import_does_not_start_with_dot_slash() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`foo/${bar}.js`");
+
     let err = to_glob_pattern(&ast).unwrap_err().to_string();
+
     assert_eq!(err,
       "invalid import \"`foo/${bar}.js`\". Variable bare imports are not supported, imports must start with ./ in the static part of the import. For example: import(`./foo/${bar}.js`)."
     );
@@ -320,8 +386,11 @@ mod tests {
   #[test]
   fn throws_when_dynamic_import_imports_its_own_directory() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./${foo}.js`");
+
     let err = to_glob_pattern(&ast).unwrap_err().to_string();
+
     assert_eq!(err,
       "invalid import \"`./${foo}.js`\". Variable imports cannot import their own directory, place imports in a separate directory or make the import filename more specific. For example: import(`./foo/${bar}.js`)."
     );
@@ -330,8 +399,11 @@ mod tests {
   #[test]
   fn throws_when_dynamic_import_imports_does_not_contain_a_file_extension() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./foo/${bar}`");
+
     let err = to_glob_pattern(&ast).unwrap_err().to_string();
+
     assert_eq!(err,
       "invalid import \"`./foo/${bar}`\". A file extension must be included in the static part of the import. For example: import(`./foo/${bar}.js`)."
     );
@@ -340,7 +412,9 @@ mod tests {
   #[test]
   fn escapes_round_brackets() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./${foo}/(foo).js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
     // The escaped glob in JS is "./*/\\(foo\\).js"
     assert_eq!(glob.unwrap(), "./*/(foo).js");
@@ -349,7 +423,9 @@ mod tests {
   #[test]
   fn escapes_square_brackets() {
     let parser = ExprParser::new();
+
     let ast = parser.parse("`./${foo}/[foo].js`");
+
     let glob = to_glob_pattern(&ast).unwrap();
     // The escaped glob in JS is "./*/\\[foo\\].js"
     assert_eq!(glob.unwrap(), "./*/[[]foo[]].js");

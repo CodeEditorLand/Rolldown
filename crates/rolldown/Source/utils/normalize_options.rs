@@ -79,6 +79,7 @@ pub fn normalize_options(mut raw_options: crate::BundlerOptions) -> NormalizeOpt
                 alias.as_deref().unwrap_or(imported),
               )
             }
+
             InjectImport::Namespace { alias, from } => {
               oxc::transformer::InjectImport::namespace_specifier(from, alias)
             }
@@ -109,6 +110,7 @@ pub fn normalize_options(mut raw_options: crate::BundlerOptions) -> NormalizeOpt
       }
       true
     }
+
     _ => raw_options.inline_dynamic_imports.unwrap_or(false),
   };
 

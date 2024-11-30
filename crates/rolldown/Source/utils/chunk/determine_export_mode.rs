@@ -27,6 +27,7 @@ pub fn determine_export_mode(
       }
       Ok(OutputExports::Default)
     }
+
     OutputExports::None => {
       if !exports.is_empty() {
         return Err(
@@ -40,6 +41,7 @@ pub fn determine_export_mode(
       }
       Ok(OutputExports::None)
     }
+
     OutputExports::Auto => {
       if exports.is_empty() {
         Ok(OutputExports::None)
@@ -47,6 +49,7 @@ pub fn determine_export_mode(
         Ok(OutputExports::Default)
       } else {
         let has_default_export = exports.iter().any(|(name, _)| name.as_str() == "default");
+
         if has_default_export {
           let name = &ctx.chunk.name;
           let chunk = ArcStr::from("chunk");
@@ -60,6 +63,7 @@ pub fn determine_export_mode(
             .with_severity_warning(),
           );
         }
+
         Ok(OutputExports::Named)
       }
     }

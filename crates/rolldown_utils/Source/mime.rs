@@ -15,9 +15,11 @@ pub struct MimeExt {
 impl Display for MimeExt {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     write!(f, "{}", self.mime)?;
+
     if self.is_utf8_encoded {
       write!(f, ";charset=utf-8")?;
     }
+
     Ok(())
   }
 }
@@ -31,6 +33,7 @@ impl From<(Mime, bool)> for MimeExt {
 impl TryFrom<RawMimeExt> for MimeExt {
   fn try_from(raw_mime_ext: RawMimeExt) -> Result<Self, Self::Error> {
     let mime = Mime::from_str(raw_mime_ext.mime_str)?;
+
     Ok(MimeExt { mime, is_utf8_encoded: raw_mime_ext.is_utf8_encoded })
   }
 

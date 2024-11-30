@@ -40,6 +40,7 @@ impl Bundler {
     try_init_custom_trace_subscriber(env);
 
     let log_level = input_options.log_level;
+
     let on_log = input_options.on_log.take();
 
     #[cfg(target_family = "wasm")]
@@ -116,6 +117,7 @@ impl Bundler {
   #[allow(clippy::significant_drop_tightening)]
   pub async fn scan_impl(&self) -> napi::Result<BindingOutputs> {
     let mut bundler_core = self.inner.lock().await;
+
     let output = self.handle_result(bundler_core.scan().await);
 
     match output {
@@ -170,6 +172,7 @@ impl Bundler {
   #[allow(clippy::significant_drop_tightening)]
   pub fn watch_impl(&self) -> napi::Result<BindingWatcher> {
     let watcher = handle_result(NativeBundler::watch(Arc::clone(&self.inner)))?;
+
     Ok(BindingWatcher::new(watcher))
   }
 

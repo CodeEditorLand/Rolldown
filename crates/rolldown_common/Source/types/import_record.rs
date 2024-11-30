@@ -97,6 +97,7 @@ impl RawImportRecord {
 
   pub fn with_meta(mut self, meta: ImportRecordMeta) -> Self {
     self.meta = meta;
+
     self
   }
 

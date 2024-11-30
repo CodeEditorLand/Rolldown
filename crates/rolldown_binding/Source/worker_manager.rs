@@ -54,6 +54,7 @@ impl WorkerSemaphorePermit {
 impl Drop for WorkerSemaphorePermit {
   fn drop(&mut self) {
     let worker_index = self.worker_index;
+
     self.sender.send_blocking(worker_index).expect("failed to send worker_index");
   }
 }

@@ -26,9 +26,11 @@ impl MemoryFileSystem {
   /// * Fails to write file
   pub fn new(data: FsFileMap) -> Self {
     let mut fs = Self::default();
+
     for (path, content) in data {
       fs.add_file(Path::new(path), content);
     }
+
     fs
   }
 
@@ -43,6 +45,7 @@ impl MemoryFileSystem {
     }
     // Create file
     let mut file = fs.create_file(path.to_string_lossy().as_ref()).unwrap();
+
     file.write_all(content.as_bytes()).unwrap();
   }
 }
@@ -69,6 +72,7 @@ impl FileSystem for MemoryFileSystem {
       .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?
       .write(content)
       .map_err(|err| io::Error::new(io::ErrorKind::Other, err))?;
+
     Ok(())
   }
 
@@ -78,11 +82,13 @@ impl FileSystem for MemoryFileSystem {
 
   fn read(&self, path: &Path) -> io::Result<Vec<u8>> {
     let mut buf = Vec::new();
+
     self
       .fs
       .open_file(&path.to_string_lossy())
       .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?
       .read_to_end(&mut buf)?;
+
     Ok(buf)
   }
 }
@@ -90,11 +96,13 @@ impl FileSystem for MemoryFileSystem {
 impl OxcResolverFileSystem for MemoryFileSystem {
   fn read_to_string(&self, path: &Path) -> io::Result<String> {
     let mut buf = String::new();
+
     self
       .fs
       .open_file(&path.to_string_lossy())
       .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?
       .read_to_string(&mut buf)?;
+
     Ok(buf)
   }
 
@@ -103,8 +111,11 @@ impl OxcResolverFileSystem for MemoryFileSystem {
       .fs
       .metadata(path.to_string_lossy().as_ref())
       .map_err(|err| io::Error::new(io::ErrorKind::NotFound, err))?;
+
     let is_file = metadata.file_type == vfs::VfsFileType::File;
+
     let is_dir = metadata.file_type == vfs::VfsFileType::Directory;
+
     Ok(FileMetadata::new(is_file, is_dir, false))
   }
 
@@ -128,12 +139,17 @@ mod tests {
   #[test]
   pub fn test_memory_file_system() -> Result<(), String> {
     let index_path = "/index.js".to_string();
+
     let index_content = "const value = 1;".to_string();
+
     let initial_files = [(&index_path, &index_content)];
+
     let mut fs = MemoryFileSystem::new(&initial_files);
 
     let module_1_path = Path::new("/module_1.js");
+
     let module_1_content = "export const module_name = \"module_1\"";
+
     fs.add_file(module_1_path, module_1_content);
 
     assert_eq!(
@@ -147,12 +163,15 @@ mod tests {
     );
 
     let ret = fs.create_dir_all(Path::new("/module_2/utils")).map_err(|err| err.kind());
+
     assert_eq!(Err(std::io::ErrorKind::Other), ret);
 
     fs.create_dir_all(Path::new("/module_2")).map_err(|err| err.to_string())?;
+
     fs.create_dir_all(Path::new("/module_2/utils")).map_err(|err| err.to_string())?;
 
     let utils_content = b"export const name = \"utils\"";
+
     fs.write(Path::new("/module_2/utils/index.js"), utils_content)
       .map_err(|err| err.to_string())?;
 

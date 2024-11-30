@@ -15,6 +15,7 @@ pub struct AstSymbols {
 impl AstSymbols {
 	pub fn from_symbol_table(table:SymbolTable) -> Self {
 		debug_assert!(table.references.is_empty());
+
 		Self {
 			names:table.names,
 			scope_ids:table.scope_ids,
@@ -25,6 +26,7 @@ impl AstSymbols {
 
 	pub fn create_symbol(&mut self, name:CompactString, scope_id:ScopeId) -> SymbolId {
 		self.scope_ids.push(scope_id);
+
 		self.names.push(name)
 	}
 

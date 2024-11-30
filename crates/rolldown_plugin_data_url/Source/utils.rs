@@ -31,45 +31,65 @@ mod tests {
   #[test]
   fn test_plain_text() {
     let dataurl = "data:text/plain;charset=utf-8,hello%20world";
+
     let ParsedDataUrl { mime, is_base64, data } = parse_data_url(dataurl).unwrap();
+
     assert_eq!(mime, "text/plain");
+
     assert!(!is_base64);
+
     assert_eq!(data, "hello%20world");
   }
 
   #[test]
   fn test_json_0() {
     let dataurl = "data:application/json,\"%31%32%33\"";
+
     let ParsedDataUrl { mime, is_base64, data } = parse_data_url(dataurl).unwrap();
+
     assert_eq!(mime, "application/json");
+
     assert!(!is_base64);
+
     assert_eq!(data, "\"%31%32%33\"");
   }
 
   #[test]
   fn test_json_1() {
     let dataurl = "data:application/json;base64,eyJ3b3JrcyI6dHJ1ZX0=";
+
     let ParsedDataUrl { mime, is_base64, data } = parse_data_url(dataurl).unwrap();
+
     assert_eq!(mime, "application/json");
+
     assert!(is_base64);
+
     assert_eq!(data, "eyJ3b3JrcyI6dHJ1ZX0=");
   }
 
   #[test]
   fn test_json_2() {
     let dataurl = "data:application/json;charset=UTF-8,%31%32%33";
+
     let ParsedDataUrl { mime, is_base64, data } = parse_data_url(dataurl).unwrap();
+
     assert_eq!(mime, "application/json");
+
     assert!(!is_base64);
+
     assert_eq!(data, "%31%32%33");
   }
 
   #[test]
   fn test_json_3() {
     let dataurl = "data:application/json;charset=UTF-8;base64,eyJ3b3JrcyI6dHJ1ZX0=";
+
     let ParsedDataUrl { mime, is_base64, data } = parse_data_url(dataurl).unwrap();
+
     assert_eq!(mime, "application/json");
+
     assert!(is_base64);
+
     assert_eq!(data, "eyJ3b3JrcyI6dHJ1ZX0=");
   }
 }

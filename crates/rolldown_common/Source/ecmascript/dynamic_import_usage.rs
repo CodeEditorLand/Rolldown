@@ -54,12 +54,16 @@ impl DynamicImportExportsUsage {
           DynamicImportExportsUsage::Complete => unreachable!(),
           DynamicImportExportsUsage::Partial(mut rhs) => {
             rhs.insert(name.clone());
+
             rhs
           }
           DynamicImportExportsUsage::Single(rhs) => {
             let mut set = FxHashSet::default();
+
             set.insert(rhs);
+
             set.insert(name.clone());
+
             set
           }
         };

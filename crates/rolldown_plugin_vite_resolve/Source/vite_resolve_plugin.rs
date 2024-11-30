@@ -111,6 +111,7 @@ impl ViteResolvePlugin {
       root: &options.resolve_options.root,
       preserve_symlinks: options.resolve_options.preserve_symlinks,
     };
+
     let resolvers = Resolvers::new(
       &base_options,
       &options.resolve_options.external_conditions,
@@ -206,6 +207,7 @@ impl ViteResolvePlugin {
       self.resolve_options.prefer_relative || args.importer.map_or(false, |i| i.ends_with(".html")),
       is_from_ts_importer(args.importer),
     );
+
     let resolver = self.resolvers.get(additional_options);
 
     if is_bare_import(args.specifier) {
@@ -219,6 +221,7 @@ impl ViteResolvePlugin {
             let finalized = finalize_bare_specifier(&result.id, args.specifier, args.importer)
               .await?
               .unwrap_or(result.id);
+
             result.id = finalized;
           }
         }
@@ -235,6 +238,7 @@ impl ViteResolvePlugin {
               || !self.external.is_external_explicitly(args.specifier))
           {
             let mut message = format!("Cannot bundle Node.js built-in \"{}\"", args.specifier);
+
             if let Some(importer) = args.importer {
               let current_dir =
                 env::current_dir().unwrap_or(PathBuf::from(&self.resolve_options.root));
@@ -243,10 +247,12 @@ impl ViteResolvePlugin {
                 Path::new(importer).relative(current_dir).to_string_lossy()
               ));
             }
+
             message.push_str(&format!(
               ". Consider disabling environments.{}.noExternal or remove the built-in dependency.",
               self.environment_name
             ));
+
             return Err(anyhow!(message));
           }
 
@@ -282,10 +288,12 @@ impl ViteResolvePlugin {
       .importer
       .map(|i| Path::new(i).parent().map(|i| i.to_str().unwrap()).unwrap_or(i))
       .unwrap_or(&self.resolve_options.root);
+
     let resolved = resolver.normalize_oxc_resolver_result(
       args.importer,
       &resolver.resolve_raw(base_dir, args.specifier),
     )?;
+
     if let Some(mut resolved) = resolved {
       if !scan {
         if let Some(finalize_other_specifiers) = &self.finalize_other_specifiers {
@@ -350,6 +358,7 @@ impl ViteResolvePlugin {
         let [_, peer_dep, parent_dep, _] = args.id.splitn(4, ":").collect::<Vec<&str>>()[..] else {
           unreachable!()
         };
+
         return Ok(Some(HookLoadOutput {
           code: get_development_optional_peer_dep_module_code(peer_dep, parent_dep),
           ..Default::default()
@@ -368,6 +377,7 @@ impl ViteResolvePlugin {
       }
       WatcherChangeKind::Update => {}
     };
+
     Ok(())
   }
 }

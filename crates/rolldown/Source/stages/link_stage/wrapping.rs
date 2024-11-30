@@ -64,6 +64,7 @@ fn has_dynamic_exports_due_to_export_star(
         })
       }
     }
+
     Module::External(_) => true,
   };
 
@@ -111,9 +112,11 @@ impl LinkStage<'_> {
 
       module.import_records.iter().for_each(|rec| {
         let importee_id = rec.resolved_module;
+
         let Module::Normal(importee) = &self.module_table.modules[importee_id] else {
           return;
         };
+
         if matches!(importee.exports_kind, ExportsKind::CommonJs) {
           wrap_module_recursively(
             &mut Context {
@@ -194,6 +197,7 @@ pub fn create_wrapper(
       linking_info.wrapper_stmt_info = Some(module.stmt_infos.add_stmt_info(stmt_info));
       linking_info.wrapper_ref = Some(wrapper_ref);
     }
+
     WrapKind::None => {}
   }
 }

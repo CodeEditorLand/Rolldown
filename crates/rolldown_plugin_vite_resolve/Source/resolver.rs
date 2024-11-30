@@ -121,6 +121,7 @@ impl Resolvers {
 
   pub fn clear_cache(&self) {
     self.resolvers.iter().for_each(|v| v.clear_cache());
+
     self.external_resolver.clear_cache();
   }
 }
@@ -247,20 +248,25 @@ impl Resolver {
     };
 
     let mut path = Path::new(specifier).components();
+
     let Some(path::Component::Normal(filename)) = path.next_back() else {
       return self.inner.resolve(directory, specifier);
     };
 
     let mut filename_with_prefix = OsString::with_capacity(try_prefix.len() + filename.len());
+
     filename_with_prefix.push(try_prefix);
+
     filename_with_prefix.push(filename);
 
     let path_with_prefix = path.as_path().join(filename_with_prefix);
+
     let Some(path_with_prefix) = path_with_prefix.to_str() else {
       return self.inner.resolve(directory, specifier);
     };
 
     let result_with_prefix = self.inner.resolve(directory.as_ref(), path_with_prefix);
+
     match result_with_prefix {
       Err(
         oxc_resolver::ResolveError::NotFound(_)
@@ -278,7 +284,9 @@ impl Resolver {
     match result {
       Ok(result) => {
         let raw_path = result.full_path().to_str().unwrap().to_string();
+
         let path = raw_path.strip_prefix("\\\\?\\").unwrap_or(&raw_path);
+
         let path = normalize_path(path);
 
         let side_effects = result
@@ -295,6 +303,7 @@ impl Resolver {
               }
             },
           );
+
         Ok(Some(HookResolveIdOutput { id: path.into_owned(), side_effects, ..Default::default() }))
       }
       Err(oxc_resolver::ResolveError::NotFound(id)) => {
@@ -305,6 +314,7 @@ impl Resolver {
         if is_bare_import(id) && !is_builtin(id, &self.runtime) && !id.contains('\0') {
           if let Some(pkg_name) = get_npm_package_name(id) {
             let base_dir = get_base_dir(importer).unwrap_or(&self.root);
+
             if base_dir != self.root {
               if let Some(package_json) =
                 self.package_json_peer_dep.get_nearest_package_json_optional_peer_deps(base_dir)
@@ -319,6 +329,7 @@ impl Resolver {
             }
           }
         }
+
         Ok(None)
       }
       Err(oxc_resolver::ResolveError::Ignored(_)) => {
@@ -338,7 +349,9 @@ impl Resolver {
     let base_dir = get_base_dir(importer).unwrap_or(&self.root);
 
     let oxc_resolved_result = self.resolve_raw(base_dir, specifier);
+
     let resolved = self.normalize_oxc_resolver_result(importer, &oxc_resolved_result)?;
+
     if let Some(mut resolved) = resolved {
       if !external || !can_externalize_file(&resolved.id) {
         return Ok(Some(resolved));
@@ -363,6 +376,7 @@ impl Resolver {
 
       return Ok(Some(resolved));
     }
+
     Ok(None)
   }
 
@@ -374,6 +388,7 @@ impl Resolver {
 fn get_base_dir(importer: Option<&str>) -> Option<&str> {
   if let Some(importer) = importer {
     let imp = Path::new(importer);
+
     if imp.is_absolute()
       && (
         // css processing appends `*` for importer

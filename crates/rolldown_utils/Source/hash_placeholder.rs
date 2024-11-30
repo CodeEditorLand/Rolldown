@@ -29,8 +29,11 @@ fn to_base64(mut value: u32) -> String {
 
   loop {
     let current_digit = value % BASE;
+
     buffer[index] = CHARS[current_digit as usize];
+
     value /= BASE;
+
     index += 1;
 
     if value == 0 {
@@ -51,6 +54,7 @@ impl HashPlaceholderGenerator {
     debug_assert!((HASH_PLACEHOLDER_OVERHEAD..=MAX_HASH_SIZE).contains(&len));
 
     let allow_middle_len = len - HASH_PLACEHOLDER_OVERHEAD;
+
     let seed_base64 = to_base64(self.seed);
 
     // TODO(hyf0): improve this
@@ -58,9 +62,13 @@ impl HashPlaceholderGenerator {
 
     let mut placeholder =
       String::with_capacity(len + HASH_PLACEHOLDER_LEFT.len() + HASH_PLACEHOLDER_RIGHT.len());
+
     placeholder.push_str(HASH_PLACEHOLDER_LEFT);
+
     placeholder.extend(std::iter::repeat('0').take(allow_middle_len - seed_base64.len()));
+
     placeholder.push_str(&seed_base64);
+
     placeholder.push_str(HASH_PLACEHOLDER_RIGHT);
 
     self.seed += 1;

@@ -13,6 +13,7 @@ pub fn render_factory_parameters(
   let mut parameters = if has_exports { vec!["exports"] } else { vec![] };
   externals.iter().for_each(|external| {
     let symbol_name = &ctx.chunk.canonical_names[&external.namespace_ref];
+
     parameters.push(symbol_name.as_str());
   });
   parameters.join(", ")
@@ -41,11 +42,17 @@ pub fn render_chunk_external_imports<'a>(
           .canonical_ref_for(ctx.link_output.runtime.resolve_symbol("__toESM"))];
 
         import_code.push_str(external_module_symbol_name);
+
         import_code.push_str(" = ");
+
         import_code.push_str(to_esm_fn_name);
+
         import_code.push('(');
+
         import_code.push_str(external_module_symbol_name);
+
         import_code.push_str(");\n");
+
         Some(importee)
       } else if importee.side_effects.has_side_effects() {
         Some(importee)

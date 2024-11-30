@@ -21,6 +21,7 @@ impl ResolveOptionsExternal {
       ResolveOptionsExternal::Vec(vec) => vec,
       _ => return false,
     };
+
     return vec.iter().any(|v| v == id);
   }
 }
@@ -73,9 +74,11 @@ impl ExternalDecider {
     }
 
     let mut is_external = false;
+
     if !id.starts_with('.') && !Path::new(id).is_absolute() {
       is_external = is_builtin(id, &self.runtime) || self.is_configured_as_external(id, importer);
     }
+
     self.processed_ids.insert(id.to_owned(), is_external);
 
     is_external
@@ -85,17 +88,22 @@ impl ExternalDecider {
     if self.options.external.is_external_explicitly(id) {
       return true;
     }
+
     let pkg_name = get_npm_package_name(id);
+
     let pkg_name = match pkg_name {
       Some(pkg_name) => pkg_name,
       None => return self.is_externalizable(id, importer, false),
     };
+
     if self.options.external.is_external_explicitly(pkg_name) {
       return self.is_externalizable(id, importer, true);
     }
+
     if self.options.no_external.is_no_external(pkg_name) {
       return false;
     }
+
     self.is_externalizable(
       id,
       importer,
@@ -114,6 +122,7 @@ impl ExternalDecider {
     }
 
     let result = self.resolver.resolve_bare_import(id, importer, false);
+
     if let Ok(result) = result {
       let resolved = match result {
         Some(result) => result,

@@ -47,8 +47,11 @@ impl PluginDriver {
     options: &SharedNormalizedBundlerOptions,
   ) -> SharedPluginDriver {
     let watch_files = Arc::new(DashSet::default());
+
     let modules = Arc::new(DashMap::default());
+
     let context_load_modules = Arc::new(DashMap::default());
+
     let tx = Arc::new(Mutex::new(None));
 
     Arc::new_cyclic(|plugin_driver| {
@@ -64,6 +67,7 @@ impl PluginDriver {
           resolve_id: plugin.call_resolve_id_filter().unwrap(),
           transform: plugin.call_transform_filter().unwrap(),
         });
+
         index_contexts.push(
           PluginContextImpl {
             skipped_resolve_calls: vec![],
@@ -97,7 +101,9 @@ impl PluginDriver {
 
   pub fn clear(&self) {
     self.watch_files.clear();
+
     self.modules.clear();
+
     self.file_emitter.clear();
   }
 
@@ -117,6 +123,7 @@ impl PluginDriver {
     if let Some((_, callback)) = self.context_load_modules.remove(module_id.as_str()) {
       callback().await?;
     }
+
     Ok(())
   }
 
@@ -233,7 +240,9 @@ impl HookOrderIndicates {
     get_hook_meta: impl Fn(&SharedPluginable) -> Option<PluginHookMeta>,
   ) -> Vec<PluginIdx> {
     let mut pre_plugins = vec![];
+
     let mut normal_plugins = vec![];
+
     let mut post_plugins = vec![];
 
     for (idx, plugin) in index_plugins.iter_enumerated() {
@@ -248,8 +257,11 @@ impl HookOrderIndicates {
         normal_plugins.push(idx);
       }
     }
+
     pre_plugins.extend(normal_plugins);
+
     pre_plugins.extend(post_plugins);
+
     pre_plugins
   }
 }

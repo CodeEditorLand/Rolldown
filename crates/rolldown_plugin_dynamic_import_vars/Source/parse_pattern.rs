@@ -96,6 +96,7 @@ mod tests {
         raw_pattern: "./mods/*.js".to_string(),
       }
     );
+
     assert_eq!(
       super::parse_pattern("./mods/*.js?url"),
       super::DynamicImportPattern {
@@ -104,6 +105,7 @@ mod tests {
         raw_pattern: "./mods/*.js".to_string(),
       }
     );
+
     assert_eq!(
       super::parse_pattern("./mods/*.js?worker&c=d"),
       super::DynamicImportPattern {

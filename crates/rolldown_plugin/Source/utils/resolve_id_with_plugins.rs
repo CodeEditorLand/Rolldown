@@ -68,6 +68,7 @@ pub async fn resolve_id_check_external(
       }
       Ok(Ok(resolved_id))
     }
+
     Err(e) => {
       if let ResolveError::NotFound(_) = &e {
         // If module can't resolve, check external with unresolved path with `isResolved: true`

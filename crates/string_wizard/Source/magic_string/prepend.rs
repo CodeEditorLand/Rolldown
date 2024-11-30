@@ -5,6 +5,7 @@ use super::MagicString;
 impl<'text> MagicString<'text> {
   pub fn prepend(&mut self, source: impl Into<CowStr<'text>>) -> &mut Self {
     self.prepend_intro(source.into());
+
     self
   }
 
@@ -17,6 +18,7 @@ impl<'text> MagicString<'text> {
       Some(chunk) => chunk.prepend_outro(content.into()),
       None => self.prepend_intro(content.into()),
     }
+
     self
   }
 
@@ -31,6 +33,7 @@ impl<'text> MagicString<'text> {
       }
       None => self.prepend_outro(content.into()),
     }
+
     self
   }
 }

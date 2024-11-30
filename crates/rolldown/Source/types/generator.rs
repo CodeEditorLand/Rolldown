@@ -35,9 +35,13 @@ impl<'a> GenerateContext<'a> {
     //   // No fancy things on none root scope symbols
     //   return self.snippet.id_ref_expr(self.canonical_name_for(symbol_ref), SPAN);
     // }
+
     let canonical_ref = symbol_db.canonical_ref_for(symbol_ref);
+
     let canonical_symbol = symbol_db.get(canonical_ref);
+
     let namespace_alias = &canonical_symbol.namespace_alias;
+
     if let Some(_ns_alias) = namespace_alias {
       // canonical_ref = ns_alias.namespace_ref;
       // canonical_symbol = symbol_db.get(canonical_ref);
@@ -55,6 +59,7 @@ impl<'a> GenerateContext<'a> {
         });
 
         let is_symbol_in_other_chunk = cur_chunk_idx != chunk_idx_of_canonical_symbol;
+
         if is_symbol_in_other_chunk {
           // In cjs output, we need convert the `import { foo } from 'foo'; console.log(foo);`;
           // If `foo` is split into another chunk, we need to convert the code `console.log(foo);` to `console.log(require_xxxx.foo);`

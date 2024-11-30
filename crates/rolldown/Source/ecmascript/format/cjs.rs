@@ -48,7 +48,9 @@ pub fn render_cjs<'code>(
     if let Some(entry_module) = ctx.chunk.entry_module(&ctx.link_output.module_table) {
       if matches!(entry_module.exports_kind, ExportsKind::Esm) {
         let export_items = get_export_items(ctx.chunk, ctx.link_output);
+
         let has_default_export = export_items.iter().any(|(name, _)| name.as_str() == "default");
+
         let export_mode = determine_export_mode(warnings, ctx, entry_module, &export_items)?;
         // Only `named` export can we render the namespace markers.
         if matches!(&export_mode, OutputExports::Named) {
@@ -58,6 +60,7 @@ pub fn render_cjs<'code>(
             source_joiner.append_source(marker.to_string());
           }
         }
+
         Some(export_mode)
       } else {
         // There is no need for a non-ESM export kind for determining the export mode.
@@ -81,6 +84,7 @@ pub fn render_cjs<'code>(
         }
       }
     }
+
     _ => {}
   }
 
@@ -97,6 +101,7 @@ pub fn render_cjs<'code>(
 
   if let Some(entry_id) = ctx.chunk.entry_module_idx() {
     let entry_meta = &ctx.link_output.metas[entry_id];
+
     match entry_meta.wrap_kind {
       WrapKind::Esm => {
         let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
@@ -106,6 +111,7 @@ pub fn render_cjs<'code>(
           ctx.chunk_idx,
           &ctx.chunk.canonical_names,
         );
+
         source_joiner.append_source(concat_string!(wrapper_ref_name, "();"));
       }
       WrapKind::Cjs => {
@@ -119,6 +125,7 @@ pub fn render_cjs<'code>(
         );
 
         // module.exports = require_xxx();
+
         source_joiner.append_source(concat_string!("module.exports = ", wrapper_ref_name, "();\n"));
       }
       WrapKind::None => {}
@@ -149,8 +156,10 @@ fn render_cjs_chunk_imports(ctx: &GenerateContext<'_>) -> String {
   // render imports from other chunks
   ctx.chunk.imports_from_other_chunks.iter().for_each(|(exporter_id, items)| {
     let importee_chunk = &ctx.chunk_graph.chunk_table[*exporter_id];
+
     let require_path_str =
       concat_string!("require('", ctx.chunk.import_path_for(importee_chunk), "');\n");
+
     if items.is_empty() {
       s.push_str(&require_path_str);
     } else {

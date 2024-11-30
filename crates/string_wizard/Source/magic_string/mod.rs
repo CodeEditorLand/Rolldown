@@ -47,10 +47,15 @@ impl<'text> MagicString<'text> {
 
   pub fn with_options(source: impl Into<CowStr<'text>>, options: MagicStringOptions) -> Self {
     let source: CowStr = source.into();
+
     let source_len = source.len();
+
     let initial_chunk = Chunk::new(Span(0, source_len));
+
     let mut chunks = IndexChunks::with_capacity(1);
+
     let initial_chunk_idx = chunks.push(initial_chunk);
+
     let mut magic_string = Self {
       intro: Default::default(),
       outro: Default::default(),
@@ -66,6 +71,7 @@ impl<'text> MagicString<'text> {
     };
 
     magic_string.chunk_by_start.insert(0, initial_chunk_idx);
+
     magic_string.chunk_by_end.insert(source_len, initial_chunk_idx);
 
     magic_string
@@ -105,8 +111,11 @@ impl<'text> MagicString<'text> {
 
   pub(crate) fn fragments(&'text self) -> impl Iterator<Item = &'text str> {
     let intro = self.intro.iter().map(|s| s.as_ref());
+
     let outro = self.outro.iter().map(|s| s.as_ref());
+
     let chunks = self.iter_chunks().flat_map(|c| c.fragments(&self.source));
+
     intro.chain(chunks).chain(outro)
   }
 
@@ -143,8 +152,11 @@ impl<'text> MagicString<'text> {
     }
 
     let second_half_chunk = self.chunks[candidate_idx].split(at_index);
+
     let second_half_span = second_half_chunk.span;
+
     let second_half_idx = self.chunks.push(second_half_chunk);
+
     let first_half_idx = candidate_idx;
 
     // Update the last searched chunk
@@ -152,16 +164,22 @@ impl<'text> MagicString<'text> {
 
     // Update the chunk_by_start/end maps
     self.chunk_by_end.insert(at_index, first_half_idx);
+
     self.chunk_by_start.insert(at_index, second_half_idx);
+
     self.chunk_by_end.insert(second_half_span.end(), second_half_idx);
 
     // Make sure the new chunk and the old chunk have correct next/prev pointers
     self.chunks[second_half_idx].next = self.chunks[first_half_idx].next;
+
     if let Some(second_half_next_idx) = self.chunks[second_half_idx].next {
       self.chunks[second_half_next_idx].prev = Some(second_half_idx);
     }
+
     self.chunks[second_half_idx].prev = Some(first_half_idx);
+
     self.chunks[first_half_idx].next = Some(second_half_idx);
+
     if first_half_idx == self.last_chunk_idx {
       self.last_chunk_idx = second_half_idx
     }
@@ -191,8 +209,11 @@ impl<'text> MagicString<'text> {
 impl<'text> std::fmt::Display for MagicString<'text> {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let size_hint = self.len();
+
     let mut ret = String::with_capacity(size_hint);
+
     self.fragments().for_each(|f| ret.push_str(f));
+
     write!(f, "{ret}")
   }
 }
@@ -210,7 +231,9 @@ impl<'a> Iterator for IterChunks<'a> {
       None => None,
       Some(idx) => {
         let chunk = &self.chunks[idx];
+
         self.next = chunk.next;
+
         Some(chunk)
       }
     }

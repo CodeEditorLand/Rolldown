@@ -19,7 +19,9 @@ impl BindingNormalizedOptions {
   #[napi(getter)]
   pub fn input(&self) -> Either<Vec<String>, HashMap<String, String>> {
     let mut inputs_iter = self.inner.input.iter().peekable();
+
     let has_name = inputs_iter.peek().is_some_and(|input| input.name.is_some());
+
     if has_name {
       Either::B(
         self

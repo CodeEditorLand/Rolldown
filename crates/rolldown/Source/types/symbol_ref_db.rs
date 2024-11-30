@@ -56,6 +56,7 @@ pub struct SymbolRefDb {
 impl SymbolRefDb {
   fn ensure_exact_capacity(&mut self, module_idx: ModuleIdx) {
     let new_len = module_idx.index() + 1;
+
     if self.inner.len() < new_len {
       self.inner.resize_with(new_len, SymbolRefDbForModule::default);
     }
@@ -69,23 +70,28 @@ impl SymbolRefDb {
 
   pub fn create_symbol(&mut self, owner: ModuleIdx, name: CompactString) -> SymbolRef {
     self.ensure_exact_capacity(owner);
+
     let symbol_id = self.inner[owner].classic_data.push(SymbolRefDataClassic {
       name,
       link: None,
       chunk_id: None,
       namespace_alias: None,
     });
+
     SymbolRef { owner, symbol: symbol_id }
   }
 
   /// Make `base` point to `target`
   pub fn link(&mut self, base: SymbolRef, target: SymbolRef) {
     let base_root = self.canonical_ref_for(base);
+
     let target_root = self.canonical_ref_for(target);
+
     if base_root == target_root {
       // already linked
       return;
     }
+
     self.get_mut(base_root).link = Some(target_root);
   }
 
@@ -95,6 +101,7 @@ impl SymbolRefDb {
     canonical_names: &'name FxHashMap<SymbolRef, Rstr>,
   ) -> &'name Rstr {
     let canonical_ref = self.par_canonical_ref_for(refer);
+
     canonical_names.get(&canonical_ref).unwrap_or_else(|| {
       panic!(
         "canonical name not found for {canonical_ref:?}, original_name: {:?}",
@@ -113,20 +120,24 @@ impl SymbolRefDb {
 
   pub fn canonical_ref_for(&mut self, target: SymbolRef) -> SymbolRef {
     let canonical = self.par_canonical_ref_for(target);
+
     if target != canonical {
       // update the link to the canonical so that the next time we can get the canonical directly
       self.get_mut(target).link = Some(canonical);
     }
+
     canonical
   }
 
   // Used for the situation where rust require `&self`
   pub fn par_canonical_ref_for(&self, target: SymbolRef) -> SymbolRef {
     let mut canonical = target;
+
     while let Some(founded) = self.get(canonical).link {
       debug_assert!(founded != target);
       canonical = founded;
     }
+
     canonical
   }
 

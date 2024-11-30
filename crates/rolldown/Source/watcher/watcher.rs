@@ -46,8 +46,11 @@ pub struct Watcher {
 impl Watcher {
   pub fn new(bundler: Arc<Mutex<Bundler>>) -> Result<Self> {
     let (tx, rx) = channel();
+
     let tx = Arc::new(tx);
+
     let cloned_tx = Arc::clone(&tx);
+
     let watch_option = {
       let config = Config::default();
       let bundler_guard = bundler.try_lock().expect("Failed to lock the bundler. ");
@@ -55,10 +58,12 @@ impl Watcher {
         if let Some(poll_interval) = notify.poll_interval {
           config.with_poll_interval(poll_interval);
         }
+
         config.with_compare_contents(notify.compare_contents);
       }
       config
     };
+
     let inner = RecommendedWatcher::new(
       move |res| {
         if let Err(e) = tx.send(WatcherChannelMsg::NotifyEvent(res)) {
@@ -85,6 +90,7 @@ impl Watcher {
       self.rerun.store(true, Ordering::Relaxed);
       return;
     }
+
     if self.rerun.load(Ordering::Relaxed) {
       return;
     }
@@ -108,10 +114,13 @@ impl Watcher {
 
   pub async fn run(&self) -> BuildResult<()> {
     let start_time = Instant::now();
+
     let mut bundler = self.bundler.lock().await;
+
     self.emitter.emit(WatcherEvent::ReStart)?;
 
     self.running.store(true, Ordering::Relaxed);
+
     self.emitter.emit(WatcherEvent::Event(BundleEvent::Start))?;
 
     self.emitter.emit(WatcherEvent::Event(BundleEvent::BundleStart))?;
@@ -140,7 +149,9 @@ impl Watcher {
       let path = Path::new(file.as_str());
       if path.exists() {
         let normalized_path = path.relative(&bundler.options.cwd);
+
         let normalized_id = normalized_path.to_string_lossy();
+
         if pattern_filter::filter(
           bundler.options.watch.exclude.as_deref(),
           bundler.options.watch.include.as_deref(),
@@ -174,6 +185,7 @@ impl Watcher {
     }
 
     self.running.store(false, Ordering::Relaxed);
+
     self.emitter.emit(WatcherEvent::Event(BundleEvent::End))?;
 
     Ok(())
@@ -185,6 +197,7 @@ impl Watcher {
     // stop watching files
     // TODO the notify watcher should be dropped, because the stop method is private
     let mut inner = self.inner.lock().await;
+
     for path in self.watch_files.iter() {
       inner.unwatch(Path::new(path.as_str()))?;
     }
@@ -194,6 +207,7 @@ impl Watcher {
     self.emitter.emit(WatcherEvent::Close)?;
     // call close watcher hook
     let bundler = self.bundler.lock().await;
+
     bundler.plugin_driver.close_watcher().await?;
 
     Ok(())
@@ -221,6 +235,7 @@ pub async fn on_change(watcher: &Arc<Watcher>, path: &str, kind: WatcherChangeKi
 pub fn wait_for_change(watcher: Arc<Watcher>) {
   let future = async move {
     let mut run = true;
+
     while run {
       let rx = watcher.rx.lock().await;
       match rx.recv() {
@@ -229,6 +244,7 @@ pub fn wait_for_change(watcher: Arc<Watcher>) {
             Ok(event) => {
               for path in event.paths {
                 let id = path.to_string_lossy();
+
                 match event.kind {
                   notify::EventKind::Create(_) => {
                     on_change(&watcher, id.as_ref(), WatcherChangeKind::Create).await;
@@ -237,6 +253,7 @@ pub fn wait_for_change(watcher: Arc<Watcher>) {
                     ModifyKind::Data(_) | ModifyKind::Any, /* windows*/
                   ) => {
                     on_change(&watcher, id.as_ref(), WatcherChangeKind::Update).await;
+
                     watcher.invalidate();
                   }
                   notify::EventKind::Remove(_) => {
@@ -246,6 +263,7 @@ pub fn wait_for_change(watcher: Arc<Watcher>) {
                 }
               }
             }
+
             Err(e) => eprintln!("notify error: {e:?}"),
           },
           WatcherChannelMsg::Close => run = false,

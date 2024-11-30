@@ -32,6 +32,7 @@ pub fn json_to_esm(json: &str) -> serde_json::Result<String> {
       ));
       Ok(source)
     }
+
     _ => {
       let json_str = serde_json::to_string(&json_value)?;
       Ok(format!("export default {json_str}"))

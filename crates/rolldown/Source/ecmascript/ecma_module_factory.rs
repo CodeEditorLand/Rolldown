@@ -134,9 +134,11 @@ impl ModuleFactory for EcmaModuleFactory {
 			has_eval,
 			errors,
 		} = scan_result;
+
 		if !errors.is_empty() {
 			return Ok(Err(errors));
 		}
+
 		ctx.warnings.extend(scan_warnings);
 
 		let mut imported_ids = vec![];
@@ -162,6 +164,7 @@ impl ModuleFactory for EcmaModuleFactory {
 				// CSS modules are considered to have side effects by default
 				return DeterminedSideEffects::Analyzed(true);
 			}
+
 			ctx.resolved_id
 				.package_json
 				.as_ref()
@@ -171,6 +174,7 @@ impl ModuleFactory for EcmaModuleFactory {
 				.unwrap_or_else(|| {
 					let analyzed_side_effects =
 						stmt_infos.iter().any(|stmt_info| stmt_info.side_effect);
+
 					DeterminedSideEffects::Analyzed(analyzed_side_effects)
 				})
 		};
@@ -185,6 +189,7 @@ impl ModuleFactory for EcmaModuleFactory {
 			},
 			// If user don't specify the side effects, we use fallback value
 			// from `option.treeshake.moduleSideEffects`;
+
 			None => {
 				match ctx.options.treeshake {
 					// Actually this convert is not necessary, just for passing

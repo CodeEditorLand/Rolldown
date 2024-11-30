@@ -11,6 +11,7 @@ impl PluginDriver {
     {
       plugin.call_render_start(ctx, &crate::HookRenderStartArgs { options: opts }).await?;
     }
+
     Ok(())
   }
 
@@ -22,12 +23,15 @@ impl PluginDriver {
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_banner_meta) {
       if let Some(r) = plugin.call_banner(ctx, &args).await? {
         banner.push('\n');
+
         banner.push_str(r.as_str());
       }
     }
+
     if banner.is_empty() {
       return Ok(None);
     }
+
     Ok(Some(banner))
   }
 
@@ -39,12 +43,15 @@ impl PluginDriver {
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_footer_meta) {
       if let Some(r) = plugin.call_footer(ctx, &args).await? {
         footer.push('\n');
+
         footer.push_str(r.as_str());
       }
     }
+
     if footer.is_empty() {
       return Ok(None);
     }
+
     Ok(Some(footer))
   }
 
@@ -52,12 +59,15 @@ impl PluginDriver {
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_intro_meta) {
       if let Some(r) = plugin.call_intro(ctx, &args).await? {
         intro.push('\n');
+
         intro.push_str(r.as_str());
       }
     }
+
     if intro.is_empty() {
       return Ok(None);
     }
+
     Ok(Some(intro))
   }
 
@@ -65,12 +75,15 @@ impl PluginDriver {
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_outro_meta) {
       if let Some(r) = plugin.call_outro(ctx, &args).await? {
         outro.push('\n');
+
         outro.push_str(r.as_str());
       }
     }
+
     if outro.is_empty() {
       return Ok(None);
     }
+
     Ok(Some(outro))
   }
 
@@ -79,15 +92,18 @@ impl PluginDriver {
     mut args: HookRenderChunkArgs<'_>,
   ) -> Result<(String, Vec<SourceMap>)> {
     let mut sourcemap_chain = vec![];
+
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_render_chunk_meta)
     {
       if let Some(r) = plugin.call_render_chunk(ctx, &args).await? {
         args.code = r.code;
+
         if let Some(map) = r.map {
           sourcemap_chain.push(map);
         }
       }
     }
+
     Ok((args.code, sourcemap_chain))
   }
 
@@ -96,6 +112,7 @@ impl PluginDriver {
     chunk: &RollupRenderedChunk,
   ) -> HookAugmentChunkHashReturn {
     let mut hash = None;
+
     for (_, plugin, ctx) in
       self.iter_plugin_with_context_by_order(&self.order_by_augment_chunk_hash_meta)
     {
@@ -103,6 +120,7 @@ impl PluginDriver {
         hash.get_or_insert_with(String::default).push_str(&plugin_hash);
       }
     }
+
     Ok(hash)
   }
 
@@ -111,6 +129,7 @@ impl PluginDriver {
     {
       plugin.call_render_error(ctx, args).await?;
     }
+
     Ok(())
   }
 
@@ -127,6 +146,7 @@ impl PluginDriver {
       plugin.call_generate_bundle(ctx, &mut args).await?;
       ctx.file_emitter.add_additional_files(bundle);
     }
+
     Ok(())
   }
 
@@ -142,6 +162,7 @@ impl PluginDriver {
       plugin.call_write_bundle(ctx, &mut args).await?;
       ctx.file_emitter.add_additional_files(bundle);
     }
+
     Ok(())
   }
 
@@ -150,6 +171,7 @@ impl PluginDriver {
     {
       plugin.call_close_bundle(ctx).await?;
     }
+
     Ok(())
   }
 }

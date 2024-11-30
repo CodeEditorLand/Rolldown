@@ -64,6 +64,7 @@ impl Plugin for DynamicImportVarsPlugin {
         fields.program.body.push(visitor.import_helper());
       }
     });
+
     Ok(args.ast)
   }
 }
@@ -83,6 +84,7 @@ impl<'ast> VisitMut<'ast> for DynamicImportVarsVisit<'ast> {
       if let Some(pattern) = pattern {
         let DynamicImportPattern { glob_params, user_pattern, raw_pattern: _ } =
           parse_pattern(pattern.as_str());
+
         self.need_helper = true;
         *expr = self.call_helper(
           import_expr.span,
@@ -112,6 +114,7 @@ impl<'ast> DynamicImportVarsVisit<'ast> {
     params: Option<DynamicImportRequest>,
   ) -> Expression<'ast> {
     let segments = pattern.split('/').count();
+
     self.ast_builder.expression_call(
       span,
       self
@@ -120,6 +123,7 @@ impl<'ast> DynamicImportVarsVisit<'ast> {
       NONE,
       {
         let mut items = self.ast_builder.vec();
+
         items.push(Argument::from(self.ast_builder.expression_parenthesized(
           SPAN,
           self.ast_builder.expression_call(
@@ -153,6 +157,7 @@ impl<'ast> DynamicImportVarsVisit<'ast> {
                         false,
                         false,
                       ));
+
                     if params.import {
                       items.push(self.ast_builder.object_property_kind_object_property(
                         SPAN,
@@ -164,6 +169,7 @@ impl<'ast> DynamicImportVarsVisit<'ast> {
                         false,
                       ));
                     }
+
                     items
                   },
                   None,
@@ -174,13 +180,16 @@ impl<'ast> DynamicImportVarsVisit<'ast> {
             false,
           ),
         )));
+
         items.push(Argument::from(expr));
+
         items.push(Argument::from(self.ast_builder.expression_numeric_literal(
           SPAN,
           segments as f64,
           segments.to_string(),
           NumberBase::Decimal,
         )));
+
         items
       },
       false,

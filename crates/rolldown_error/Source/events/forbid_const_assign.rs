@@ -24,9 +24,11 @@ impl BuildEvent for ForbidConstAssign {
   }
   fn on_diagnostic(&self, diagnostic: &mut Diagnostic, opts: &DiagnosticOptions) {
     let filename = opts.stabilize_path(&self.filename);
+
     diagnostic.title = format!("Unexpected re-assignment of const variable `{0}`", self.name);
 
     let file_id = diagnostic.add_file(filename, self.source.clone());
+
     diagnostic
       .add_label(
         &file_id,

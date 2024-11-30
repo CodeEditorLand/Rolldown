@@ -31,6 +31,7 @@ impl ParallelJsPlugin {
     worker_manager: Arc<WorkerManager>,
   ) -> Box<dyn Pluginable> {
     let plugins = plugins.into_iter().map(JsPlugin::new).collect::<Vec<_>>().into_boxed_slice();
+
     Box::new(Self { plugins, worker_manager })
   }
 
@@ -39,6 +40,7 @@ impl ParallelJsPlugin {
     worker_manager: Arc<WorkerManager>,
   ) -> Arc<dyn Pluginable> {
     let plugins = plugins.into_iter().map(JsPlugin::new).collect::<Vec<_>>().into_boxed_slice();
+
     Arc::new(Self { plugins, worker_manager })
   }
 
@@ -49,7 +51,9 @@ impl ParallelJsPlugin {
   #[cfg(not(target_family = "wasm"))]
   async fn run_single<'a, R, F: FnOnce(&'a JsPlugin) -> BoxFuture<R>>(&'a self, f: F) -> R {
     let permit = self.worker_manager.acquire().await;
+
     let plugin = &self.plugins[permit.worker_index() as usize];
+
     f(plugin).await
   }
 
@@ -59,11 +63,15 @@ impl ParallelJsPlugin {
     f: F,
   ) -> Result<Vec<R>, E> {
     let _permit = self.worker_manager.acquire_all().await;
+
     let results = future::join_all(self.plugins.iter().map(f)).await;
+
     let mut ok_list: Vec<R> = Vec::with_capacity(results.len());
+
     for result in results {
       ok_list.push(result?);
     }
+
     Ok(ok_list)
   }
 }
@@ -84,6 +92,7 @@ impl Plugin for ParallelJsPlugin {
     if self.first_plugin().build_start.is_some() {
       self.run_all(|plugin| plugin.call_build_start(ctx, args)).await?;
     }
+
     Ok(())
   }
 
@@ -131,6 +140,7 @@ impl Plugin for ParallelJsPlugin {
     if self.first_plugin().build_end.is_some() {
       self.run_all(|plugin| plugin.call_build_end(ctx, args)).await?;
     }
+
     Ok(())
   }
 

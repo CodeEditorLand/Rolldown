@@ -27,6 +27,7 @@ impl BuildEvent for AssignToImport {
     let filename = opts.stabilize_path(&*self.filename);
 
     let file_id = diagnostic.add_file(filename, self.source.clone());
+
     diagnostic.add_label(
       &file_id,
       self.span.start..self.span.end,

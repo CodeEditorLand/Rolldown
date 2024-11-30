@@ -147,6 +147,7 @@ pub async fn render_iife<'code>(
         }
       }
     }
+
     _ => {}
   }
 
@@ -164,6 +165,7 @@ pub async fn render_iife<'code>(
 
   if let Some(entry_id) = ctx.chunk.entry_module_idx() {
     let entry_meta = &ctx.link_output.metas[entry_id];
+
     match entry_meta.wrap_kind {
       WrapKind::Esm => {
         let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
@@ -173,6 +175,7 @@ pub async fn render_iife<'code>(
           ctx.chunk_idx,
           &ctx.chunk.canonical_names,
         );
+
         source_joiner.append_source(concat_string!(wrapper_ref_name, "();"));
       }
       WrapKind::Cjs => {
@@ -186,6 +189,7 @@ pub async fn render_iife<'code>(
         );
 
         // return require_xxx();
+
         source_joiner.append_source(concat_string!("return ", wrapper_ref_name, "();\n"));
       }
       WrapKind::None => {}
@@ -232,17 +236,21 @@ async fn render_iife_factory_arguments(
   let globals = &ctx.options.globals;
   for external in externals {
     let global = globals.call(external.name.as_str()).await;
+
     let target = match &global {
       Some(global_name) => legitimize_identifier_name(global_name).to_string(),
       None => {
         let target = legitimize_identifier_name(&external.name).to_string();
+
         warnings.push(
           BuildDiagnostic::missing_global_name(external.name.clone(), ArcStr::from(&target))
             .with_severity_warning(),
         );
+
         target
       }
     };
+
     factory_arguments.push(target);
   }
   factory_arguments.join(", ")

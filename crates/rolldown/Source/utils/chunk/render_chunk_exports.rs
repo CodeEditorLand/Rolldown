@@ -34,7 +34,9 @@ pub fn render_chunk_exports(
           let canonical_name = &chunk.canonical_names[&canonical_ref];
           if let Some(ns_alias) = &symbol.namespace_alias {
             let canonical_ns_name = &chunk.canonical_names[&ns_alias.namespace_ref];
+
             let property_name = &ns_alias.property_name;
+
             s.push_str(&concat_string!(
               "var ",
               canonical_name,
@@ -58,6 +60,7 @@ pub fn render_chunk_exports(
       s.push_str(&concat_string!("export { ", rendered_items.join(", "), " };"));
       Some(s)
     }
+
     OutputFormat::Cjs | OutputFormat::Iife | OutputFormat::Umd => {
       let mut s = String::new();
       match chunk.kind {
@@ -69,8 +72,11 @@ pub fn render_chunk_exports(
               .into_iter()
               .map(|(exported_name, export_ref)| {
                 let canonical_ref = link_output.symbol_db.canonical_ref_for(export_ref);
+
                 let symbol = link_output.symbol_db.get(canonical_ref);
+
                 let mut canonical_name = Cow::Borrowed(&chunk.canonical_names[&canonical_ref]);
+
                 let exported_value = if let Some(ns_alias) = &symbol.namespace_alias {
                   let canonical_ns_name = &chunk.canonical_names[&ns_alias.namespace_ref];
                   let property_name = &ns_alias.property_name;
@@ -87,6 +93,7 @@ pub fn render_chunk_exports(
                   if is_this_symbol_point_to_other_chunk {
                     let require_binding = &ctx.chunk.require_binding_names_for_other_chunks
                       [&canonical_ref_owner_chunk_idx];
+
                     canonical_name = Cow::Owned(Rstr::new(&concat_string!(
                       require_binding,
                       ".",
@@ -136,6 +143,7 @@ pub fn render_chunk_exports(
                 }
               })
               .collect::<Vec<_>>();
+
             s.push_str(&rendered_items.join("\n"));
           }
 
@@ -149,6 +157,7 @@ pub fn render_chunk_exports(
           let external = &ctx.link_output.module_table.modules[*idx].as_external().expect("Should be external module here");
           let binding_ref_name =
           &ctx.chunk.canonical_names[&external.namespace_ref];
+
             let import_stmt =
 "Object.keys($NAME).forEach(function (k) {
   if (k !== 'default' && !Object.prototype.hasOwnProperty.call(exports, k)) Object.defineProperty(exports, k, {
@@ -161,10 +170,13 @@ pub fn render_chunk_exports(
           s.push_str(&import_stmt);
         });
         }
+
         ChunkKind::Common => {
           export_items.into_iter().for_each(|(exported_name, export_ref)| {
             let canonical_ref = link_output.symbol_db.canonical_ref_for(export_ref);
+
             let symbol = link_output.symbol_db.get(canonical_ref);
+
             let canonical_name = &chunk.canonical_names[&canonical_ref];
 
             if let Some(ns_alias) = &symbol.namespace_alias {
@@ -206,6 +218,7 @@ pub fn render_chunk_exports(
       }
       Some(s)
     }
+
     OutputFormat::App => None,
   }
 }
@@ -223,6 +236,7 @@ pub fn get_export_items(chunk: &Chunk, graph: &LinkStageOutput) -> Vec<(Rstr, Sy
         .map(|(name, export)| (name.clone(), export.symbol_ref))
         .collect::<Vec<_>>()
     }
+
     ChunkKind::Common => {
       let mut tmp = chunk
         .exports_to_other_chunks

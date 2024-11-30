@@ -224,6 +224,7 @@ impl BuildDiagnostic {
           error.message.to_string(),
           error.labels.take().unwrap_or_default(),
         );
+
         if matches!(severity, Severity::Warning) {
           diagnostic.with_severity_warning()
         } else {
@@ -249,7 +250,9 @@ impl BuildDiagnostic {
   #[cfg(feature = "napi")]
   pub fn napi_error(err: napi::Error) -> Self {
     let mut diagnostic = Self::new_inner(NapiError {});
+
     diagnostic.napi_error = Some(err);
+
     diagnostic
   }
 
@@ -280,7 +283,9 @@ impl BuildDiagnostic {
   ) -> Self {
     // `serde_json` Error is one-based https://docs.rs/serde_json/1.0.132/serde_json/struct.Error.html#method.column
     let start_offset = line_column_to_byte_offset(source.as_str(), line - 1, column - 1);
+
     let span = Span::new(start_offset as u32, start_offset as u32);
+
     Self::new_inner(JsonParse { filename, source, span, message })
   }
 

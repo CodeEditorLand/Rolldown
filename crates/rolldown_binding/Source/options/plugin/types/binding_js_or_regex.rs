@@ -32,7 +32,9 @@ impl FromNapiValue for JsRegExp {
     let js_object = unsafe { JsObject::from_raw_unchecked(env, napi_val) };
 
     let env = Env::from(env);
+
     let global = env.get_global()?;
+
     let regexp_constructor = global.get_named_property::<Function<JsUnknown, ()>>("RegExp")?;
 
     if js_object.instanceof(regexp_constructor)? {
@@ -91,9 +93,11 @@ impl TryFrom<BindingStringOrRegex> for StringOrRegex {
       Either::A(inner) => StringOrRegex::String(inner),
       Either::B(inner) => {
         let reg = HybridRegex::with_flags(&inner.source, &inner.flags)?;
+
         StringOrRegex::Regex(reg)
       }
     };
+
     Ok(ret)
   }
 }

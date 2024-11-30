@@ -50,12 +50,15 @@ impl FileEmitter {
     }
 
     let reference_id = self.assign_reference_id(file.file_name.clone());
+
     if file.file_name.is_none() {
       self.source_hash_to_reference_id.insert(hash.clone(), reference_id.clone());
     }
 
     self.generate_file_name(&mut file, &hash);
+
     self.files.insert(reference_id.clone(), file);
+
     reference_id
   }
 
@@ -64,6 +67,7 @@ impl FileEmitter {
       .files
       .get(reference_id)
       .ok_or(format!("Unable to get file name for unknown file: {reference_id}"))?;
+
     file.file_name.clone().ok_or(format!("{reference_id} should have file name"))
   }
 
@@ -107,7 +111,9 @@ impl FileEmitter {
       // deconflict file name
       if let Some(count) = self.names.get_mut(file_name.as_str()).as_deref_mut() {
         *count += 1;
+
         let extension = extension.map(|e| format!(".{e}")).unwrap_or_default();
+
         file_name = format!(
           "{}{count}{extension}",
           &file_name.to_string()[..file_name.len() - extension.len()],
@@ -139,9 +145,13 @@ impl FileEmitter {
 
   pub fn clear(&self) {
     self.files.clear();
+
     self.names.clear();
+
     self.source_hash_to_reference_id.clear();
+
     self.base_reference_id.store(0, Ordering::Relaxed);
+
     self.emitted_files.clear();
   }
 }

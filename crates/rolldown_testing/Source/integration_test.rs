@@ -107,6 +107,7 @@ impl IntegrationTest {
           self.test_meta.expect_error,
           "Expected the bundling to be success, but got diagnosable errors: {errs:#?}"
         );
+
         self.snapshot_bundle_output(BundleOutput::default(), errs.into_vec(), &cwd);
       }
     }
@@ -118,6 +119,7 @@ impl IntegrationTest {
     test_folder_path: &Path,
   ) {
     let mut snapshot_outputs = vec![];
+
     for mut named_options in multiple_options {
       self.apply_test_defaults(&mut named_options.options);
 
@@ -129,11 +131,13 @@ impl IntegrationTest {
 
       let bundle_output = if self.test_meta.write_to_disk {
         let abs_output_dir = cwd.join(&bundler.options().dir);
+
         if abs_output_dir.is_dir() {
           std::fs::remove_dir_all(&abs_output_dir)
             .context(format!("{abs_output_dir:?}"))
             .expect("Failed to clean the output directory");
         }
+
         bundler.write().await
       } else {
         bundler.generate().await
@@ -141,6 +145,7 @@ impl IntegrationTest {
 
       if !debug_title.is_empty() {
         snapshot_outputs.push("\n---\n\n".to_string());
+
         snapshot_outputs.push(format!("Variant: {debug_title}\n\n"));
       }
 
@@ -163,6 +168,7 @@ impl IntegrationTest {
             Self::execute_output_assets(&bundler, &debug_title);
           }
         }
+
         Err(errs) => {
           assert!(
             self.test_meta.expect_error,
@@ -177,10 +183,15 @@ impl IntegrationTest {
 
     // Configure insta to use the fixture path as the snapshot path
     let mut settings = insta::Settings::clone_current();
+
     settings.set_snapshot_path(test_folder_path);
+
     settings.set_prepend_module_to_snapshot(false);
+
     settings.remove_input_file();
+
     settings.set_omit_expression(true);
+
     settings.bind(|| {
       insta::assert_snapshot!("artifacts", snapshot_outputs.concat());
     });
@@ -224,6 +235,7 @@ impl IntegrationTest {
         panic!("`visualizeSourcemap` is only supported with `sourcemap: 'file'`")
       }
     }
+
     if options.sourcemap.is_none() && self.test_meta.visualize_sourcemap {
       options.sourcemap = Some(SourceMapType::File);
     }
@@ -238,6 +250,7 @@ impl IntegrationTest {
     cwd: &Path,
   ) -> String {
     let mut errors = errs;
+
     let errors_section = if !errors.is_empty() {
       let mut snapshot = String::new();
       snapshot.push_str("# Errors\n\n");
@@ -266,6 +279,7 @@ impl IntegrationTest {
     };
 
     let warnings = bundle_output.warnings;
+
     let warnings_section = if !warnings.is_empty() {
       let mut snapshot = String::new();
       snapshot.push_str("# warnings\n\n");
@@ -326,6 +340,7 @@ impl IntegrationTest {
                 "```".into(),
               ])
             }
+
             Output::Asset(output_asset) => {
               if file_ext == "map" {
                 // Skip sourcemap for now
@@ -407,6 +422,7 @@ impl IntegrationTest {
     } else {
       String::new()
     };
+
     let snapshot = [
       errors_section,
       warnings_section,
@@ -417,6 +433,7 @@ impl IntegrationTest {
     .join("\n")
     .trim()
     .to_owned();
+
     snapshot
   }
 
@@ -429,10 +446,15 @@ impl IntegrationTest {
     let content = self.render_bundle_output_to_string(bundle_output, errs, cwd);
     // Configure insta to use the fixture path as the snapshot path
     let mut settings = insta::Settings::clone_current();
+
     settings.set_snapshot_path(cwd);
+
     settings.set_prepend_module_to_snapshot(false);
+
     settings.remove_input_file();
+
     settings.set_omit_expression(true);
+
     settings.bind(|| {
       insta::assert_snapshot!("artifacts", content);
     });
@@ -440,6 +462,7 @@ impl IntegrationTest {
 
   fn execute_output_assets(bundler: &Bundler, test_title: &str) {
     let cwd = bundler.options().cwd.clone();
+
     let dist_folder = cwd.join(&bundler.options().dir);
 
     let is_expect_executed_under_esm = matches!(bundler.options().format, OutputFormat::Esm)
@@ -485,13 +508,16 @@ impl IntegrationTest {
 
       compiled_entries.iter().for_each(|entry| {
         node_command.arg("--import");
+
         if cfg!(target_os = "windows") {
           // Only URLs with a scheme in: file, data, and node are supported by the default ESM loader. On Windows, absolute paths must be valid file:// URLs.
           node_command.arg(format!("file://{}", entry.to_str().expect("should be valid utf8")));
         } else {
           node_command.arg(entry);
         }
+
         node_command.arg("--eval");
+
         node_command.arg("\"\"");
       });
     }

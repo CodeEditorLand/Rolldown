@@ -27,11 +27,14 @@ pub fn derive_benchmark_items(
 
   if derive_options.sourcemap {
     let create_bundler_options = create_bundler_options.clone();
+
     ret.push(BenchItem {
       name: format!("{}-sourcemap", name),
       options: Box::new(move || {
         let mut options = create_bundler_options();
+
         options.sourcemap = Some(rolldown::SourceMapType::File);
+
         options
       }),
     });
@@ -39,11 +42,14 @@ pub fn derive_benchmark_items(
 
   if derive_options.minify {
     let create_bundler_options = create_bundler_options.clone();
+
     ret.push(BenchItem {
       name: format!("{}-minify", name),
       options: Box::new(move || {
         let mut options = create_bundler_options();
+
         options.minify = Some(true);
+
         options
       }),
     });
@@ -54,8 +60,11 @@ pub fn derive_benchmark_items(
       name: format!("{}-minify-sourcemap", name),
       options: Box::new(move || {
         let mut options = create_bundler_options();
+
         options.sourcemap = Some(rolldown::SourceMapType::File);
+
         options.minify = Some(true);
+
         options
       }),
     });

@@ -30,8 +30,11 @@ pub fn create_css_view(
           Span::new(range.start, range.end),
           None,
         ));
+
         record_idx_to_span.push(Span::new(range.start, range.end));
+
         let mut range_end = range.end as usize;
+
         if source.is_char_boundary(range_end) {
           if source[range_end..].starts_with("\r\n") {
             range_end += 2;
@@ -40,6 +43,7 @@ pub fn create_css_view(
             range_end += 1;
           }
         }
+
         css_renderer.at_import_ranges.push((range.start as usize, range_end));
       }
       css_module_lexer::Dependency::Url { request, range, kind } => {
@@ -51,6 +55,7 @@ pub fn create_css_view(
         } else {
           Span::new(range.start + 4 /*length of `url(`*/, range.end - 1)
         };
+
         dependencies.push(RawImportRecord::new(
           request.into(),
           ImportKind::UrlImport,
@@ -58,6 +63,7 @@ pub fn create_css_view(
           span,
           None,
         ));
+
         record_idx_to_span.push(span);
       }
       _ => {}

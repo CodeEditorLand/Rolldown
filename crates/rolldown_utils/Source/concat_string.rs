@@ -47,6 +47,7 @@ macro_rules! concat_string {
     () => { String::with_capacity(0) };
     ($($s:expr),+) => {{
         use std::ops::AddAssign;
+
         let mut len = 0;
         $(len.add_assign(AsRef::<str>::as_ref(&$s).len());)+
         let mut buf = String::with_capacity(len);
@@ -60,18 +61,21 @@ mod tests {
   #[test]
   fn concat_string_0_args() {
     let s = concat_string!();
+
     assert_eq!(s, String::new());
   }
 
   #[test]
   fn concat_string_1_arg() {
     let s = concat_string!("foo");
+
     assert_eq!(s, String::from("foo"));
   }
 
   #[test]
   fn concat_string_str_string() {
     let s = concat_string!("foo", String::from("bar"));
+
     assert_eq!(s, String::from("foobar"));
   }
 }

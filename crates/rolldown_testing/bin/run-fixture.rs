@@ -12,6 +12,7 @@ fn main() {
   let mut path = PathBuf::from(arg);
   if !path.is_absolute() {
     let workspace_dir = workspace::root_dir();
+
     path = workspace_dir.join(path);
   }
   Fixture::new(path.parent().unwrap()).run_integration_test();

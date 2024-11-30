@@ -26,18 +26,21 @@ impl<'a> GenerateStage<'a> {
         self.link_output.entries.iter().filter(|entry| entry.kind.is_user_defined()).count();
       debug_assert!(user_defined_entry_count == 1, "IIFE/UMD format only supports one entry point");
     }
+
     let entries_len: u32 =
       self.link_output.entries.len().try_into().expect("Too many entries, u32 overflowed.");
     // If we are in test environment, to make the runtime module always fall into a standalone chunk,
     // we create a facade entry point for it.
 
     let mut chunk_graph = ChunkGraph::new(&self.link_output.module_table);
+
     chunk_graph.chunk_table.chunks.reserve(self.link_output.entries.len());
 
     let mut index_splitting_info: IndexSplittingInfo = oxc_index::index_vec![SplittingInfo {
         bits: BitSet::new(entries_len),
         share_count: 0
       }; self.link_output.module_table.modules.len()];
+
     let mut bits_to_chunk = FxHashMap::with_capacity(self.link_output.entries.len());
 
     let mut entry_module_to_entry_chunk: FxHashMap<ModuleIdx, ChunkIdx> =
@@ -102,8 +105,11 @@ impl<'a> GenerateStage<'a> {
         chunk_graph.add_module_to_chunk(normal_module.idx, chunk_id);
       } else {
         let chunk = Chunk::new(None, bits.clone(), vec![], ChunkKind::Common);
+
         let chunk_id = chunk_graph.add_chunk(chunk);
+
         chunk_graph.add_module_to_chunk(normal_module.idx, chunk_id);
+
         bits_to_chunk.insert(bits.clone(), chunk_id);
       }
     }
@@ -120,6 +126,7 @@ impl<'a> GenerateStage<'a> {
       .iter_mut()
       .sorted_by(|a, b| {
         let a_should_be_first = Ordering::Less;
+
         let b_should_be_first = Ordering::Greater;
 
         match (&a.kind, &b.kind) {
@@ -132,8 +139,10 @@ impl<'a> GenerateStage<'a> {
           (ChunkKind::EntryPoint { module: a_module_id, .. }, ChunkKind::Common) => {
             let a_module_exec_order =
               self.link_output.module_table.modules[*a_module_id].exec_order();
+
             let b_chunk_first_module_exec_order =
               self.link_output.module_table.modules[b.modules[0]].exec_order();
+
             if a_module_exec_order == b_chunk_first_module_exec_order {
               a_should_be_first
             } else {
@@ -143,8 +152,10 @@ impl<'a> GenerateStage<'a> {
           (ChunkKind::Common, ChunkKind::EntryPoint { module: b_module_id, .. }) => {
             let b_module_exec_order =
               self.link_output.module_table.modules[*b_module_id].exec_order();
+
             let a_chunk_first_module_exec_order =
               self.link_output.module_table.modules[a.modules[0]].exec_order();
+
             if a_chunk_first_module_exec_order == b_module_exec_order {
               b_should_be_first
             } else {
@@ -154,8 +165,10 @@ impl<'a> GenerateStage<'a> {
           (ChunkKind::Common, ChunkKind::Common) => {
             let a_chunk_first_module_exec_order =
               self.link_output.module_table.modules[a.modules[0]].exec_order();
+
             let b_chunk_first_module_exec_order =
               self.link_output.module_table.modules[b.modules[0]].exec_order();
+
             a_chunk_first_module_exec_order.cmp(&b_chunk_first_module_exec_order)
           }
         }
@@ -175,6 +188,7 @@ impl<'a> GenerateStage<'a> {
       .iter_enumerated()
       .sorted_unstable_by(|(index_a, a), (index_b, b)| {
         let a_should_be_first = Ordering::Less;
+
         let b_should_be_first = Ordering::Greater;
 
         match (&a.kind, &b.kind) {
@@ -210,6 +224,7 @@ impl<'a> GenerateStage<'a> {
       .collect::<Vec<_>>();
 
     chunk_graph.sorted_chunk_idx_vec = sorted_chunk_idx_vec;
+
     chunk_graph.entry_module_to_entry_chunk = entry_module_to_entry_chunk;
 
     Ok(chunk_graph)
@@ -224,6 +239,7 @@ impl<'a> GenerateStage<'a> {
     let Module::Normal(module) = &self.link_output.module_table.modules[module_id] else {
       return;
     };
+
     let meta = &self.link_output.metas[module_id];
 
     if !module.meta.is_included() {
@@ -235,6 +251,7 @@ impl<'a> GenerateStage<'a> {
     }
 
     index_splitting_info[module_id].bits.set_bit(entry_index);
+
     index_splitting_info[module_id].share_count += 1;
 
     meta.dependencies.iter().copied().for_each(|dep_idx| {
@@ -329,6 +346,7 @@ impl<'a> GenerateStage<'a> {
     }
 
     let mut index_module_groups: IndexVec<ModuleGroupIdx, ModuleGroup> = IndexVec::new();
+
     let mut name_to_module_group: FxHashMap<ArcStr, ModuleGroupIdx> = FxHashMap::default();
 
     for normal_module in self.link_output.module_table.modules.iter().filter_map(Module::as_normal)
@@ -383,8 +401,11 @@ impl<'a> GenerateStage<'a> {
     }
 
     let mut module_groups = index_module_groups.raw;
+
     module_groups.sort_unstable_by_key(|item| item.match_group_index);
+
     module_groups.sort_by_key(|item| Reverse(item.priority));
+
     module_groups.reverse();
     // These two sort ensure higher priority group goes first. If two groups have the same priority, the one with the lower index goes first.
 
@@ -418,8 +439,11 @@ impl<'a> GenerateStage<'a> {
         module_groups.iter_mut().for_each(|group| {
           group.remove_module(module_idx, &self.link_output.module_table);
         });
+
         chunk_graph.chunk_table[chunk_idx].bits.union(&index_splitting_info[module_idx].bits);
+
         chunk_graph.add_module_to_chunk(module_idx, chunk_idx);
+
         module_to_assigned[module_idx] = true;
       });
     }

@@ -60,6 +60,7 @@ impl<'a> SideEffectDetector<'a> {
                 true
               }
             }
+
             _ => !is_primitive_literal(self.scope, key_expr),
           }
         }
@@ -70,9 +71,11 @@ impl<'a> SideEffectDetector<'a> {
   /// ref: https://github.com/evanw/esbuild/blob/360d47230813e67d0312ad754cad2b6ee09b151b/internal/js_ast/js_ast_helpers.go#L2298-L2393
   fn detect_side_effect_of_class(&mut self, cls: &ast::Class) -> bool {
     use oxc::ast::ast::ClassElement;
+
     if !cls.decorators.is_empty() {
       return true;
     }
+
     cls.body.body.iter().any(|elm| match elm {
       ClassElement::StaticBlock(static_block) => {
         static_block.body.iter().any(|stmt| self.detect_side_effect_of_stmt(stmt))
@@ -81,6 +84,7 @@ impl<'a> SideEffectDetector<'a> {
         if !def.decorators.is_empty() {
           return true;
         }
+
         if self.detect_side_effect_of_property_key(&def.key, def.computed) {
           return true;
         }
@@ -91,12 +95,14 @@ impl<'a> SideEffectDetector<'a> {
         if !def.decorators.is_empty() {
           return true;
         }
+
         if self.detect_side_effect_of_property_key(&def.key, def.computed) {
           return true;
         }
 
         let value_side_effect = def.r#static
           && def.value.as_ref().map_or(false, |init| self.detect_side_effect_of_expr(init));
+
         value_side_effect
       }
       ClassElement::AccessorProperty(def) => {
@@ -120,6 +126,7 @@ impl<'a> SideEffectDetector<'a> {
     if !self.scope.is_unresolved(ref_id) {
       return true;
     }
+
     match chains.len() {
       2 => !is_side_effect_free_member_expr_of_len_two(&chains),
       3 => !is_side_effect_free_member_expr_of_len_three(&chains),
@@ -131,6 +138,7 @@ impl<'a> SideEffectDetector<'a> {
     let Some(pattern) = expr.as_assignment_target_pattern() else {
       return true;
     };
+
     match pattern {
       // {} = expr
       AssignmentTargetPattern::ArrayAssignmentTarget(array_pattern) => {
@@ -145,6 +153,7 @@ impl<'a> SideEffectDetector<'a> {
 
   fn detect_side_effect_of_call_expr(&mut self, expr: &CallExpression) -> bool {
     let is_pure = !self.ignore_annotations && self.is_pure_function_or_constructor_call(expr.span);
+
     if is_pure {
       expr.arguments.iter().any(|arg| match arg {
         Argument::SpreadElement(_) => true,
@@ -172,9 +181,11 @@ impl<'a> SideEffectDetector<'a> {
         obj_expr.properties.iter().any(|obj_prop| match obj_prop {
           ast::ObjectPropertyKind::ObjectProperty(prop) => {
             let key_side_effect = self.detect_side_effect_of_property_key(&prop.key, prop.computed);
+
             if key_side_effect {
               return true;
             }
+
             self.detect_side_effect_of_expr(&prop.value)
           }
           ast::ObjectPropertyKind::SpreadProperty(_) => {
@@ -189,6 +200,7 @@ impl<'a> SideEffectDetector<'a> {
         ast::UnaryOperator::Typeof if matches!(unary_expr.argument, Expression::Identifier(_)) => {
           false
         }
+
         _ => self.detect_side_effect_of_expr(&unary_expr.argument),
       },
       oxc::ast::match_member_expression!(Expression) => {
@@ -216,6 +228,7 @@ impl<'a> SideEffectDetector<'a> {
             .unwrap_or_default()
               && self.detect_side_effect_of_expr(&logic_expr.right))
         }
+
         ast::LogicalOperator::And => {
           self.detect_side_effect_of_expr(&logic_expr.left)
             || (!is_side_effect_free_unbound_identifier_ref(
@@ -227,6 +240,7 @@ impl<'a> SideEffectDetector<'a> {
             .unwrap_or_default()
               && self.detect_side_effect_of_expr(&logic_expr.right))
         }
+
         ast::LogicalOperator::Coalesce => {
           self.detect_side_effect_of_expr(&logic_expr.left)
             || self.detect_side_effect_of_expr(&logic_expr.right)
@@ -281,6 +295,7 @@ impl<'a> SideEffectDetector<'a> {
                 || self.detect_side_effect_of_expr(&binary_expr.left)
                 || self.detect_side_effect_of_expr(&binary_expr.right)
             }
+
             _ => true,
           }
         }
@@ -312,6 +327,7 @@ impl<'a> SideEffectDetector<'a> {
         ChainElement::TSNonNullExpression(expr) => {
           self.detect_side_effect_of_expr(&expr.expression)
         }
+
         match_member_expression!(ChainElement) => {
           self.detect_side_effect_of_member_expr(expr.expression.to_member_expression())
         }
@@ -332,6 +348,7 @@ impl<'a> SideEffectDetector<'a> {
       Expression::NewExpression(expr) => {
         let is_pure = maybe_side_effect_free_global_constructor(self.scope, expr)
           || self.is_pure_function_or_constructor_call(expr.span);
+
         if is_pure {
           expr.arguments.iter().any(|arg| match arg {
             Argument::SpreadElement(_) => true,
@@ -377,6 +394,7 @@ impl<'a> SideEffectDetector<'a> {
             }
           }
         }
+
         match &declarator.id.kind {
           // Destructuring the initializer has no side effects if the
           // initializer is an array, since we assume the iterator is then
@@ -390,12 +408,14 @@ impl<'a> SideEffectDetector<'a> {
                 {
                   continue;
                 }
+
                 None => continue,
                 _ => {
                   return true;
                 }
               }
             }
+
             declarator.init.as_ref().is_some_and(|init| self.detect_side_effect_of_expr(init))
           }
           BindingPatternKind::BindingIdentifier(_) | BindingPatternKind::AssignmentPattern(_) => {
@@ -408,6 +428,7 @@ impl<'a> SideEffectDetector<'a> {
 
   fn detect_side_effect_of_decl(&mut self, decl: &ast::Declaration) -> bool {
     use oxc::ast::ast::Declaration;
+
     match decl {
       Declaration::VariableDeclaration(var_decl) => self.detect_side_effect_of_var_decl(var_decl),
       Declaration::FunctionDeclaration(_) => false,
@@ -443,6 +464,7 @@ impl<'a> SideEffectDetector<'a> {
   #[allow(clippy::too_many_lines)]
   pub fn detect_side_effect_of_stmt(&mut self, stmt: &ast::Statement) -> bool {
     use oxc::ast::ast::Statement;
+
     match stmt {
       oxc::ast::match_declaration!(Statement) => {
         self.detect_side_effect_of_decl(stmt.to_declaration())
@@ -455,21 +477,25 @@ impl<'a> SideEffectDetector<'a> {
           // In that case, we will mark the statement as having side effect in link stage.
           false
         }
+
         ast::ModuleDeclaration::ExportDefaultDeclaration(default_decl) => {
           use oxc::ast::ast::ExportDefaultDeclarationKind;
           match &default_decl.declaration {
             decl @ oxc::ast::match_expression!(ExportDefaultDeclarationKind) => {
               self.detect_side_effect_of_expr(decl.to_expression())
             }
+
             ast::ExportDefaultDeclarationKind::FunctionDeclaration(_) => false,
             ast::ExportDefaultDeclarationKind::ClassDeclaration(decl) => {
               self.detect_side_effect_of_class(decl)
             }
+
             ast::ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
               unreachable!("ts should be transpiled")
             }
           }
         }
+
         ast::ModuleDeclaration::ExportNamedDeclaration(named_decl) => {
           if named_decl.source.is_some() {
             // `export { ... } from '...'` is considered as side effect.
@@ -481,6 +507,7 @@ impl<'a> SideEffectDetector<'a> {
               .map_or(false, |decl| self.detect_side_effect_of_decl(decl))
           }
         }
+
         ast::ModuleDeclaration::TSExportAssignment(_)
         | ast::ModuleDeclaration::TSNamespaceExportDeclaration(_) => {
           unreachable!("ts should be transpiled")
@@ -553,7 +580,9 @@ mod test {
 
   fn get_statements_side_effect(code: &str) -> bool {
     let source_type = SourceType::tsx();
+
     let ast = EcmaCompiler::parse("<Noop>", code, source_type).unwrap();
+
     let ast_scope = {
       let semantic = EcmaAst::make_semantic(ast.program());
       let (mut symbol_table, scope) = semantic.into_symbol_table_and_scope_tree();
@@ -575,7 +604,9 @@ mod test {
   #[test]
   fn test_side_effect() {
     assert!(!get_statements_side_effect("export { a }"));
+
     assert!(!get_statements_side_effect("const a = {}"));
+
     assert!(!get_statements_side_effect(
       "const PatchFlags = {
         'TEXT':1,
@@ -613,54 +644,68 @@ mod test {
   #[test]
   fn test_template_literal() {
     assert!(!get_statements_side_effect("`hello`"));
+
     assert!(get_statements_side_effect("const foo = ''; `hello${foo}`"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("`hello${foo}`"));
+
     assert!(get_statements_side_effect("const foo = {}; `hello${foo.bar}`"));
+
     assert!(get_statements_side_effect("tag`hello`"));
   }
 
   #[test]
   fn test_logical_expression() {
     assert!(!get_statements_side_effect("true && false"));
+
     assert!(!get_statements_side_effect("null ?? true"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("true && bar"));
+
     assert!(get_statements_side_effect("foo ?? true"));
   }
 
   #[test]
   fn test_parenthesized_expression() {
     assert!(!get_statements_side_effect("(true)"));
+
     assert!(!get_statements_side_effect("(null)"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("(bar)"));
+
     assert!(get_statements_side_effect("(foo)"));
   }
 
   #[test]
   fn test_sequence_expression() {
     assert!(!get_statements_side_effect("true, false"));
+
     assert!(!get_statements_side_effect("null, true"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("true, bar"));
+
     assert!(get_statements_side_effect("foo, true"));
   }
 
   #[test]
   fn test_conditional_expression() {
     assert!(!get_statements_side_effect("true ? false : true"));
+
     assert!(!get_statements_side_effect("null ? true : false"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("true ? bar : true"));
+
     assert!(get_statements_side_effect("foo ? true : false"));
+
     assert!(get_statements_side_effect("true ? bar : true"));
   }
 
   #[test]
   fn test_block_statement() {
     assert!(!get_statements_side_effect("{ }"));
+
     assert!(!get_statements_side_effect("{ const a = 1; }"));
+
     assert!(!get_statements_side_effect("{ const a = 1; const b = 2; }"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("{ const a = 1; bar; }"));
@@ -669,36 +714,46 @@ mod test {
   #[test]
   fn test_do_while_statement() {
     assert!(!get_statements_side_effect("do { } while (true)"));
+
     assert!(!get_statements_side_effect("do { const a = 1; } while (true)"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("do { const a = 1; } while (bar)"));
+
     assert!(get_statements_side_effect("do { const a = 1; bar; } while (true)"));
+
     assert!(get_statements_side_effect("do { bar; } while (true)"));
   }
 
   #[test]
   fn test_while_statement() {
     assert!(!get_statements_side_effect("while (true) { }"));
+
     assert!(!get_statements_side_effect("while (true) { const a = 1; }"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("while (bar) { const a = 1; }"));
+
     assert!(get_statements_side_effect("while (true) { const a = 1; bar; }"));
+
     assert!(get_statements_side_effect("while (true) { bar; }"));
   }
 
   #[test]
   fn test_if_statement() {
     assert!(!get_statements_side_effect("if (true) { }"));
+
     assert!(!get_statements_side_effect("if (true) { const a = 1; }"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("if (bar) { const a = 1; }"));
+
     assert!(get_statements_side_effect("if (true) { const a = 1; bar; }"));
+
     assert!(get_statements_side_effect("if (true) { bar; }"));
   }
 
   #[test]
   fn test_empty_statement() {
     assert!(!get_statements_side_effect(";"));
+
     assert!(!get_statements_side_effect(";;"));
   }
 
@@ -715,6 +770,7 @@ mod test {
   #[test]
   fn test_return_statement() {
     assert!(!get_statements_side_effect("return;"));
+
     assert!(!get_statements_side_effect("return 1;"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("return bar;"));
@@ -723,44 +779,65 @@ mod test {
   #[test]
   fn test_labeled_statement() {
     assert!(!get_statements_side_effect("label: { }"));
+
     assert!(!get_statements_side_effect("label: { const a = 1; }"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("label: { const a = 1; bar; }"));
+
     assert!(get_statements_side_effect("label: { bar; }"));
   }
 
   #[test]
   fn test_try_statement() {
     assert!(!get_statements_side_effect("try { } catch (e) { }"));
+
     assert!(!get_statements_side_effect("try { const a = 1; } catch (e) { }"));
+
     assert!(!get_statements_side_effect("try { } catch (e) { const a = 1; }"));
+
     assert!(!get_statements_side_effect("try { const a = 1; } catch (e) { const a = 1; }"));
+
     assert!(!get_statements_side_effect("try { const a = 1; } finally { }"));
+
     assert!(!get_statements_side_effect("try { } catch (e) { const a = 1; } finally { }"));
+
     assert!(!get_statements_side_effect("try { } catch (e) { } finally { const a = 1; }"));
+
     assert!(!get_statements_side_effect(
       "try { const a = 1; } catch (e) { const a = 1; } finally { const a = 1; }"
     ));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("try { const a = 1; bar; } catch (e) { }"));
+
     assert!(get_statements_side_effect("try { } catch (e) { const a = 1; bar; }"));
+
     assert!(get_statements_side_effect("try { } catch (e) { bar; }"));
+
     assert!(get_statements_side_effect("try { const a = 1; } catch (e) { bar; }"));
+
     assert!(get_statements_side_effect("try { bar; } finally { }"));
+
     assert!(get_statements_side_effect("try { } catch (e) { bar; } finally { }"));
+
     assert!(get_statements_side_effect("try { } catch (e) { } finally { bar; }"));
+
     assert!(get_statements_side_effect("try { bar; } catch (e) { bar; } finally { bar; }"));
   }
 
   #[test]
   fn test_switch_statement() {
     assert!(!get_statements_side_effect("switch (true) { }"));
+
     assert!(!get_statements_side_effect("switch (true) { case 1: break; }"));
+
     assert!(!get_statements_side_effect("switch (true) { case 1: break; default: break; }"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("switch (bar) { case 1: break; }"));
+
     assert!(get_statements_side_effect("switch (true) { case 1: bar; }"));
+
     assert!(get_statements_side_effect("switch (true) { case bar: break; }"));
+
     assert!(get_statements_side_effect("switch (true) { case 1: bar; default: bar; }"));
   }
 
@@ -768,86 +845,126 @@ mod test {
   fn test_binary_expression() {
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("1 + foo"));
+
     assert!(get_statements_side_effect("2 + bar"));
     // + will invoke valueOf, which may have side effect
     assert!(get_statements_side_effect("1 + 1"));
+
     assert!(get_statements_side_effect("const a = 1; const b = 2; a + b"));
   }
 
   #[test]
   fn test_private_in_expression() {
     assert!(!get_statements_side_effect("#privateField in this"));
+
     assert!(!get_statements_side_effect("const obj = {}; #privateField in obj"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("#privateField in bar"));
+
     assert!(get_statements_side_effect("#privateField in foo"));
   }
 
   #[test]
   fn test_this_expression() {
     assert!(!get_statements_side_effect("this"));
+
     assert!(get_statements_side_effect("this.a"));
+
     assert!(get_statements_side_effect("this.a + this.b"));
+
     assert!(get_statements_side_effect("this.a = 10"));
   }
 
   #[test]
   fn test_meta_property_expression() {
     assert!(!get_statements_side_effect("import.meta"));
+
     assert!(!get_statements_side_effect("const meta = import.meta"));
+
     assert!(get_statements_side_effect("import.meta.url"));
+
     assert!(get_statements_side_effect("const { url } = import.meta"));
+
     assert!(get_statements_side_effect("import.meta.url = 'test'"));
   }
 
   #[test]
   fn test_assignment_expression() {
     assert!(!get_statements_side_effect("let a; [] = a; ({} = a)"));
+
     assert!(get_statements_side_effect("let a; a = 1"));
+
     assert!(get_statements_side_effect("let a, b; a = b; a = b = 1"));
     // accessing global variable may have side effect
     assert!(get_statements_side_effect("b = 1"));
+
     assert!(get_statements_side_effect("[] = b"));
+
     assert!(get_statements_side_effect("let a; a = b"));
+
     assert!(get_statements_side_effect("let a; a.b = 1"));
+
     assert!(get_statements_side_effect("let a; a['b'] = 1"));
+
     assert!(get_statements_side_effect("let a; a = a.b"));
+
     assert!(get_statements_side_effect("let a, b; ({ a } = b)"));
+
     assert!(get_statements_side_effect("let a, b; ({ ...a } = b)"));
+
     assert!(get_statements_side_effect("let a, b; [ a ] = b"));
+
     assert!(get_statements_side_effect("let a, b; [ ...a ] = b"));
   }
 
   #[test]
   fn test_chain_expression() {
     assert!(!get_statements_side_effect("Object.create"));
+
     assert!(!get_statements_side_effect("Object?.create"));
+
     assert!(!get_statements_side_effect("let a; /*#__PURE__*/ a?.()"));
+
     assert!(get_statements_side_effect("let a; a?.b"));
+
     assert!(get_statements_side_effect("let a; a?.()"));
+
     assert!(get_statements_side_effect("let a; a?.[a]"));
   }
 
   #[test]
   fn test_other_statements() {
     assert!(get_statements_side_effect("debugger;"));
+
     assert!(get_statements_side_effect("for (const k in {}) { }"));
+
     assert!(get_statements_side_effect("let a; for (const v of []) { a++ }"));
+
     assert!(get_statements_side_effect("for (;;) { }"));
+
     assert!(get_statements_side_effect("throw 1;"));
+
     assert!(get_statements_side_effect("with(a) { }"));
+
     assert!(get_statements_side_effect("await 1"));
+
     assert!(get_statements_side_effect("import('foo')"));
+
     assert!(get_statements_side_effect("let a; a``"));
+
     assert!(get_statements_side_effect("let a; a++"));
   }
 
   #[test]
   fn test_new_expr() {
     assert!(!get_statements_side_effect("new Map()"));
+
     assert!(!get_statements_side_effect("new Set()"));
+
     assert!(!get_statements_side_effect("new Map([[1, 2], [3, 4]]);"));
+
     assert!(get_statements_side_effect("new Regex()"));
+
     assert!(!get_statements_side_effect(
       "new Date(); new Date(''); new Date(null); new Date(false); new Date(undefined)"
     ));
@@ -856,27 +973,41 @@ mod test {
   #[test]
   fn test_side_effects_free_global_variable_ref() {
     assert!(!get_statements_side_effect("let a = undefined"));
+
     assert!(!get_statements_side_effect("let a = NaN"));
+
     assert!(!get_statements_side_effect("let a = String"));
+
     assert!(!get_statements_side_effect("let a = Object.assign"));
+
     assert!(!get_statements_side_effect("let a = Object.prototype.propertyIsEnumerable"));
+
     assert!(!get_statements_side_effect("let a = Symbol.asyncDispose"));
+
     assert!(!get_statements_side_effect("let a = Math.E"));
+
     assert!(!get_statements_side_effect("let a = Reflect.apply"));
+
     assert!(!get_statements_side_effect("let a = JSON.stringify"));
+
     assert!(!get_statements_side_effect("let a = Proxy"));
 
     // should have side effects other global member expr access
     assert!(get_statements_side_effect("let a = Object.test"));
+
     assert!(get_statements_side_effect("let a = Object.prototype.two"));
+
     assert!(get_statements_side_effect("let a = Reflect.something"));
   }
 
   #[test]
   fn test_object_expression() {
     assert!(!get_statements_side_effect("const of = { [1]: 'hi'}"));
+
     assert!(!get_statements_side_effect("const of = { [-1]: 'hi'}"));
+
     assert!(!get_statements_side_effect("const of = { [+1]: 'hi'}"));
+
     assert!(get_statements_side_effect("const of = { [{}]: 'hi'}"));
   }
 }

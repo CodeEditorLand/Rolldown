@@ -36,11 +36,13 @@ impl Plugin for DataUrlPlugin {
         let Some(parsed) = parse_data_url(args.specifier) else {
           return Ok(None);
         };
+
         let decoded_data = if parsed.is_base64 {
           String::from_utf8(base64_simd::STANDARD.decode_to_vec(parsed.data)?)?
         } else {
           urlencoding::decode(parsed.data)?.into_owned()
         };
+
         let module_type = match parsed.mime {
           "text/javascript" => ModuleType::Js,
           "application/json" => ModuleType::Json,

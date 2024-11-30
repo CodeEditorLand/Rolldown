@@ -40,10 +40,13 @@ impl<'a> SideEffectDetector<'a> {
     // If there are non-whitespace characters between the `comment` and the `span`,
     // we treat the `comment` not belongs to the `span`.
     let leading_comment_span = Span::new(comment_span.end, span.start);
+
     if !leading_comment_span.is_valid(self.source) {
       return None;
     }
+
     let range_text = leading_comment_span.source_text(self.source);
+
     let only_whitespace = match comment.kind {
       CommentKind::Line => range_text.trim().is_empty(),
       CommentKind::Block => {
@@ -52,6 +55,7 @@ impl<'a> SideEffectDetector<'a> {
           .is_some_and(|s| s.trim().is_empty())
       }
     };
+
     if !only_whitespace {
       return None;
     }
@@ -100,6 +104,7 @@ pub(crate) fn known_primitive_type(scope: &AstScopes, expr: &Expression) -> Prim
     {
       PrimitiveType::Undefined
     }
+
     Expression::BooleanLiteral(_) => PrimitiveType::Boolean,
     Expression::NumericLiteral(_) => PrimitiveType::Number,
     Expression::StringLiteral(_) => PrimitiveType::String,
@@ -111,6 +116,7 @@ pub(crate) fn known_primitive_type(scope: &AstScopes, expr: &Expression) -> Prim
         PrimitiveType::Unknown
       }
     }
+
     Expression::UpdateExpression(e) => {
       match e.operator {
         UpdateOperator::Increment | UpdateOperator::Decrement => {
@@ -118,6 +124,7 @@ pub(crate) fn known_primitive_type(scope: &AstScopes, expr: &Expression) -> Prim
         }
       }
     }
+
     Expression::UnaryExpression(e) => match e.operator {
       UnaryOperator::Void => PrimitiveType::Undefined,
       UnaryOperator::Typeof => PrimitiveType::String,
@@ -125,12 +132,15 @@ pub(crate) fn known_primitive_type(scope: &AstScopes, expr: &Expression) -> Prim
       UnaryOperator::UnaryPlus => PrimitiveType::Number, // Cannot be bigint because that throws an exception
       UnaryOperator::UnaryNegation | UnaryOperator::BitwiseNot => {
         let value = known_primitive_type(scope, &e.argument);
+
         if value == PrimitiveType::BigInt {
           return PrimitiveType::BigInt;
         }
+
         if value != PrimitiveType::Unknown && value != PrimitiveType::Mixed {
           return PrimitiveType::Number;
         }
+
         PrimitiveType::Mixed // Can be number or bigint
       }
     },
@@ -140,10 +150,13 @@ pub(crate) fn known_primitive_type(scope: &AstScopes, expr: &Expression) -> Prim
       }
       LogicalOperator::Coalesce => {
         let left = known_primitive_type(scope, &e.left);
+
         let right = known_primitive_type(scope, &e.right);
+
         if left == PrimitiveType::Null || left == PrimitiveType::Undefined {
           return right;
         }
+
         if left != PrimitiveType::Unknown {
           if left != PrimitiveType::Mixed {
             return left; // Definitely not null or undefined
@@ -152,6 +165,7 @@ pub(crate) fn known_primitive_type(scope: &AstScopes, expr: &Expression) -> Prim
             return PrimitiveType::Mixed; // Definitely some kind of primitive
           }
         }
+
         PrimitiveType::Unknown
       }
     },
@@ -168,7 +182,9 @@ pub(crate) fn known_primitive_type(scope: &AstScopes, expr: &Expression) -> Prim
       | BinaryOperator::In => PrimitiveType::Boolean,
       BinaryOperator::Addition => {
         let left = known_primitive_type(scope, &e.left);
+
         let right = known_primitive_type(scope, &e.right);
+
         if left == PrimitiveType::String || right == PrimitiveType::String {
           PrimitiveType::String
         } else if left == PrimitiveType::BigInt && right == PrimitiveType::BigInt {
@@ -202,6 +218,7 @@ pub(crate) fn known_primitive_type(scope: &AstScopes, expr: &Expression) -> Prim
       oxc::syntax::operator::AssignmentOperator::Assign => known_primitive_type(scope, &e.right),
       oxc::syntax::operator::AssignmentOperator::Addition => {
         let right = known_primitive_type(scope, &e.right);
+
         if right == PrimitiveType::String {
           PrimitiveType::String
         } else {
@@ -247,11 +264,13 @@ pub fn is_primitive_literal(scope: &AstScopes, expr: &Expression) -> bool {
     {
       true
     }
+
     Expression::Identifier(id)
       if id.name == "undefined" && scope.is_unresolved(id.reference_id.get().unwrap()) =>
     {
       true
     }
+
     _ => false,
   }
 }
@@ -273,11 +292,13 @@ pub fn extract_member_expr_chain<'a>(
       let mut cur = &computed_expr.object;
       extract_rest_member_expr_chain(&mut cur, &mut chain, max_len).map(|ref_id| (ref_id, chain))
     }
+
     MemberExpression::StaticMemberExpression(static_expr) => {
       let mut cur = &static_expr.object;
       chain.push(static_expr.property.name.clone());
       extract_rest_member_expr_chain(&mut cur, &mut chain, max_len).map(|ref_id| (ref_id, chain))
     }
+
     MemberExpression::PrivateFieldExpression(_) => None,
   }
 }
@@ -291,19 +312,24 @@ fn extract_rest_member_expr_chain<'a>(
     match &cur {
       Expression::StaticMemberExpression(expr) => {
         *cur = &expr.object;
+
         chain.push(expr.property.name.clone());
       }
       Expression::ComputedMemberExpression(expr) => {
         let Expression::StringLiteral(ref str) = expr.expression else {
           break;
         };
+
         chain.push(str.value.clone());
         *cur = &expr.object;
       }
       Expression::Identifier(ident) => {
         chain.push(ident.name.clone());
+
         let ref_id = ident.reference_id.get().expect("should have reference_id");
+
         chain.reverse();
+
         return Some(ref_id);
       }
       _ => break,
@@ -354,11 +380,13 @@ pub fn is_side_effect_free_unbound_identifier_ref(
         )
       {
         let type_of_value = unary.argument.as_identifier()?;
+
         if type_of_value.name == ident.name {
           return Some(true);
         }
       }
     }
+
     BinaryOperator::LessThan
     | BinaryOperator::LessEqualThan
     | BinaryOperator::GreaterThan
@@ -366,6 +394,7 @@ pub fn is_side_effect_free_unbound_identifier_ref(
       let (mut ty_of, mut string) = (&bin_expr.left, &bin_expr.right);
       if matches!(ty_of, Expression::StringLiteral(_)) {
         std::mem::swap(&mut string, &mut ty_of);
+
         is_yes_branch = !is_yes_branch;
       }
 
@@ -383,11 +412,13 @@ pub fn is_side_effect_free_unbound_identifier_ref(
           == matches!(bin_expr.operator, BinaryOperator::LessThan | BinaryOperator::LessEqualThan)
       {
         let type_of_value = unary.argument.as_identifier()?;
+
         if type_of_value.name == ident.name {
           return Some(true);
         }
       }
     }
+
     _ => {}
   }
   Some(false)
@@ -415,10 +446,12 @@ pub fn maybe_side_effect_free_global_constructor(
             {
               return true
             }
+
             ast::Argument::ArrayExpression(arr) if arr.elements.is_empty() => return true,
             _ => {}
           }
         }
+
         _ => {}
       },
       "Date" => match expr.arguments.len() {
@@ -440,6 +473,7 @@ pub fn maybe_side_effect_free_global_constructor(
             }
           }
         }
+
         _ => {}
       },
       "Set" => match expr.arguments.len() {
@@ -453,9 +487,11 @@ pub fn maybe_side_effect_free_global_constructor(
             {
               return true
             }
+
             _ => {}
           }
         }
+
         _ => {}
       },
       "Map" => match expr.arguments.len() {
@@ -469,6 +505,7 @@ pub fn maybe_side_effect_free_global_constructor(
             {
               return true
             }
+
             ast::Argument::ArrayExpression(arr) => {
               let all_entries_are_arrays = arr.elements.iter().all(|item| {
                 item
@@ -479,9 +516,11 @@ pub fn maybe_side_effect_free_global_constructor(
                 return true;
               }
             }
+
             _ => {}
           }
         }
+
         _ => {}
       },
       _ => {}

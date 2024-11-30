@@ -23,13 +23,17 @@ impl<'text> MagicString<'text> {
     }
 
     self.split_at(start);
+
     self.split_at(end);
+
     self.split_at(to);
 
     let first_idx = self.chunk_by_start[&start];
+
     let last_idx = self.chunk_by_end[&end];
 
     let old_left_idx = self.chunks[first_idx].prev;
+
     let old_right_idx = self.chunks[last_idx].next;
 
     let new_right_idx = self.chunk_by_start.get(&to).copied();
@@ -50,6 +54,7 @@ impl<'text> MagicString<'text> {
     if let Some(old_left_idx) = old_left_idx {
       self.chunks[old_left_idx].next = old_right_idx;
     }
+
     if let Some(old_right_idx) = old_right_idx {
       self.chunks[old_right_idx].prev = old_left_idx;
     }
@@ -57,6 +62,7 @@ impl<'text> MagicString<'text> {
     if let Some(new_left_idx) = new_left_idx {
       self.chunks[new_left_idx].next = Some(first_idx);
     }
+
     if let Some(new_right_idx) = new_right_idx {
       self.chunks[new_right_idx].prev = Some(last_idx);
     }
@@ -65,6 +71,7 @@ impl<'text> MagicString<'text> {
       // If the `first_idx` is the first chunk, then we need to update the `first_chunk_idx`.
       self.first_chunk_idx = self.chunks[last_idx].next.unwrap();
     }
+
     if self.chunks[last_idx].next.is_none() {
       // If the `last_idx` is the last chunk, then we need to update the `last_chunk_idx`.
       self.last_chunk_idx = self.chunks[first_idx].prev.unwrap();
@@ -74,11 +81,13 @@ impl<'text> MagicString<'text> {
     if new_left_idx.is_none() {
       self.first_chunk_idx = first_idx;
     }
+
     if new_right_idx.is_none() {
       self.last_chunk_idx = last_idx;
     }
 
     self.chunks[first_idx].prev = new_left_idx;
+
     self.chunks[last_idx].next = new_right_idx;
 
     self

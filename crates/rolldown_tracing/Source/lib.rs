@@ -44,6 +44,7 @@ pub fn try_init_tracing() -> Option<FlushGuard> {
       // We gonna use this feature to implement something like https://github.com/antfu-collective/vite-plugin-inspect
       unimplemented!()
     }
+
     _ => {
       tracing_subscriber::registry()
         .with(env_filter)

@@ -30,6 +30,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     // IdentifierReference, but IdentifierReference did not saved the related `SymbolId`
     // Something wrong with semantic analyze
     let symbol_id = reference.symbol_id().expect("should have symbol id");
+
     let parent = self.visit_path.last()?;
     // if the property could be converted as a static property name, e.g.
     // a.b // static
@@ -39,6 +40,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       AstKind::MemberExpression(expr) => expr.static_property_name(),
       _ => None,
     };
+
     let rec_idx =
       *self.dynamic_import_usage_info.dynamic_import_binding_to_import_record_id.get(&symbol_id)?;
 
@@ -51,6 +53,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
         Some(name) => {
           vac.insert(DynamicImportExportsUsage::Single(name.into()));
         }
+
         None => {
           vac.insert(DynamicImportExportsUsage::Complete);
         }
@@ -65,6 +68,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     import_record_idx: ImportRecordIdx,
   ) -> Option<()> {
     let ancestor_len = self.visit_path.len();
+
     let init_set = match self.visit_path.last()? {
       AstKind::MemberExpression(member_expr) => self.init_dynamic_import_usage_with_member_expr(
         member_expr,
@@ -73,9 +77,11 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       ),
       AstKind::AwaitExpression(_) => {
         let parent_parent = self.visit_path.get(ancestor_len - 2)?;
+
         let AstKind::VariableDeclarator(var_decl) = parent_parent else {
           return None;
         };
+
         self.update_dynamic_import_usage_info_from_binding_pattern(&var_decl.id, import_record_idx)
       }
       _ => None,
@@ -95,6 +101,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
           .insert(import_record_idx, DynamicImportExportsUsage::Complete);
       }
     };
+
     None
   }
 
@@ -107,11 +114,15 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     let ast::MemberExpression::StaticMemberExpression(parent) = parent else {
       return None;
     };
+
     if parent.property.name != "then" {
       return None;
     }
+
     let parent_parent = self.visit_path.get(ancestor_len - 2)?.as_call_expression()?;
+
     let first_arg = parent_parent.arguments.first()?;
+
     let dynamic_import_binding = match first_arg {
       Argument::FunctionExpression(func) => func.params.items.first()?,
       Argument::ArrowFunctionExpression(func) => func.params.items.first()?,
@@ -142,6 +153,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       // only care about first level destructuring, if it is nested just assume it is used
       ast::BindingPatternKind::ObjectPattern(obj) => {
         let mut set = FxHashSet::default();
+
         for binding in &obj.properties {
           let binding_name = match &binding.key {
             // for complex key pattern, just return `None` to bailout
@@ -162,6 +174,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
             set.insert(binding_name.into());
           }
         }
+
         return Some(set);
       }
       ast::BindingPatternKind::ArrayPattern(_) | ast::BindingPatternKind::AssignmentPattern(_) => {
@@ -169,14 +182,17 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
         return None;
       }
     };
+
     self
       .dynamic_import_usage_info
       .dynamic_import_binding_to_import_record_id
       .insert(symbol_id, import_record_id);
+
     self
       .dynamic_import_usage_info
       .dynamic_import_binding_reference_id
       .extend(self.scopes.resolved_references[symbol_id].iter());
+
     Some(FxHashSet::default())
   }
 }

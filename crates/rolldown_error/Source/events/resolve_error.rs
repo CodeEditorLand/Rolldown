@@ -22,6 +22,7 @@ impl BuildEvent for DiagnosableResolveError {
       DiagnosableArcstr::String(str) => str.as_str(),
       DiagnosableArcstr::Span(span) => &self.source.as_str()[*span],
     };
+
     format!("Could not resolve {} in {}", importee, opts.stabilize_path(self.importer_id.as_str()))
   }
 
@@ -31,6 +32,7 @@ impl BuildEvent for DiagnosableResolveError {
     opts: &DiagnosticOptions,
   ) {
     let stable_id = opts.stabilize_path(self.importer_id.as_str());
+
     let importer_file = diagnostic.add_file(stable_id, self.source.clone());
 
     match self.importee {
@@ -39,6 +41,7 @@ impl BuildEvent for DiagnosableResolveError {
       }
       _ => {}
     };
+
     diagnostic.title = self.message(opts);
   }
 }

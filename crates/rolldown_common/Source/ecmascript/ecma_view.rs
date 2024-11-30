@@ -15,8 +15,11 @@ bitflags! {
     #[derive(Debug, Default)]
     pub struct EcmaViewMeta: u8 {
         const EVAL = 1;
+
         const INCLUDED = 1 << 1;
+
         const HAS_LAZY_EXPORT = 1 << 2;
+
         const HAS_STAR_EXPORT = 1 << 3;
     }
 }
@@ -115,7 +118,9 @@ bitflags! {
     #[derive(Debug, Clone, Copy)]
     pub struct EcmaModuleAstUsage: u8 {
         const ModuleRef = 1;
+
         const ExportsRef = 1 << 1;
+
         const ModuleOrExports = Self::ModuleRef.bits() | Self::ExportsRef.bits();
     }
 }

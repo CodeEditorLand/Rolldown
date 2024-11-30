@@ -38,6 +38,7 @@ pub fn generate_namespace_definition(
 
   for (i, part) in parts.iter().enumerate() {
     let property = render_property_access(part);
+
     namespace.push_str(&property);
 
     if i < parts.len() - 1 {
@@ -95,6 +96,7 @@ pub fn generate_identifier(
 
   if ctx.options.extend {
     let property = render_property_access(name.as_str());
+
     let final_expr = if matches!(export_mode, OutputExports::Named) {
       // In named exports, the `extend` option will make the assignment disappear and
       // the modification will be done extending the existed object (the `name` option).
@@ -119,6 +121,7 @@ pub fn generate_identifier(
   } else {
     // This behavior is aligned with Rollup. If using `output.extend: true`, this error won't be triggered.
     let name = ArcStr::from(name);
+
     Err(vec![BuildDiagnostic::illegal_identifier_as_name(name)].into())
   }
 }
@@ -142,17 +145,21 @@ mod tests {
   #[test]
   fn test_generate_namespace_definition() {
     let result = generate_namespace_definition("a.b.c", "this", ";\n");
+
     assert_eq!(result.0, "this.a = this.a || {};\nthis.a.b = this.a.b || {};\n");
+
     assert_eq!(result.1, "this.a.b.c");
   }
 
   #[test]
   fn test_reserved_identifier_as_name() {
     let result = generate_namespace_definition("1.2.3", "this", ";\n");
+
     assert_eq!(
       result.0,
       "this[\"1\"] = this[\"1\"] || {};\nthis[\"1\"][\"2\"] = this[\"1\"][\"2\"] || {};\n"
     );
+
     assert_eq!(result.1, "this[\"1\"][\"2\"][\"3\"]");
   }
 
@@ -160,7 +167,9 @@ mod tests {
   /// It is related a bug in rollup. Check it out in [rollup/rollup#5603](https://github.com/rollup/rollup/issues/5603).
   fn test_invalid_identifier_as_name() {
     let result = generate_namespace_definition("toString.valueOf.constructor", "this", ";\n");
+
     assert_eq!(result.0, "this.toString = this.toString || {};\nthis.toString.valueOf = this.toString.valueOf || {};\n");
+
     assert_eq!(result.1, "this.toString.valueOf.constructor");
   }
 }

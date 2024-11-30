@@ -85,6 +85,7 @@ impl BindingCallableBuiltinPlugin {
     event: BindingJsWatchChangeEvent,
   ) -> napi::Result<()> {
     self.inner.watch_change(&path, bindingify_watcher_change_kind(event.event)?).await?;
+
     Ok(())
   }
 }
@@ -98,7 +99,9 @@ pub struct BindingHookJsResolveIdOptions {
 impl From<BindingHookJsResolveIdOptions> for Arc<TypedDashMap> {
   fn from(value: BindingHookJsResolveIdOptions) -> Self {
     let map = TypedDashMap::default();
+
     map.insert(ResolveIdOptionsScan {}, value.scan.unwrap_or(false));
+
     Arc::new(map)
   }
 }

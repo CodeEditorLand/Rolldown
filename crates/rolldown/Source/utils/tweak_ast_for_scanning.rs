@@ -31,13 +31,17 @@ impl<'ast, 'a: 'ast> VisitMut<'ast> for PreProcessor<'a, 'ast> {
       let is_use_strict = directive.is_use_strict();
       if is_use_strict {
         self.contains_use_strict = true;
+
         false
       } else {
         true
       }
     });
+
     let original_body = program.body.take_in(self.snippet.alloc());
+
     program.body.reserve_exact(original_body.len());
+
     self.none_hosted_stmts = Vec::with_capacity(
       original_body.iter().filter(|stmt| !stmt.is_module_declaration_with_source()).count(),
     );
@@ -53,12 +57,15 @@ impl<'ast, 'a: 'ast> VisitMut<'ast> for PreProcessor<'a, 'ast> {
         }
       }
     }
+
     program.body.extend(std::mem::take(&mut self.none_hosted_stmts));
   }
 
   fn visit_export_named_declaration(&mut self, named_decl: &mut ast::ExportNamedDeclaration<'ast>) {
     walk_mut::walk_export_named_declaration(self, named_decl);
+
     let named_decl_export_kind = named_decl.export_kind;
+
     let named_decl_span = named_decl.span;
 
     let Some(Declaration::VariableDeclaration(ref mut var_decl)) = named_decl.declaration else {
@@ -108,6 +115,7 @@ impl<'ast, 'a: 'ast> VisitMut<'ast> for PreProcessor<'a, 'ast> {
         if expr.callee.is_specific_id("require") && expr.arguments.len() == 1 =>
       {
         let arg = expr.arguments.get_mut(0).unwrap();
+
         if let Some(cond_expr) = arg.as_expression_mut().and_then(|item| match item {
           ast::Expression::ConditionalExpression(cond) => Some(cond),
           _ => None,
@@ -142,10 +150,13 @@ impl<'ast, 'a: 'ast> VisitMut<'ast> for PreProcessor<'a, 'ast> {
       // transpose `import(test ? 'a' : 'b')` into `test ? import('a') : import('b')`
       ast::Expression::ImportExpression(expr) if expr.arguments.is_empty() => {
         let source = &mut expr.source;
+
         match source {
           ast::Expression::ConditionalExpression(cond_expr) => {
             let test = cond_expr.test.take_in(self.snippet.alloc());
+
             let consequent = cond_expr.consequent.take_in(self.snippet.alloc());
+
             let alternative = cond_expr.alternate.take_in(self.snippet.alloc());
 
             let new_cond_expr = self.snippet.builder.expression_conditional(
@@ -162,9 +173,11 @@ impl<'ast, 'a: 'ast> VisitMut<'ast> for PreProcessor<'a, 'ast> {
       }
       _ => None,
     };
+
     if let Some(replaced) = to_replaced {
       *it = replaced;
     }
+
     walk_mut::walk_expression(self, it);
   }
 }

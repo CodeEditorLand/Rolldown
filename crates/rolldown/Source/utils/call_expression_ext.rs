@@ -13,6 +13,7 @@ impl<'ast> CallExpressionExt<'ast> for ast::CallExpression<'ast> {
           // `require(...)` inserted by bundler does not have a reference id
           return true;
         };
+
         scope.is_unresolved(ref_id)
       }
       _ => false,

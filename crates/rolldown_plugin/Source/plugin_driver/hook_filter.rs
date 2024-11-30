@@ -68,7 +68,9 @@ pub fn filter_transform(
     };
   if let Some(ref id_filter) = transform_hook_filter_options.id {
     let stabilized_path = Path::new(id).relative(cwd);
+
     let normalized_id = stabilized_path.to_string_lossy();
+
     let id_res = pattern_filter::filter(
       id_filter.exclude.as_deref(),
       id_filter.include.as_deref(),
@@ -79,6 +81,7 @@ pub fn filter_transform(
     if let FilterResult::Match(id_res) = id_res {
       return id_res;
     }
+
     fallback_ret = fallback_ret && id_res.inner();
   }
 
@@ -92,6 +95,7 @@ pub fn filter_transform(
     if let FilterResult::Match(code_res) = code_res {
       return code_res;
     }
+
     fallback_ret = fallback_ret && code_res.inner();
   }
   fallback_ret

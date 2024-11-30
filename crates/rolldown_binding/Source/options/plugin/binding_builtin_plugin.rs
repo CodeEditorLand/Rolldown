@@ -164,6 +164,7 @@ impl From<BindingViteResolvePluginConfig> for ViteResolveOptions {
       napi::Either::A(_) => rolldown_plugin_vite_resolve::ResolveOptionsExternal::True,
       napi::Either::B(v) => rolldown_plugin_vite_resolve::ResolveOptionsExternal::Vec(v),
     };
+
     let no_external = match value.no_external {
       napi::Either::A(_) => rolldown_plugin_vite_resolve::ResolveOptionsNoExternal::True,
       napi::Either::B(v) => rolldown_plugin_vite_resolve::ResolveOptionsNoExternal::Vec(v),
@@ -179,9 +180,13 @@ impl From<BindingViteResolvePluginConfig> for ViteResolveOptions {
         |finalizer_fn| -> Arc<FinalizeBareSpecifierCallback> {
           Arc::new(move |resolved_id: &str, raw_id: &str, importer: Option<&str>| {
             let finalizer_fn = Arc::clone(&finalizer_fn);
+
             let resolved_id = resolved_id.to_owned();
+
             let raw_id = raw_id.to_owned();
+
             let importer = importer.map(ToString::to_string);
+
             Box::pin(async move {
               finalizer_fn
                 .invoke_async((resolved_id, raw_id, importer))
@@ -195,8 +200,11 @@ impl From<BindingViteResolvePluginConfig> for ViteResolveOptions {
         |finalizer_fn| -> Arc<FinalizeOtherSpecifiersCallback> {
           Arc::new(move |resolved_id: &str, raw_id: &str| {
             let finalizer_fn = Arc::clone(&finalizer_fn);
+
             let resolved_id = resolved_id.to_owned();
+
             let raw_id = raw_id.to_owned();
+
             Box::pin(async move {
               finalizer_fn.invoke_async((resolved_id, raw_id)).await.map_err(anyhow::Error::from)
             })
@@ -278,6 +286,7 @@ impl TryFrom<BindingAliasPluginConfig> for AliasPlugin {
 
   fn try_from(value: BindingAliasPluginConfig) -> Result<Self, Self::Error> {
     let mut ret = Vec::with_capacity(value.entries.len());
+
     for item in value.entries {
       ret.push(Alias { find: item.find.try_into()?, replacement: item.replacement });
     }
@@ -312,6 +321,7 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         } else {
           ImportGlobPluginConfig::default()
         };
+
         Arc::new(ImportGlobPlugin { config })
       }
       BindingBuiltinPluginName::DynamicImportVars => Arc::new(DynamicImportVarsPlugin {}),
@@ -322,6 +332,7 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         } else {
           false
         };
+
         Arc::new(ModulePreloadPolyfillPlugin { skip })
       }
       BindingBuiltinPluginName::Manifest => {
@@ -330,6 +341,7 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         } else {
           ManifestPluginConfig::default()
         };
+
         Arc::new(ManifestPlugin { config })
       }
       BindingBuiltinPluginName::LoadFallback => Arc::new(LoadFallbackPlugin {}),
@@ -339,6 +351,7 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         } else {
           TransformPlugin::default()
         };
+
         Arc::new(plugin)
       }
       BindingBuiltinPluginName::Alias => {
@@ -347,6 +360,7 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         } else {
           AliasPlugin::default()
         };
+
         Arc::new(plugin)
       }
 
@@ -356,6 +370,7 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         } else {
           BindingJsonPluginConfig::default()
         };
+
         Arc::new(JsonPlugin {
           stringify: config.stringify.unwrap_or_default(),
           is_build: config.is_build.unwrap_or_default(),
@@ -370,6 +385,7 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
             "Missing options for BuildImportAnalysisPlugin",
           ));
         };
+
         Arc::new(BuildImportAnalysisPlugin::try_from(config)?)
       }
       BindingBuiltinPluginName::Replace => {

@@ -42,12 +42,14 @@ impl BuildDiagnostic {
     source: impl Into<Box<dyn std::error::Error + 'static + Send + Sync>>,
   ) -> Self {
     self.source = Some(source.into());
+
     self
   }
 
   #[must_use]
   pub fn with_severity_warning(mut self) -> Self {
     self.severity = Severity::Warning;
+
     self
   }
 
@@ -58,7 +60,9 @@ impl BuildDiagnostic {
   pub fn into_diagnostic_with(self, opts: &DiagnosticOptions) -> Diagnostic {
     let mut diagnostic =
       Diagnostic::new(self.kind().to_string(), self.inner.message(opts), self.severity);
+
     self.inner.on_diagnostic(&mut diagnostic, opts);
+
     diagnostic
   }
 

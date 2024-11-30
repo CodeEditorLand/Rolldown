@@ -32,6 +32,7 @@ impl ChunkGraph {
 
   pub fn add_module_to_chunk(&mut self, module_idx: ModuleIdx, chunk_idx: ChunkIdx) {
     self.chunk_table.chunks[chunk_idx].modules.push(module_idx);
+
     self.module_to_chunk[module_idx] = Some(chunk_idx);
   }
 }

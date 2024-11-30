@@ -78,14 +78,23 @@ mod tests {
   #[test]
   fn normal_extensions() {
     assert_eq!(mime_type_by_extension("txt"), None);
+
     assert_eq!(mime_type_by_extension("css").unwrap().mime_str, "text/css");
+
     assert_eq!(mime_type_by_extension("html").unwrap().mime_str, "text/html");
+
     assert_eq!(mime_type_by_extension("json").unwrap().mime_str, "application/json");
+
     assert_eq!(mime_type_by_extension("png").unwrap().mime_str, "image/png");
+
     assert_eq!(mime_type_by_extension("svg").unwrap().mime_str, "image/svg+xml");
+
     assert_eq!(mime_type_by_extension("woff2").unwrap().mime_str, "font/woff2");
+
     assert_eq!(mime_type_by_extension("pdf").unwrap().mime_str, "application/pdf");
+
     assert_eq!(mime_type_by_extension("wasm").unwrap().mime_str, "application/wasm");
+
     assert_eq!(
       mime_type_by_extension("webmanifest").unwrap().mime_str,
       "application/manifest+json"
@@ -100,7 +109,9 @@ mod tests {
   #[test]
   fn try_from_exts() {
     assert!(matches!(try_from_ext("png").unwrap().mime.subtype(), mime::PNG));
+
     assert!(matches!(try_from_ext("svg").unwrap().mime.subtype(), mime::SVG));
+
     assert!(matches!(try_from_ext("woff2").unwrap().mime.type_(), mime::FONT));
   }
 }

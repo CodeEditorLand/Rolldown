@@ -16,6 +16,7 @@ impl PackageJsonPeerDep {
     dir: &str,
   ) -> Option<PackageJsonWithOptionalPeerDependencies> {
     let mut dir = Path::new(dir);
+
     loop {
       let package_json_path = dir.join("package.json");
 

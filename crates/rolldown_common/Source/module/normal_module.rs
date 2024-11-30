@@ -75,12 +75,16 @@ impl NormalModule {
       is_entry: self.is_user_defined_entry,
       importers: {
         let mut value = self.ecma_view.importers.clone();
+
         value.sort_unstable();
+
         value
       },
       dynamic_importers: {
         let mut value = self.ecma_view.dynamic_importers.clone();
+
         value.sort_unstable();
+
         value
       },
       imported_ids: self.ecma_view.imported_ids.clone(),
@@ -111,6 +115,7 @@ impl NormalModule {
       .star_export_module_ids()
       .filter_map(|id| modules[id].as_normal())
       .for_each(|module| module.get_exported_names(export_star_set, modules, false, ret));
+
     if include_default {
       ret.extend(self.ecma_view.named_exports.keys());
     } else {
@@ -192,6 +197,7 @@ impl NormalModule {
           ast,
           PrintOptions { sourcemap: enable_sourcemap, filename: self.id.to_string(), comments },
         );
+
         if !self.ecma_view.mutations.is_empty() {
           let original_code: Arc<str> = render_output.code.into();
           let mut magic_string = string_wizard::MagicString::new(&*original_code);
@@ -207,6 +213,7 @@ impl NormalModule {
             render_output.map.map(|original| collapse_sourcemaps(vec![&original, &mutated_map]));
           return Some(ModuleRenderOutput { code, map });
         }
+
         Some(ModuleRenderOutput { code: render_output.code, map: render_output.map })
       }
     }

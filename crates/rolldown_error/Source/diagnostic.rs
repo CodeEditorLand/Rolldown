@@ -37,14 +37,19 @@ impl Diagnostic {
     content: impl Into<ArcStr>,
   ) -> DiagnosticFileId {
     let filename = filename.into();
+
     let content = content.into();
+
     debug_assert!(self.files.iter().all(|(id, _)| id != &filename));
+
     self.files.push((filename.clone(), content));
+
     DiagnosticFileId(filename)
   }
 
   pub(crate) fn add_help(&mut self, message: String) -> &mut Self {
     self.help = Some(message);
+
     self
   }
 
@@ -55,9 +60,13 @@ impl Diagnostic {
     message: String,
   ) -> &mut Self {
     let range = range.into();
+
     let range = range.start as usize..range.end as usize;
+
     let label = Label::new((file_id.0.clone(), range)).with_message(message);
+
     self.labels.push(label);
+
     self
   }
 
@@ -85,12 +94,15 @@ impl Diagnostic {
 
   pub fn convert_to_string(&self, color: bool) -> String {
     let builder = self.clone().init_report_builder();
+
     let mut output = Vec::new();
+
     builder
       .with_config(Config::default().with_color(color).with_index_type(ariadne::IndexType::Byte))
       .finish()
       .write_for_stdout(sources(self.files.clone()), &mut output)
       .unwrap();
+
     String::from_utf8(output).expect("Diagnostic should be valid utf8")
   }
 

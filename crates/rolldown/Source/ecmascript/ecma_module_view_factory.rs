@@ -131,6 +131,7 @@ pub async fn create_ecma_view<'any>(
       // CSS modules are considered to have side effects by default
       return DeterminedSideEffects::Analyzed(true);
     }
+
     ctx
       .resolved_id
       .package_json
@@ -139,11 +140,13 @@ pub async fn create_ecma_view<'any>(
         // the glob expr is based on parent path of package.json, which is package path
         // so we should use the relative path of the module to package path
         let module_path_relative_to_package = id.as_path().relative(p.path.parent()?);
+
         p.check_side_effects_for(&module_path_relative_to_package.to_string_lossy())
           .map(DeterminedSideEffects::UserDefined)
       })
       .unwrap_or_else(|| {
         let analyzed_side_effects = stmt_infos.iter().any(|stmt_info| stmt_info.side_effect);
+
         DeterminedSideEffects::Analyzed(analyzed_side_effects)
       })
   };
@@ -154,6 +157,7 @@ pub async fn create_ecma_view<'any>(
       HookSideEffects::NoTreeshake => DeterminedSideEffects::NoTreeshake,
     },
     // If user don't specify the side effects, we use fallback value from `option.treeshake.moduleSideEffects`;
+
     None => match ctx.options.treeshake {
       // Actually this convert is not necessary, just for passing type checking
       TreeshakeOptions::Boolean(false) => DeterminedSideEffects::NoTreeshake,

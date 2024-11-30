@@ -38,14 +38,18 @@ pub fn stringify_bundle_output(output: BundleOutput, cwd: &Path) -> String {
   let mut warnings = output.warnings;
   warnings.sort_by(|a, b| {
     let a = a.to_string();
+
     let b = b.to_string();
+
     a.cmp(&b)
   });
   if !warnings.is_empty() {
     ret.push_str("# warnings\n\n");
+
     let diagnostics = warnings
       .into_iter()
       .map(|e| (e.kind(), e.into_diagnostic_with(&DiagnosticOptions { cwd: cwd.to_path_buf() })));
+
     let rendered = diagnostics
       .flat_map(|(code, diagnostic)| {
         [
@@ -57,7 +61,9 @@ pub fn stringify_bundle_output(output: BundleOutput, cwd: &Path) -> String {
       })
       .collect::<Vec<_>>()
       .join("\n");
+
     ret.push_str(&rendered);
+
     ret.push('\n');
   }
 

@@ -50,6 +50,7 @@ impl Generator for CssGenerator {
         .expect("chunk file name should be generated before rendering")
         .as_str(),
     );
+
     let file_dir = file_path.parent().expect("chunk file name should have a parent");
 
     Ok(Ok(GenerateOutput {

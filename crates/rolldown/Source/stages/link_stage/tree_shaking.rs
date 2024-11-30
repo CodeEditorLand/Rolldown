@@ -89,6 +89,7 @@ fn include_symbol(ctx: &mut Context, symbol_ref: SymbolRef) {
 
   if let Module::Normal(module) = &ctx.modules[canonical_ref.owner] {
     include_module(ctx, module);
+
     module.stmt_infos.declared_stmts_by_symbol(&canonical_ref).iter().copied().for_each(
       |stmt_info_id| {
         include_statement(ctx, module, stmt_info_id);
@@ -113,6 +114,7 @@ fn include_statement(ctx: &mut Context, module: &NormalModule, stmt_info_id: Stm
     SymbolOrMemberExprRef::Symbol(symbol_ref) => {
       include_symbol(ctx, *symbol_ref);
     }
+
     SymbolOrMemberExprRef::MemberExpr(member_expr) => {
       if let Some(symbol) =
         member_expr.resolved_symbol_ref(&ctx.metas[module.idx].resolved_member_expr_refs)
@@ -196,6 +198,7 @@ impl LinkStage<'_> {
       Visited,
       Cache(DeterminedSideEffects),
     }
+
     type IndexSideEffectsCache = IndexVec<ModuleIdx, SideEffectCache>;
 
     fn determine_side_effects_for_module(
@@ -209,9 +212,11 @@ impl LinkStage<'_> {
         SideEffectCache::None => {
           cache[module_id] = SideEffectCache::Visited;
         }
+
         SideEffectCache::Visited => {
           return *module.side_effects();
         }
+
         SideEffectCache::Cache(v) => {
           return *v;
         }
@@ -223,6 +228,7 @@ impl LinkStage<'_> {
         DeterminedSideEffects::UserDefined(_) | DeterminedSideEffects::NoTreeshake => {
           *module.side_effects()
         }
+
         DeterminedSideEffects::Analyzed(v) if v => *module.side_effects(),
         // this branch means the side effects of the module is analyzed `false`
         DeterminedSideEffects::Analyzed(_) => match module {
@@ -247,6 +253,7 @@ impl LinkStage<'_> {
 
     let mut index_side_effects_cache =
       oxc_index::index_vec![SideEffectCache::None; self.module_table.modules.len()];
+
     let index_module_side_effects = self
       .module_table
       .modules

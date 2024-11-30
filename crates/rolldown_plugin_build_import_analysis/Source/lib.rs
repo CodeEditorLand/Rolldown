@@ -56,6 +56,7 @@ impl Plugin for BuildImportAnalysisPlugin {
         ..Default::default()
       }));
     }
+
     Ok(None)
   }
 
@@ -63,6 +64,7 @@ impl Plugin for BuildImportAnalysisPlugin {
     if args.id == PRELOAD_HELPER_ID {
       return Ok(Some(HookLoadOutput { code: self.preload_code.clone(), ..Default::default() }));
     }
+
     Ok(None)
   }
 
@@ -74,7 +76,9 @@ impl Plugin for BuildImportAnalysisPlugin {
     if args.id.contains("node_modules") {
       return Ok(args.ast);
     }
+
     let mut ast = args.ast;
+
     ast.program.with_mut(|fields| {
       let builder = AstBuilder::new(fields.allocator);
       let mut visitor = BuildImportAnalysisVisitor::new(
@@ -87,7 +91,9 @@ impl Plugin for BuildImportAnalysisPlugin {
     });
 
     let mut codegen = CodeGenerator::new();
+
     ast.program().gen(&mut codegen, codegen::Context::default());
+
     Ok(ast)
   }
 }
@@ -131,9 +137,11 @@ impl<'a> BuildImportAnalysisVisitor<'a> {
     let Expression::ParenthesizedExpression(ref mut paren) = member_expr.object else {
       return;
     };
+
     let Expression::AwaitExpression(ref mut expr) = paren.expression else {
       return;
     };
+
     let Expression::ImportExpression(ref import_expr) = expr.argument else { return };
 
     let source = match &import_expr.source {
@@ -142,6 +150,7 @@ impl<'a> BuildImportAnalysisVisitor<'a> {
         let Some(first) = lit.quasis.first() else {
           return;
         };
+
         first.value.cooked.clone().unwrap_or(first.value.raw.clone())
       }
       _ => return,
@@ -155,7 +164,9 @@ impl<'a> BuildImportAnalysisVisitor<'a> {
       &[property],
       self.is_relative_base || self.render_built_url,
     );
+
     expr.argument = vite_preload_call;
+
     self.need_prepend_helper = true;
   }
 
@@ -166,23 +177,29 @@ impl<'a> BuildImportAnalysisVisitor<'a> {
     let Expression::StaticMemberExpression(ref mut callee) = expr.callee else {
       return;
     };
+
     let Expression::ImportExpression(ref import_expr) = callee.object else {
       return;
     };
+
     let source = match &import_expr.source {
       Expression::StringLiteral(lit) => lit.value.clone(),
       Expression::TemplateLiteral(lit) if lit.quasis.len() == 1 && lit.expressions.is_empty() => {
         let Some(first) = lit.quasis.first() else { return };
+
         first.value.cooked.clone().unwrap_or(first.value.raw.clone())
       }
       _ => return,
     };
+
     if callee.property.name != "then" {
       return;
     };
+
     let [Argument::ArrowFunctionExpression(arrow_expr)] = expr.arguments.as_slice() else {
       return;
     };
+
     let Some(first_param) = arrow_expr.params.items.first() else {
       return;
     };
@@ -206,7 +223,9 @@ impl<'a> BuildImportAnalysisVisitor<'a> {
       &decls,
       self.render_built_url || self.is_relative_base,
     );
+
     callee.object = vite_preload_call;
+
     self.need_prepend_helper = true;
   }
 }
@@ -214,6 +233,7 @@ impl<'a> BuildImportAnalysisVisitor<'a> {
 impl<'a> VisitMut<'a> for BuildImportAnalysisVisitor<'a> {
   fn visit_program(&mut self, it: &mut oxc::ast::ast::Program<'a>) {
     walk_mut::walk_program(self, it);
+
     if self.need_prepend_helper && self.insert_preload && !self.has_inserted_helper {
       let helper_stmt = Statement::from(self.builder.module_declaration_import_declaration(
         SPAN,
@@ -233,6 +253,7 @@ impl<'a> VisitMut<'a> for BuildImportAnalysisVisitor<'a> {
 
   fn visit_variable_declaration(&mut self, decl: &mut VariableDeclaration<'a>) {
     walk_mut::walk_variable_declaration(self, decl);
+
     let mut declarators_map = decl
       .declarations
       .iter_mut()
@@ -241,19 +262,24 @@ impl<'a> VisitMut<'a> for BuildImportAnalysisVisitor<'a> {
         let Some(Expression::AwaitExpression(ref mut init)) = decl.init else {
           return None;
         };
+
         let Expression::ImportExpression(ref mut import) = init.argument else {
           return None;
         };
+
         let BindingPattern { kind, .. } = &decl.id;
+
         let BindingPatternKind::ObjectPattern(kind) = kind else {
           return None;
         };
+
         let source = match &import.source {
           Expression::StringLiteral(lit) => lit.value.clone(),
           Expression::TemplateLiteral(lit)
             if lit.quasis.len() == 1 && lit.expressions.is_empty() =>
           {
             let first = lit.quasis.first()?;
+
             first.value.cooked.clone().unwrap_or(first.value.raw.clone())
           }
           _ => return None,
@@ -268,17 +294,21 @@ impl<'a> VisitMut<'a> for BuildImportAnalysisVisitor<'a> {
             _ => None,
           })
           .collect::<Vec<_>>();
+
         Some((i, (ImportPattern::Decl(source, decls), decl.kind)))
       })
       .collect::<FxHashMap<usize, (ImportPattern<'a>, VariableDeclarationKind)>>();
+
     if declarators_map.is_empty() {
       return;
     }
+
     for (i, d) in decl.declarations.iter_mut().enumerate() {
       if let Some((pattern, kind)) = declarators_map.remove(&i) {
         match pattern {
           ImportPattern::Decl(source, decls) => {
             self.need_prepend_helper = true;
+
             let mut declarator = construct_snippet_from_await_decl(
               self.builder,
               source,
@@ -286,6 +316,7 @@ impl<'a> VisitMut<'a> for BuildImportAnalysisVisitor<'a> {
               kind,
               self.render_built_url || self.is_relative_base,
             );
+
             std::mem::swap(d, &mut declarator);
           }
         }
@@ -300,11 +331,13 @@ impl<'a> VisitMut<'a> for BuildImportAnalysisVisitor<'a> {
         self.has_inserted_helper = id.name == PRELOAD_METHOD;
       }
     }
+
     walk_mut::walk_variable_declarator(self, it);
   }
 
   fn visit_expression(&mut self, expr: &mut Expression<'a>) {
     walk_mut::walk_expression(self, expr);
+
     match expr {
       Expression::StaticMemberExpression(expr) => self.rewrite_paren_member_expr(expr),
       Expression::CallExpression(expr) => self.rewrite_import_expr(expr),

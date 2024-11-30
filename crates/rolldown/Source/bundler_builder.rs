@@ -50,12 +50,14 @@ impl BundlerBuilder {
   #[must_use]
   pub fn with_options(mut self, options: BundlerOptions) -> Self {
     self.options = options;
+
     self
   }
 
   #[must_use]
   pub fn with_plugins(mut self, plugins: Vec<SharedPluginable>) -> Self {
     self.plugins = plugins;
+
     self
   }
 }

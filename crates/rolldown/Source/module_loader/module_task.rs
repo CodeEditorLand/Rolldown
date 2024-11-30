@@ -98,8 +98,11 @@ impl ModuleTask {
   #[expect(clippy::too_many_lines)]
   async fn run_inner(&mut self) -> BuildResult<()> {
     let mut hook_side_effects = self.resolved_id.side_effects.take();
+
     let mut sourcemap_chain = vec![];
+
     let mut warnings = vec![];
+
     let id = ModuleId::new(ArcStr::clone(&self.resolved_id.id));
 
     // Add watch files for watcher recover if build errors occurred.
@@ -141,6 +144,7 @@ impl ModuleTask {
           }),
           err,
         ));
+
         return Ok(());
       }
     };
@@ -161,6 +165,7 @@ impl ModuleTask {
           &mut module_type,
         )
         .await?;
+
         source.into()
       }
       StrOrBytes::Bytes(_) => source,
@@ -178,6 +183,7 @@ impl ModuleTask {
     };
 
     let repr_name = self.resolved_id.id.as_path().representative_file_name().into_owned();
+
     let repr_name = legitimize_identifier_name(&repr_name);
 
     let stable_id = id.stabilize(&self.ctx.options.cwd);
@@ -229,6 +235,7 @@ impl ModuleTask {
     if !matches!(module_type, ModuleType::Css) {
       raw_import_records = ecma_raw_import_records;
     }
+
     let resolved_deps = match self
       .resolve_dependencies(
         &raw_import_records,
@@ -241,9 +248,11 @@ impl ModuleTask {
       Ok(deps) => deps,
       Err(errs) => {
         self.errors.extend(errs.into_vec());
+
         return Ok(());
       }
     };
+
     if !matches!(module_type, ModuleType::Css) {
       for (record, info) in raw_import_records.iter().zip(&resolved_deps) {
         match record.kind {
@@ -258,6 +267,7 @@ impl ModuleTask {
         }
       }
     }
+
     let module = NormalModule {
       repr_name: repr_name.into_owned(),
       stable_id,
@@ -273,8 +283,11 @@ impl ModuleTask {
     };
 
     let module_info = Arc::new(module.to_module_info());
+
     self.ctx.plugin_driver.set_module_info(&module.id, Arc::clone(&module_info));
+
     self.ctx.plugin_driver.module_parsed(Arc::clone(&module_info)).await?;
+
     self.ctx.plugin_driver.mark_context_load_modules_loaded(&module.id).await?;
 
     if let Err(_err) = self
@@ -358,8 +371,11 @@ impl ModuleTask {
     // FIXME: if the import records came from css view, but source from ecma view,
     // the span will not matched.
     let is_css_module = matches!(module_type, ModuleType::Css);
+
     let mut ret = IndexVec::with_capacity(dependencies.len());
+
     let mut build_errors = vec![];
+
     for resolved_id in resolved_ids {
       let (specifier, idx, resolved_id) = resolved_id?;
 
@@ -367,6 +383,7 @@ impl ModuleTask {
         Ok(info) => {
           ret.push(info);
         }
+
         Err(e) => {
           let dep = &dependencies[idx];
           match &e {
@@ -395,6 +412,7 @@ impl ModuleTask {
                 is_external_without_side_effects: false,
               });
             }
+
             e => {
               let reason = rolldown_resolver::error::oxc_resolve_error_to_reason(e);
               build_errors.push(BuildDiagnostic::resolve_error(

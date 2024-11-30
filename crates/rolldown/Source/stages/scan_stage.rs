@@ -104,6 +104,7 @@ impl ScanStage {
     &mut self,
   ) -> Result<BuildResult<Vec<(Option<ArcStr>, ResolvedId)>>> {
     let resolver = &self.resolver;
+
     let plugin_driver = &self.plugin_driver;
 
     let resolved_ids = join_all(self.options.input.iter().map(|input_item| async move {
@@ -140,10 +141,12 @@ impl ScanStage {
         Ok(item) => {
           if item.1.is_external {
             errors.push(BuildDiagnostic::entry_cannot_be_external(item.1.id.to_string()));
+
             continue;
           }
           ret.push(item);
         }
+
         Err(e) => match e {
           ResolveError::NotFound(..) => {
             errors.push(BuildDiagnostic::unresolved_entry(args.specifier, None));

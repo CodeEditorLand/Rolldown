@@ -74,7 +74,9 @@ fn precompute_utf16_index_map(
   let mut map: FxHashMap<usize, usize> = Default::default();
   for &i in &byte_indices {
     index_utf16 += source[index..i].chars().map(|c| c.len_utf16()).sum::<usize>();
+
     index = i;
+
     map.insert(i, index_utf16);
   }
   map

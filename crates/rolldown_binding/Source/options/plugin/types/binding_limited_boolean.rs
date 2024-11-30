@@ -26,6 +26,7 @@ impl<const VALUE: bool> FromNapiValue for LimitedBooleanValue<VALUE> {
     napi_val: napi::sys::napi_value,
   ) -> napi::Result<Self> {
     let result = bool::from_napi_value(env, napi_val)?;
+
     if result == VALUE {
       Ok(Self())
     } else {

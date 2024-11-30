@@ -15,6 +15,7 @@ impl Default for DiagnosticOptions {
 impl DiagnosticOptions {
   pub fn stabilize_path(&self, path: impl AsRef<Path>) -> String {
     let path = path.as_ref();
+
     let non_absolute = if path.is_absolute() {
       path.relative(&self.cwd).to_slash_lossy().into_owned()
     } else {

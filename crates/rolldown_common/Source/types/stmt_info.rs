@@ -21,9 +21,11 @@ impl StmtInfos {
 
   pub fn add_stmt_info(&mut self, info: StmtInfo) -> StmtInfoIdx {
     let id = self.infos.push(info);
+
     for symbol_ref in &*self.infos[id].declared_symbols {
       self.symbol_ref_to_declared_stmt_idx.entry(*symbol_ref).or_default().push(id);
     }
+
     id
   }
 
@@ -31,15 +33,19 @@ impl StmtInfos {
   /// Caller should guarantee the stmt is included in `stmts` before, or it will panic.
   pub fn declare_symbol_for_stmt(&mut self, id: StmtInfoIdx, symbol_ref: SymbolRef) {
     self.infos[id].declared_symbols.push(symbol_ref);
+
     self.symbol_ref_to_declared_stmt_idx.entry(symbol_ref).or_default().push(id);
   }
 
   pub fn replace_namespace_stmt_info(&mut self, info: StmtInfo) -> StmtInfoIdx {
     let idx = StmtInfoIdx::from_raw(0);
+
     self.infos[idx] = info;
+
     for symbol_ref in &*self.infos[idx].declared_symbols {
       self.symbol_ref_to_declared_stmt_idx.entry(*symbol_ref).or_default().push(idx);
     }
+
     idx
   }
 
@@ -98,18 +104,21 @@ impl StmtInfo {
   #[must_use]
   pub fn with_stmt_idx(mut self, stmt_idx: usize) -> Self {
     self.stmt_idx = Some(stmt_idx);
+
     self
   }
 
   #[must_use]
   pub fn with_declared_symbols(mut self, declared_symbols: Vec<SymbolRef>) -> Self {
     self.declared_symbols = declared_symbols;
+
     self
   }
 
   #[must_use]
   pub fn with_referenced_symbols(mut self, referenced_symbols: Vec<SymbolOrMemberExprRef>) -> Self {
     self.referenced_symbols = referenced_symbols;
+
     self
   }
 }

@@ -66,6 +66,7 @@ impl PluginDriver {
     skipped_resolve_calls: Option<&Vec<Arc<HookResolveIdSkipped>>>,
   ) -> Vec<PluginIdx> {
     let mut skipped_plugins = vec![];
+
     if let Some(skipped_resolve_calls) = skipped_resolve_calls {
       for skip_resolve_call in skipped_resolve_calls {
         if skip_resolve_call.specifier == specifier
@@ -75,6 +76,7 @@ impl PluginDriver {
         }
       }
     }
+
     skipped_plugins
   }
 
@@ -85,6 +87,7 @@ impl PluginDriver {
   ) -> HookResolveIdReturn {
     let skipped_plugins =
       Self::get_resolve_call_skipped_plugins(args.specifier, args.importer, skipped_resolve_calls);
+
     for (plugin_idx, plugin, ctx) in
       self.iter_plugin_with_context_by_order(&self.order_by_resolve_id_meta)
     {
@@ -113,6 +116,7 @@ impl PluginDriver {
         return Ok(Some(r));
       }
     }
+
     Ok(None)
   }
 
@@ -125,6 +129,7 @@ impl PluginDriver {
   ) -> HookResolveIdReturn {
     let skipped_plugins =
       Self::get_resolve_call_skipped_plugins(args.specifier, args.importer, skipped_resolve_calls);
+
     for (plugin_idx, plugin, ctx) in
       self.iter_plugin_with_context_by_order(&self.order_by_resolve_dynamic_import_meta)
     {
@@ -149,6 +154,7 @@ impl PluginDriver {
         return Ok(Some(r));
       }
     }
+
     Ok(None)
   }
 
@@ -164,6 +170,7 @@ impl PluginDriver {
         return Ok(Some(r));
       }
     }
+
     Ok(None)
   }
 
@@ -176,8 +183,11 @@ impl PluginDriver {
     module_type: &mut ModuleType,
   ) -> Result<String> {
     let mut code = args.code.to_string();
+
     let mut original_sourcemap_chain = std::mem::take(sourcemap_chain);
+
     let mut plugin_sourcemap_chain = UniqueArc::new(original_sourcemap_chain);
+
     for (plugin_idx, plugin, ctx) in
       self.iter_plugin_with_context_by_order(&self.order_by_transform_meta)
     {
@@ -210,18 +220,22 @@ impl PluginDriver {
           original_sourcemap_chain.push(map);
           plugin_sourcemap_chain = UniqueArc::new(original_sourcemap_chain);
         }
+
         if let Some(v) = r.side_effects {
           *side_effects = Some(v);
         }
+
         if let Some(v) = r.code {
           code = v;
         }
+
         if let Some(ty) = r.module_type {
           *module_type = ty;
         }
       }
     }
     *sourcemap_chain = plugin_sourcemap_chain.into_inner();
+
     Ok(code)
   }
 
@@ -234,6 +248,7 @@ impl PluginDriver {
         HookTransformAstArgs { cwd: args.cwd, ast: args.ast, id: args.id },
       )?;
     }
+
     Ok(args.ast)
   }
 
@@ -243,6 +258,7 @@ impl PluginDriver {
     {
       plugin.call_module_parsed(ctx, Arc::clone(&module_info)).await?;
     }
+
     Ok(())
   }
 
@@ -250,6 +266,7 @@ impl PluginDriver {
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_build_end_meta) {
       plugin.call_build_end(ctx, args).await?;
     }
+
     Ok(())
   }
 }

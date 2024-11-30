@@ -53,6 +53,7 @@ impl ReplacePlugin {
     } else {
       options.values
     };
+
     let mut keys = values.keys().collect::<Vec<_>>();
     // Sort by length in descending order so that longer targets are matched first.
     keys.sort_by_key(|key| Reverse(key.len()));
@@ -67,6 +68,7 @@ impl ReplacePlugin {
     } else {
       HybridRegex::Optimize(regex::Regex::new(&format!("\\b({joined_keys})\\b")).unwrap())
     };
+
     Self {
       matcher,
       prevent_assignment: options.prevent_assignment,
@@ -93,6 +95,7 @@ impl ReplacePlugin {
     regex: &regex::Regex,
   ) -> bool {
     let mut changed = false;
+
     for captures in regex.captures_iter(code) {
       let Some(matched) = captures.get(1) else {
         break;
@@ -117,18 +120,21 @@ impl ReplacePlugin {
         return true;
       }
     }
+
     let after = &code[matched_range.end..];
     // default delimiters[1] == `\\b(?!\\.)`, we use regex matched `\\b` before
     // needs to test `(?!\\.)` here
     if after.starts_with('.') {
       return true;
     }
+
     if self.prevent_assignment {
       let stripped_after = after.trim_start();
       if stripped_after.starts_with('=') && !stripped_after[1..].starts_with('=') {
         return true;
       }
     }
+
     false
   }
 
@@ -139,6 +145,7 @@ impl ReplacePlugin {
     regex: &regress::Regex,
   ) -> bool {
     let mut changed = false;
+
     for captures in regex.find_iter(code) {
       // We expect the regex we used will always have one `Captures`.
       let Some(Some(matched)) = captures.captures.first() else {
@@ -153,6 +160,7 @@ impl ReplacePlugin {
       changed = true;
       magic_string.update(matched.start, matched.end, replacement);
     }
+
     changed
   }
 }
@@ -168,6 +176,7 @@ impl Plugin for ReplacePlugin {
     args: &rolldown_plugin::HookTransformArgs<'_>,
   ) -> rolldown_plugin::HookTransformReturn {
     let mut magic_string = MagicString::new(args.code);
+
     if self.try_replace(args.code, &mut magic_string) {
       return Ok(Some(HookTransformOutput {
         code: Some(magic_string.to_string()),
@@ -183,6 +192,7 @@ impl Plugin for ReplacePlugin {
         ..Default::default()
       }));
     }
+
     Ok(None)
   }
 
@@ -192,6 +202,7 @@ impl Plugin for ReplacePlugin {
     args: &rolldown_plugin::HookRenderChunkArgs<'_>,
   ) -> rolldown_plugin::HookRenderChunkReturn {
     let mut magic_string = MagicString::new(&args.code);
+
     if self.try_replace(&args.code, &mut magic_string) {
       return Ok(Some(HookRenderChunkOutput {
         code: magic_string.to_string(),
@@ -206,6 +217,7 @@ impl Plugin for ReplacePlugin {
         },
       }));
     }
+
     Ok(None)
   }
 }

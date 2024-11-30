@@ -211,6 +211,7 @@ where
         annotations: Some(true),
       }))
     }
+
     Some(Value::Object(obj)) => {
       let module_side_effects = obj.get("moduleSideEffects").map_or_else(
         || Ok(types::treeshake::ModuleSideEffects::Boolean(true)),
@@ -231,6 +232,7 @@ where
         annotations,
       }))
     }
+
     _ => Err(serde::de::Error::custom("treeshake should be a boolean or an object")),
   }
 }
@@ -253,6 +255,7 @@ where
             let runtime = v
               .as_str()
               .ok_or_else(|| serde::de::Error::custom("jsx.pragma should be a string"))?;
+
             match runtime {
               "classic" => default_jsx_option.runtime = JsxRuntime::Classic,
               "automatic" => default_jsx_option.runtime = JsxRuntime::Automatic,
@@ -265,24 +268,28 @@ where
             let import_source = v
               .as_str()
               .ok_or_else(|| serde::de::Error::custom("jsx.importSource should be a string"))?;
+
             default_jsx_option.import_source = Some(import_source.to_string());
           }
           "development" => {
             let development = v
               .as_bool()
               .ok_or_else(|| serde::de::Error::custom("jsx.development should be a boolean"))?;
+
             default_jsx_option.development = development;
           }
           "pragma" => {
             let pragma = v
               .as_str()
               .ok_or_else(|| serde::de::Error::custom("jsx.pragma should be a string"))?;
+
             default_jsx_option.pragma = Some(pragma.to_string());
           }
           "pragmaFrag" => {
             let pragma_frag = v
               .as_str()
               .ok_or_else(|| serde::de::Error::custom("jsx.pragmaFrag should be a string"))?;
+
             default_jsx_option.pragma_frag = Some(pragma_frag.to_string());
           }
           _ => return Err(serde::de::Error::custom(format!("unknown jsx option: {k}",))),
@@ -291,6 +298,7 @@ where
 
       Ok(Some(default_jsx_option))
     }
+
     _ => Err(serde::de::Error::custom("jsx should be an object")),
   }
 }

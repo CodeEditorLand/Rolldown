@@ -28,8 +28,11 @@ impl TryFrom<BindingGeneralHookFilter> for ResolvedIdHookFilter {
 
   fn try_from(value: BindingGeneralHookFilter) -> Result<Self, Self::Error> {
     let mut ret = Self::default();
+
     let id_filter = value.try_into()?;
+
     ret.id = Some(id_filter);
+
     Ok(ret)
   }
 }
@@ -48,18 +51,22 @@ impl TryFrom<BindingTransformHookFilter> for TransformHookFilter {
 
   fn try_from(value: BindingTransformHookFilter) -> Result<Self, Self::Error> {
     let mut default = Self::default();
+
     if let Some(code_filter) = value.code {
       let ret = code_filter.try_into()?;
       default.code = Some(ret);
     }
+
     if let Some(id_filter) = value.id {
       let ret = id_filter.try_into()?;
       default.id = Some(ret);
     }
+
     if let Some(module_type) = value.module_type {
       default.module_type =
         Some(module_type.into_iter().map(ModuleType::from_str_with_fallback).collect());
     }
+
     Ok(default)
   }
 }

@@ -74,7 +74,9 @@ impl Chunk {
   pub fn import_path_for(&self, importee: &Chunk) -> String {
     let importer_dir =
       self.absolute_preliminary_filename.as_ref().unwrap().as_path().parent().unwrap();
+
     let importee_filename = importee.absolute_preliminary_filename.as_ref().unwrap();
+
     let import_path = importee_filename.relative(importer_dir).as_path().expect_to_slash();
 
     if import_path.starts_with('.') {
@@ -125,7 +127,9 @@ impl Chunk {
     if let Some(file) = &options.file {
       return Ok(PreliminaryFilename::new(file.clone(), None));
     }
+
     let filename_template = self.filename_template(options, rollup_pre_rendered_chunk).await?;
+
     let extracted_hash_pattern = extract_hash_pattern(filename_template.template());
 
     let hash_placeholder =
@@ -161,6 +165,7 @@ impl Chunk {
       file.set_extension("css");
       return Ok(PreliminaryFilename::new(file.into_os_string().into_string().unwrap(), None));
     }
+
     let filename_template = self.css_filename_template(options, rollup_pre_rendered_chunk).await?;
 
     let extracted_hash_pattern = extract_hash_pattern(filename_template.template());
@@ -175,6 +180,7 @@ impl Chunk {
       let unique = make_unique_name(chunk_name);
       Cow::Owned(unique)
     };
+
     let rendered = filename_template.render(&FileNameRenderOptions {
       name: Some(&name),
       hash: hash_placeholder.as_deref(),

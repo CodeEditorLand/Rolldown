@@ -38,10 +38,15 @@ impl Plugin for ManifestPlugin {
   ) -> HookNoopReturn {
     // Use BTreeMap to make the result sorted
     let mut manifest = BTreeMap::default();
+
     let mut file_name_to_asset = FxHashMap::default();
+
     let mut file_name_to_asset_meta = FxHashMap::default();
+
     let assets: &FxHashMap<String, GeneratedAssetMeta> = &GENERATED_ASSETS;
+
     let mut skip_assets = FxHashSet::default();
+
     for (reference_id, asset) in assets {
       if let Ok(file_name) = ctx.try_get_file_name(reference_id.as_str()) {
         file_name_to_asset_meta.insert(file_name, asset);
@@ -59,10 +64,13 @@ impl Plugin for ManifestPlugin {
           let chunk_manifest = Rc::new(self.create_chunk(args.bundle, chunk, name.clone()));
           manifest.insert(name.clone(), chunk_manifest);
         }
+
         Output::Asset(asset) => {
           if let Some(name) = &asset.name {
             let asset_meta = file_name_to_asset_meta.remove(&asset.filename);
+
             let src = asset_meta.map_or(name, |m| &m.original_name);
+
             let asset_manifest = Rc::new(Self::create_asset(
               asset,
               src.clone(),
@@ -80,6 +88,7 @@ impl Plugin for ManifestPlugin {
             }
 
             manifest.insert(src.clone(), Rc::<ManifestChunk>::clone(&asset_manifest));
+
             file_name_to_asset.insert(asset.filename.clone(), asset_manifest);
           }
         }
@@ -94,7 +103,9 @@ impl Plugin for ManifestPlugin {
       let original_name = &asset.original_name;
       if !manifest.contains_key(original_name) {
         let filename = ctx.get_file_name(reference_id.as_str());
+
         let asset = file_name_to_asset.remove(&filename);
+
         if let Some(asset) = asset {
           manifest.insert(original_name.clone(), asset);
         }
@@ -151,16 +162,19 @@ impl ManifestPlugin {
   }
   fn get_internal_imports(&self, bundle: &Vec<Output>, imports: &Vec<ModuleId>) -> Vec<String> {
     let mut filtered_imports = vec![];
+
     for file in imports {
       for chunk in bundle {
         if let Output::Chunk(output_chunk) = chunk {
           if output_chunk.filename == *file {
             filtered_imports.push(self.get_chunk_name(output_chunk));
+
             break;
           }
         }
       }
     }
+
     filtered_imports
   }
   fn create_chunk(&self, bundle: &Vec<Output>, chunk: &OutputChunk, src: String) -> ManifestChunk {
@@ -187,6 +201,7 @@ impl ManifestPlugin {
 fn get_chunk_original_file_name(chunk: &OutputChunk, root: &str) -> String {
   if let Some(facade_module_id) = &chunk.facade_module_id {
     let name = facade_module_id.relative_path(root);
+
     let name_str = name.to_string_lossy().to_string();
     // TODO: Support System format
     // if format == 'system' && !chunk.name.as_str().contains("-legacy") {
@@ -197,6 +212,7 @@ fn get_chunk_original_file_name(chunk: &OutputChunk, root: &str) -> String {
     //     format!("{name_str}-legacy")
     //   }
     // }
+
     name_str.replace('\0', "")
   } else {
     format!("_{}", Path::new(chunk.filename.as_str()).file_name().unwrap().to_string_lossy())

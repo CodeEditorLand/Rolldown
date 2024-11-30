@@ -45,6 +45,7 @@ fn criterion_benchmark(c: &mut Criterion) {
   let mut sources = vec![];
   for i in 0..3 {
     sources.push(format!("{i}.js"));
+
     source_joiner.append_source(
       SourceMapSource::new(code.clone(), map.as_ref().unwrap().clone())
         .with_pre_compute_sourcemap_data(true),

@@ -28,6 +28,7 @@ impl<'text> MagicString<'text> {
     opts: UpdateOptions,
   ) -> &mut Self {
     self.inner_update_with(start, end, content.into(), opts, true);
+
     self
   }
 
@@ -44,14 +45,19 @@ impl<'text> MagicString<'text> {
     if panic_if_start_equal_end && start == end {
       panic!("Cannot overwrite a zero-length range – use append_left or prepend_right instead")
     }
+
     assert!(start < end);
+
     self.split_at(start);
+
     self.split_at(end);
 
     let start_idx = self.chunk_by_start.get(&start).copied().unwrap();
+
     let end_idx = self.chunk_by_end.get(&end).copied().unwrap();
 
     let start_chunk = &mut self.chunks[start_idx];
+
     start_chunk
       .edit(content, EditOptions { overwrite: opts.overwrite, store_name: opts.keep_original });
 
@@ -66,6 +72,7 @@ impl<'text> MagicString<'text> {
       rest_chunk.edit("".into(), Default::default());
       rest_chunk_idx = rest_chunk.next.unwrap();
     }
+
     self
   }
 }

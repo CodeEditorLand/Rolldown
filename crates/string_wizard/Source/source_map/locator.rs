@@ -7,18 +7,23 @@ pub struct Locator {
 impl Locator {
   pub fn new(source: &str) -> Self {
     let mut line_offsets = vec![];
+
     let mut line_start_pos = 0;
+
     for line in source.split('\n') {
       line_offsets.push(line_start_pos);
       line_start_pos += 1 + line.chars().map(|c| c.len_utf16()).sum::<usize>();
     }
+
     Self { line_offsets: line_offsets.into_boxed_slice() }
   }
 
   /// Pass the index based on utf-16 and return the [Location] based on utf-16
   pub fn locate(&self, index: usize) -> Location {
     let mut left_cursor = 0;
+
     let mut right_cursor = self.line_offsets.len();
+
     while left_cursor < right_cursor {
       let mid = (left_cursor + right_cursor) >> 1;
       if index < self.line_offsets[mid] {
@@ -27,8 +32,11 @@ impl Locator {
         left_cursor = mid + 1;
       }
     }
+
     let line = left_cursor - 1;
+
     let column = index - self.line_offsets[line];
+
     Location { line, column }
   }
 }
@@ -43,6 +51,7 @@ pub struct Location {
 impl Location {
   pub fn bump_line(&mut self) {
     self.line += 1;
+
     self.column = 0;
   }
 }

@@ -21,6 +21,7 @@ pub async fn load_source(
     plugin_driver.load(&HookLoadArgs { id: &resolved_id.id }).await?
   {
     sourcemap_chain.extend(load_hook_output.map);
+
     if let Some(v) = load_hook_output.side_effects {
       *side_effects = Some(v);
     }
@@ -38,6 +39,7 @@ pub async fn load_source(
       Some(user_specified_type) if user_specified_type == asserted => false,
       _ => true,
     };
+
     if is_type_conflicted {
       // TODO: emit a warning about the type conflict
     }

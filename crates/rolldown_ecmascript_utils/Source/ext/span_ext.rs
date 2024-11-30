@@ -17,6 +17,7 @@ impl SpanExt for Span {
     if self == &SPAN {
       return false;
     }
+
     let source_len = source.len() as u32;
     // Check if the span is out of bounds
     if self.start > source_len || self.end > source_len {

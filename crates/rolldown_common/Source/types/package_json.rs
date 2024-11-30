@@ -19,12 +19,14 @@ impl PackageJson {
   pub fn with_type(mut self, value: Option<&serde_json::Value>) -> Self {
     self.r#type =
       value.and_then(|v| v.get("type").and_then(|v| v.as_str()).map(ToString::to_string));
+
     self
   }
 
   #[must_use]
   pub fn with_side_effects(mut self, value: Option<&serde_json::Value>) -> Self {
     self.side_effects = value.and_then(SideEffects::from_json_value);
+
     self
   }
 

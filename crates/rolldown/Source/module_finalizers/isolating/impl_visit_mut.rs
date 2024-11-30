@@ -16,6 +16,7 @@ impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
     // we don't want oxc to generate hashbang statement in module level since we already handle
     // them in chunk level
     program.hashbang.take();
+
     let mut stmts = self.snippet.builder.vec();
 
     for mut stmt in program.body.take_in(self.alloc) {
@@ -24,17 +25,21 @@ impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
         Statement::ImportDeclaration(import_decl) => {
           self.transform_import_declaration(import_decl);
         }
+
         ast::Statement::ExportDefaultDeclaration(export_default_decl) => {
           stmts.push(self.transform_export_default_declaration(export_default_decl));
         }
+
         ast::Statement::ExportNamedDeclaration(export_named_decl) => {
           if let Some(stmt) = self.transform_named_declaration(export_named_decl) {
             stmts.push(stmt);
           }
         }
+
         ast::Statement::ExportAllDeclaration(export_all_decl) => {
           self.transform_export_all_declaration(export_all_decl);
         }
+
         _ => stmts.push(stmt),
       };
     }
@@ -100,6 +105,7 @@ impl<'me, 'ast> VisitMut<'ast> for IsolatingModuleFinalizer<'me, 'ast> {
         }
       };
     }
+
     walk_mut::walk_expression(self, expr);
   }
 
@@ -120,7 +126,9 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
 
     // Create a require call statement for import declaration
     let module = self.get_importee_module(import_decl.span);
+
     let namespace_object_ref = self.create_namespace_object_ref_for_module(module);
+
     self.create_require_call_stmt(
       &module.stable_id().into(),
       module.interop(),
@@ -143,15 +151,18 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
           self.snippet.id_ref_expr(default_export_ref, SPAN),
           false,
         ));
+
         self.snippet.var_decl_stmt(default_export_ref, decl.to_expression_mut().take_in(self.alloc))
       }
       ast::ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
         let from = func.id.as_ref().map_or(default_export_ref, |ident| ident.name.as_str());
+
         self.generated_exports.push(self.snippet.object_property_kind_object_property(
           "default",
           self.snippet.id_ref_expr(from, SPAN),
           false,
         ));
+
         self
           .snippet
           .builder
@@ -159,11 +170,13 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
       }
       ast::ExportDefaultDeclarationKind::ClassDeclaration(class) => {
         let from = class.id.as_ref().map_or(default_export_ref, |ident| ident.name.as_str());
+
         self.generated_exports.push(self.snippet.object_property_kind_object_property(
           "default",
           self.snippet.id_ref_expr(from, SPAN),
           false,
         ));
+
         self
           .snippet
           .builder
@@ -183,7 +196,9 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
     match &export_named_decl.source {
       Some(_) => {
         let module = self.get_importee_module(export_named_decl.span);
+
         let namespace_object_ref = self.create_namespace_object_ref_for_module(module);
+
         self.create_require_call_stmt(
           &module.stable_id().into(),
           module.interop(),
@@ -226,6 +241,7 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
             matches!(specifier.exported, ast::ModuleExportName::StringLiteral(_))
           )
         }));
+
         None
       }
       None => {
@@ -251,6 +267,7 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
                 ),
               ));
             }
+
             ast::Declaration::FunctionDeclaration(func_decl) => {
               let from =
                 func_decl.id.as_ref().expect("FunctionDeclaration should have ident").name.as_str();
@@ -264,6 +281,7 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
                 Expression::FunctionExpression(func_decl.take_in(self.alloc)),
               ));
             }
+
             ast::Declaration::ClassDeclaration(class_decl) => {
               let from =
                 class_decl.id.as_ref().expect("ClassDeclaration should have ident").name.as_str();
@@ -277,6 +295,7 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
                 Expression::ClassExpression(class_decl.take_in(self.alloc)),
               ));
             }
+
             _ => {}
           }
         }
@@ -298,6 +317,7 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
             matches!(specifier.exported, ast::ModuleExportName::StringLiteral(_)
           ))
         }));
+
         None
       }
     }
@@ -308,7 +328,9 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
     export_all_decl: &ast::ExportAllDeclaration<'ast>,
   ) {
     let module = self.get_importee_module(export_all_decl.span);
+
     let namespace_object_ref = self.create_namespace_object_ref_for_module(module);
+
     self.create_require_call_stmt(
       &module.stable_id().into(),
       module.interop(),
@@ -370,6 +392,7 @@ impl<'me, 'ast> IsolatingModuleFinalizer<'me, 'ast> {
 
   fn get_importee_module(&self, span: Span) -> &Module {
     let rec_id = self.ctx.module.imports[&span];
+
     let rec = &self.ctx.module.import_records[rec_id];
     &self.ctx.modules[rec.resolved_module]
   }

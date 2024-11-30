@@ -63,25 +63,30 @@ pub fn render_esm<'code>(
 
   if let Some(entry_id) = ctx.chunk.entry_module_idx() {
     let entry_meta = &ctx.link_output.metas[entry_id];
+
     match entry_meta.wrap_kind {
       WrapKind::Esm => {
         // init_xxx()
         let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
+
         let wrapper_ref_name = ctx.finalized_string_pattern_for_symbol_ref(
           *wrapper_ref,
           ctx.chunk_idx,
           &ctx.chunk.canonical_names,
         );
+
         source_joiner.append_source(concat_string!(wrapper_ref_name.as_str(), "();"));
       }
       WrapKind::Cjs => {
         // "export default require_xxx();"
         let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
+
         let wrapper_ref_name = ctx.finalized_string_pattern_for_symbol_ref(
           *wrapper_ref,
           ctx.chunk_idx,
           &ctx.chunk.canonical_names,
         );
+
         source_joiner.append_source(concat_string!(
           "export default ",
           wrapper_ref_name.as_str(),
@@ -114,26 +119,33 @@ fn render_esm_chunk_imports(ctx: &GenerateContext<'_>) -> String {
 
   ctx.chunk.imports_from_other_chunks.iter().for_each(|(exporter_id, items)| {
     let importee_chunk = &ctx.chunk_graph.chunk_table[*exporter_id];
+
     let mut default_alias = vec![];
+
     let mut specifiers = items
       .iter()
       .filter_map(|item| {
         let canonical_ref = ctx.link_output.symbol_db.canonical_ref_for(item.import_ref);
+
         let imported = &ctx.chunk.canonical_names[&canonical_ref];
+
         let Specifier::Literal(alias) = item.export_alias.as_ref().unwrap() else {
           panic!("should not be star import from other chunks")
         };
+
         if alias == imported {
           Some(alias.as_str().into())
         } else {
           if alias.as_str() == "default" {
             default_alias.push(imported.as_str().into());
+
             return None;
           }
           Some(concat_string!(alias, " as ", imported))
         }
       })
       .collect::<Vec<_>>();
+
     specifiers.sort_unstable();
 
     s.push_str(&create_import_declaration(
@@ -151,23 +163,34 @@ fn render_esm_chunk_imports(ctx: &GenerateContext<'_>) -> String {
       .expect("Should be external module here");
 
     let mut has_importee_imported = false;
+
     let mut default_alias = vec![];
+
     let mut specifiers = named_imports
       .iter()
       .filter_map(|item| {
         let canonical_ref = &ctx.link_output.symbol_db.canonical_ref_for(item.imported_as);
+
         if !ctx.link_output.used_symbol_refs.contains(canonical_ref) {
           return None;
         };
+
         let alias = &ctx.chunk.canonical_names[canonical_ref];
+
         match &item.imported {
           Specifier::Star => {
             has_importee_imported = true;
+
             s.push_str("import * as ");
+
             s.push_str(alias);
+
             s.push_str(" from \"");
+
             s.push_str(&importee.name);
+
             s.push_str("\";\n");
+
             None
           }
           Specifier::Literal(imported) => {
@@ -176,6 +199,7 @@ fn render_esm_chunk_imports(ctx: &GenerateContext<'_>) -> String {
             } else {
               if imported.as_str() == "default" {
                 default_alias.push(alias.as_str().into());
+
                 return None;
               }
               Some(concat_string!(imported, " as ", alias))
@@ -184,7 +208,9 @@ fn render_esm_chunk_imports(ctx: &GenerateContext<'_>) -> String {
         }
       })
       .collect::<Vec<_>>();
+
     specifiers.sort_unstable();
+
     default_alias.sort_unstable();
 
     if !specifiers.is_empty()
@@ -214,24 +240,36 @@ fn create_import_declaration(
   };
   if !specifiers.is_empty() {
     ret.push_str("import ");
+
     if let Some(first_default_alias) = first_default_alias {
       ret.push_str(first_default_alias);
       ret.push_str(", ");
     }
+
     ret.push_str("{ ");
+
     ret.push_str(&specifiers.join(", "));
+
     ret.push_str(" } from \"");
+
     ret.push_str(path);
+
     ret.push_str("\";\n");
   } else if let Some(first_default_alias) = first_default_alias {
     ret.push_str("import ");
+
     ret.push_str(first_default_alias);
+
     ret.push_str(" from \"");
+
     ret.push_str(path);
+
     ret.push_str("\";\n");
   } else {
     ret.push_str("import \"");
+
     ret.push_str(path);
+
     ret.push_str("\";\n");
   }
   ret

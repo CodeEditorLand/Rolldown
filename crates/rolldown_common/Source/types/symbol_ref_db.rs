@@ -65,6 +65,7 @@ impl SymbolRefDbForModule {
       chunk_id: None,
       namespace_alias: None,
     });
+
     let symbol_id = self.symbol_table.create_symbol(
       SPAN,
       name,
@@ -107,6 +108,7 @@ pub struct SymbolRefDb {
 impl SymbolRefDb {
   fn ensure_exact_capacity(&mut self, module_idx: ModuleIdx) {
     let new_len = module_idx.index() + 1;
+
     if self.inner.len() < new_len {
       self.inner.resize_with(new_len, || None);
     }
@@ -124,17 +126,21 @@ impl SymbolRefDb {
     name: CompactString,
   ) -> SymbolRef {
     self.ensure_exact_capacity(owner);
+
     self.inner[owner].unpack_ref_mut().create_facade_root_symbol_ref(name)
   }
 
   /// Make `base` point to `target`
   pub fn link(&mut self, base: SymbolRef, target: SymbolRef) {
     let base_root = self.find_mut(base);
+
     let target_root = self.find_mut(target);
+
     if base_root == target_root {
       // already linked
       return;
     }
+
     self.get_mut(base_root).link = Some(target_root);
   }
 
@@ -144,6 +150,7 @@ impl SymbolRefDb {
     canonical_names: &'name FxHashMap<SymbolRef, Rstr>,
   ) -> &'name Rstr {
     let canonical_ref = self.canonical_ref_for(refer);
+
     canonical_names.get(&canonical_ref).unwrap_or_else(|| {
       panic!(
         "canonical name not found for {canonical_ref:?}, original_name: {:?}",
@@ -164,6 +171,7 @@ impl SymbolRefDb {
   /// See Path halving
   pub fn find_mut(&mut self, target: SymbolRef) -> SymbolRef {
     let mut canonical = target;
+
     while let Some(parent) = self.get_mut(canonical).link {
       self.get_mut(canonical).link = self.get_mut(parent).link;
       canonical = parent;
@@ -175,15 +183,18 @@ impl SymbolRefDb {
   // Used for the situation where rust require `&self`
   pub fn canonical_ref_for(&self, target: SymbolRef) -> SymbolRef {
     let mut canonical = target;
+
     while let Some(founded) = self.get(canonical).link {
       debug_assert!(founded != target);
       canonical = founded;
     }
+
     canonical
   }
 
   pub fn is_declared_in_root_scope(&self, refer: SymbolRef) -> bool {
     let local_db = self.inner[refer.owner].unpack_ref();
+
     local_db.get_scope_id(refer.symbol) == local_db.root_scope_id
   }
 }
@@ -211,6 +222,7 @@ impl GetLocalDbMut for SymbolRefDb {
 impl GetLocalDb for SymbolRefDbForModule {
   fn local_db(&self, owner: ModuleIdx) -> &SymbolRefDbForModule {
     debug_assert!(self.owner_idx == owner);
+
     self
   }
 }
@@ -218,6 +230,7 @@ impl GetLocalDb for SymbolRefDbForModule {
 impl GetLocalDbMut for SymbolRefDbForModule {
   fn local_db_mut(&mut self, owner: ModuleIdx) -> &mut SymbolRefDbForModule {
     debug_assert!(self.owner_idx == owner);
+
     self
   }
 }

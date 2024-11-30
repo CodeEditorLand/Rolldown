@@ -24,6 +24,7 @@ impl AliasPlugin {
         if importee.len() < p.len() {
           return false;
         }
+
         if importee == p {
           return true;
         }
@@ -46,7 +47,9 @@ impl Plugin for AliasPlugin {
     args: &rolldown_plugin::HookResolveIdArgs<'_>,
   ) -> rolldown_plugin::HookResolveIdReturn {
     let importee = args.specifier;
+
     let match_entry = self.entries.iter().find(|alias| Self::matches(&alias.find, importee));
+
     let Some(match_entry) = match_entry else {
       return Ok(None);
     };
@@ -55,6 +58,7 @@ impl Plugin for AliasPlugin {
       StringOrRegex::String(find) => importee.replace(find, &match_entry.replacement),
       StringOrRegex::Regex(find) => find.replace_all(importee, &match_entry.replacement),
     };
+
     Ok(
       ctx
         .resolve(

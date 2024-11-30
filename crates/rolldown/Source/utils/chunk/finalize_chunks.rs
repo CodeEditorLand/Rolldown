@@ -115,7 +115,9 @@ pub fn finalize_assets(
 
       if let InstantiationKind::Ecma(ecma_meta) = &mut asset.kind {
         ecma_meta.rendered_chunk.filename = filename.clone();
+
         let (_, debug_id) = index_final_hashes[asset_idx];
+
         ecma_meta.rendered_chunk.debug_id = debug_id;
       }
 
@@ -126,6 +128,7 @@ pub fn finalize_assets(
             replace_placeholder_with_hash(mem::take(content), &final_hashes_by_placeholder)
               .into_owned();
         }
+
         StrOrBytes::Bytes(_content) => {}
       }
 

@@ -101,9 +101,13 @@ pub struct ConcatSource {
 impl ConcatSource {
   fn add_sourcemap(&mut self, sourcemap: &SourceMap) {
     self.enable_sourcemap = true;
+
     self.names_len += sourcemap.get_names().count();
+
     self.sources_len += sourcemap.get_sources().count();
+
     self.tokens_len += sourcemap.get_tokens().count();
+
     self.token_chunks_len += 1;
   }
 
@@ -111,6 +115,7 @@ impl ConcatSource {
     if let Some(sourcemap) = source.sourcemap() {
       self.add_sourcemap(sourcemap);
     }
+
     self.inner.push(source);
   }
 
@@ -118,11 +123,13 @@ impl ConcatSource {
     if let Some(sourcemap) = source.sourcemap() {
       self.add_sourcemap(sourcemap);
     }
+
     self.prepend_source.push(source);
   }
 
   pub fn content_and_sourcemap(self) -> (String, Option<SourceMap>) {
     let mut final_source = String::new();
+
     let mut sourcemap_builder = self.enable_sourcemap.then(|| {
       ConcatSourceMapBuilder::with_capacity(
         self.names_len,
@@ -131,13 +138,16 @@ impl ConcatSource {
         self.token_chunks_len,
       )
     });
+
     let mut line_offset = 0;
+
     let source_len = self.prepend_source.len() + self.inner.len();
 
     for (index, source) in self.prepend_source.iter().chain(self.inner.iter()).enumerate() {
       source.into_concat_source(&mut final_source, &mut sourcemap_builder, line_offset);
       if index < source_len - 1 {
         final_source.push('\n');
+
         line_offset += source.lines_count() + 1; // +1 for the newline
       }
     }

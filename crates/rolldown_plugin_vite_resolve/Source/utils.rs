@@ -28,6 +28,7 @@ pub fn is_bare_import(id: &str) -> bool {
 pub fn is_deep_import(id: &str) -> bool {
   if id.starts_with('@') {
     let split: Vec<&str> = id.splitn(3, '/').collect();
+
     split.len() == 3 && split[0].len() >= 2 && !split[1].is_empty()
   } else {
     id[1..].contains('/')
@@ -71,8 +72,11 @@ pub fn normalize_path(path: &str) -> Cow<str> {
 pub fn get_npm_package_name(id: &str) -> Option<&str> {
   if id.starts_with('@') {
     let mut indices = id.match_indices('/');
+
     indices.next()?;
+
     let second_pos = indices.next().map_or(id.len(), |(pos, _)| pos);
+
     Some(&id[0..second_pos])
   } else {
     id.split('/').next()

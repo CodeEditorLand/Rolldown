@@ -42,10 +42,13 @@ pub fn collect_render_chunk_imports(
       .iter()
       .map(|item| {
         let canonical_ref = graph.symbol_db.canonical_ref_for(item.import_ref);
+
         let local_binding = &chunk.canonical_names[&canonical_ref];
+
         let Specifier::Literal(export_alias) = item.export_alias.as_ref().unwrap() else {
           panic!("should not be star import from other chunks")
         };
+
         RenderImportSpecifier {
           imported: export_alias.as_str().into(),
           alias: if export_alias == local_binding {
@@ -56,6 +59,7 @@ pub fn collect_render_chunk_imports(
         }
       })
       .collect::<Vec<_>>();
+
     specifiers.sort_unstable();
 
     render_import_stmts.push(RenderImportStmt::NormalRenderImportStmt());
@@ -77,14 +81,19 @@ pub fn collect_render_chunk_imports(
         } else {
           importee.namespace_ref
         };
+
         let canonical_ref = graph.symbol_db.canonical_ref_for(target);
+
         if !graph.used_symbol_refs.contains(&canonical_ref) {
           return None;
         };
+
         let alias = &chunk.canonical_names[&canonical_ref];
+
         match &item.imported {
           Specifier::Star => {
             has_importee_imported = true;
+
             render_import_stmts.push(RenderImportStmt::ExternalRenderImportStmt(
               ExternalRenderImportStmt {
                 path: importee.name.clone(),
@@ -92,6 +101,7 @@ pub fn collect_render_chunk_imports(
                 specifiers: RenderImportDeclarationSpecifier::ImportStarSpecifier(),
               },
             ));
+
             None
           }
           Specifier::Literal(imported) => Some(RenderImportSpecifier {
@@ -101,6 +111,7 @@ pub fn collect_render_chunk_imports(
         }
       })
       .collect::<Vec<_>>();
+
     specifiers.sort_unstable();
 
     if !specifiers.is_empty()

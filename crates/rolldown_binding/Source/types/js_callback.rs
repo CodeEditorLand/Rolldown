@@ -97,6 +97,7 @@ where
       Either::B(_unknown) => {
         // TODO: should provide more information about the unknown return value
         let js_type = "unknown";
+
         let expected_rust_type = pretty_type_name::<Ret>();
 
         Err(napi::Error::new(

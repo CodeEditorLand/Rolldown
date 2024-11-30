@@ -51,7 +51,9 @@ fn normalize_chunk_file_names_option(
       Either::A(str) => Ok(ChunkFilenamesOutputOption::String(str)),
       Either::B(func) => Ok(ChunkFilenamesOutputOption::Fn(Arc::new(move |chunk| {
         let func = Arc::clone(&func);
+
         let chunk = chunk.clone();
+
         Box::pin(async move { func.invoke_async(chunk.into()).await.map_err(anyhow::Error::from) })
       }))),
     })
@@ -65,6 +67,7 @@ fn normalize_globals_option(
     Either::A(hash_map) => {
       rolldown_common::GlobalsOutputOption::FxHashMap(hash_map.into_iter().collect())
     }
+
     Either::B(func) => rolldown_common::GlobalsOutputOption::Fn(Arc::new(move |name| {
       let func = Arc::clone(&func);
       let name = name.to_string();
@@ -124,6 +127,7 @@ pub fn normalize_binding_options(
   let mut module_types = None;
   if let Some(raw) = input_options.module_types {
     let mut tmp = HashMap::with_capacity(raw.len());
+
     for (k, v) in raw {
       tmp.insert(
         k,
@@ -131,6 +135,7 @@ pub fn normalize_binding_options(
           .map_err(|err| napi::Error::new(napi::Status::GenericFailure, err))?,
       );
     }
+
     module_types = Some(tmp);
   }
 
@@ -267,6 +272,7 @@ pub fn normalize_binding_options(
           Either::B(builtin) => {
             // Needs to save the name, since `try_into` will consume the ownership
             let name = format!("{:?}", builtin.__name);
+
             builtin
               .try_into()
               .unwrap_or_else(|err| panic!("Should convert to builtin plugin: {name} \n {err}"))

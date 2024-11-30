@@ -34,6 +34,7 @@ impl ParallelJsPluginRegistry {
     }
 
     let id = NEXT_ID.fetch_add(1, atomic::Ordering::Relaxed);
+
     PLUGINS_MAP.insert(id, vec![]);
 
     Ok(Self { id, worker_count })
@@ -44,6 +45,7 @@ impl ParallelJsPluginRegistry {
 
     let mut map: FxHashMap<usize, Vec<BindingPluginOptions>> =
       FxHashMap::with_capacity(plugins_list[0].len());
+
     for plugins in plugins_list {
       for plugin in plugins {
         map.entry(plugin.index as usize).or_default().push(plugin.plugin);
@@ -57,6 +59,7 @@ impl ParallelJsPluginRegistry {
 impl ObjectFinalize for ParallelJsPluginRegistry {
   fn finalize(self, mut _env: Env) -> napi::Result<()> {
     PLUGINS_MAP.remove(&self.id);
+
     Ok(())
   }
 }
@@ -67,13 +70,17 @@ impl FromNapiValue for ParallelJsPluginRegistry {
     napi_val: napi::sys::napi_value,
   ) -> napi::Result<Self> {
     let unknown = JsUnknown::from_napi_value(env, napi_val)?;
+
     if !ParallelJsPluginRegistry::instance_of(env.into(), &unknown)? {
       return Err(napi::Error::from_status(napi::Status::GenericFailure));
     }
 
     let object: Object = unknown.cast();
+
     let id: u16 = object.get_named_property_unchecked("id")?;
+
     let worker_count: u16 = object.get_named_property_unchecked("workerCount")?;
+
     Ok(Self { id, worker_count })
   }
 }

@@ -30,6 +30,7 @@ pub fn normalize_binding_inject_import(item: BindingInjectImport) -> InjectImpor
     Either::A(named) => {
       InjectImport::Named { imported: named.imported, alias: named.alias, from: named.from }
     }
+
     Either::B(namespace) => {
       InjectImport::Namespace { alias: namespace.alias, from: namespace.from }
     }

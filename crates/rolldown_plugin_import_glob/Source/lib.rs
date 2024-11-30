@@ -60,6 +60,7 @@ impl Plugin for ImportGlobPlugin {
         fields.program.body.extend(visitor.import_decls);
       }
     });
+
     Ok(args.ast)
   }
 }
@@ -123,6 +124,7 @@ impl<'ast, 'a> VisitMut<'ast> for GlobImportVisit<'ast, 'a> {
             }
           }
         }
+
         _ => {}
       }
     }
@@ -166,6 +168,7 @@ fn extract_import_glob_options(arg: &Argument, opts: &mut ImportGlobOptions) {
         Expression::StringLiteral(str) => {
           opts.query = Some(str.value.to_string());
         }
+
         Expression::ObjectExpression(expr) => {
           let map = expr
             .properties
@@ -196,9 +199,11 @@ fn extract_import_glob_options(arg: &Argument, opts: &mut ImportGlobOptions) {
               }
               query_string.push_str(&format!("{k}={v}"));
             }
+
             opts.query = Some(query_string);
           }
         }
+
         _ => {}
       },
       _ => {}
@@ -209,6 +214,7 @@ fn extract_import_glob_options(arg: &Argument, opts: &mut ImportGlobOptions) {
 impl<'ast, 'a> GlobImportVisit<'ast, 'a> {
   fn eval_glob_expr(&mut self, arg: &Argument, files: &mut std::vec::Vec<String>) {
     let mut glob_exprs = vec![];
+
     match arg {
       Argument::StringLiteral(str) => {
         glob_exprs.push(str.value.as_str());
@@ -233,6 +239,7 @@ impl<'ast, 'a> GlobImportVisit<'ast, 'a> {
       // TODO handle error
       for file in glob(&absolute_glob).unwrap() {
         let file = file.unwrap().as_path().relative(dir.as_ref()).to_slash_lossy().to_string();
+
         files.push(format!("./{file}"));
       }
     }
@@ -258,6 +265,7 @@ impl<'ast, 'a> GlobImportVisit<'ast, 'a> {
             query
           }
         };
+
         Cow::Owned(format!("{file}{normalized_query}"))
       } else {
         Cow::Borrowed(file)
@@ -267,6 +275,7 @@ impl<'ast, 'a> GlobImportVisit<'ast, 'a> {
         // const modules = {
         //   './dir/foo.js': __glob__0,
         // }
+
         let name = format!(
           "__glob__{}_{}_",
           itoa::Buffer::new().format(self.current),
@@ -404,6 +413,7 @@ impl<'ast, 'a> GlobImportVisit<'ast, 'a> {
     });
 
     let properties = self.ast_builder.vec_from_iter(properties);
+
     self.ast_builder.expression_object(call_expr_span, properties, None)
   }
 }
@@ -415,6 +425,7 @@ fn preprocess_glob_expr(glob_expr: &str) -> String {
   let mut new_glob_expr = String::with_capacity(glob_expr.len());
   while let Some(part) = parts.next() {
     new_glob_expr.push_str(&part.replace("**.", "*."));
+
     if parts.peek().is_some() {
       new_glob_expr.push('/');
     }
@@ -430,11 +441,13 @@ fn to_absolute_glob<'a>(
   let mut pre: Option<char> = None;
   if glob.starts_with('!') {
     pre = Some('!');
+
     glob = &glob[1..];
   }
 
   let dir = {
     let dir = Path::new(importer).parent().unwrap_or_else(|| Path::new(root));
+
     dir.to_slash_lossy()
   };
 

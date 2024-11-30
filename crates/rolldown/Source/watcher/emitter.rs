@@ -14,12 +14,14 @@ pub struct WatcherEmitter {
 impl WatcherEmitter {
   pub fn new() -> Self {
     let (tx, rx) = std::sync::mpsc::channel::<WatcherEvent>();
+
     Self { tx: Arc::new(tx), rx: Arc::new(Mutex::new(rx)) }
   }
 
   #[allow(clippy::needless_pass_by_value)]
   pub fn emit(&self, event: WatcherEvent) -> Result<()> {
     self.tx.send(event)?;
+
     Ok(())
   }
 }

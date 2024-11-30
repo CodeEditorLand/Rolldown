@@ -18,7 +18,9 @@ impl<'a> GenerateStage<'a> {
               asset.map.is_some(),
               &asset.filename,
             )?;
+
             asset.content = minified_content.into();
+
             match (&asset.map, &new_map) {
               (Some(origin_map), Some(new_map)) => {
                 asset.map = Some(collapse_sourcemaps(vec![origin_map, new_map]));
@@ -30,6 +32,7 @@ impl<'a> GenerateStage<'a> {
           }
           rolldown_common::InstantiationKind::None => {}
         }
+
         Ok(())
       })?;
     }

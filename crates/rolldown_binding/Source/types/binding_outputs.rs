@@ -34,11 +34,13 @@ impl BindingOutputs {
         .map(|diagnostic| into_js_diagnostic(diagnostic, cwd.clone(), env))
         .collect();
     }
+
     Ok(vec![])
   }
 
   pub fn from_errors(diagnostics: Vec<BuildDiagnostic>, cwd: std::path::PathBuf) -> Self {
     let error = BindingOutputsDiagnostics { diagnostics, cwd };
+
     Self { assets: vec![], chunks: vec![], error: Some(error) }
   }
 }
@@ -46,7 +48,9 @@ impl BindingOutputs {
 impl From<Vec<rolldown_common::Output>> for BindingOutputs {
   fn from(outputs: Vec<rolldown_common::Output>) -> Self {
     let mut chunks = vec![];
+
     let mut assets = vec![];
+
     outputs.into_iter().for_each(|o| match o {
       rolldown_common::Output::Chunk(chunk) => {
         chunks.push(BindingOutputChunk::new(*chunk));
@@ -55,6 +59,7 @@ impl From<Vec<rolldown_common::Output>> for BindingOutputs {
         assets.push(BindingOutputAsset::new(*asset));
       }
     });
+
     Self { chunks, assets, error: None }
   }
 }

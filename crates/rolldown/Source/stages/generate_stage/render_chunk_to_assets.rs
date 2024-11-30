@@ -37,7 +37,9 @@ impl<'a> GenerateStage<'a> {
     chunk_graph: &mut ChunkGraph,
   ) -> BuildResult<BundleOutput> {
     let mut errors = std::mem::take(&mut self.link_output.errors);
+
     let mut warnings = std::mem::take(&mut self.link_output.warnings);
+
     let (mut instantiated_chunks, index_chunk_to_assets) =
       self.instantiate_chunks(chunk_graph, &mut errors, &mut warnings).await?;
 
@@ -55,7 +57,9 @@ impl<'a> GenerateStage<'a> {
     self.minify_assets(&mut assets)?;
 
     let mut output = Vec::with_capacity(assets.len());
+
     let mut output_assets = vec![];
+
     for Asset {
       mut map,
       meta: rendered_chunk,
@@ -68,7 +72,9 @@ impl<'a> GenerateStage<'a> {
     {
       if let InstantiationKind::Ecma(ecma_meta) = rendered_chunk {
         let mut code = code.try_into_string()?;
+
         let rendered_chunk = ecma_meta.rendered_chunk;
+
         if let Some(map) = map.as_mut() {
           let file_base_name =
             Path::new(rendered_chunk.filename.as_str()).file_name().expect("should have file name");
@@ -79,12 +85,14 @@ impl<'a> GenerateStage<'a> {
 
           if let Some(source_map_ignore_list) = &self.options.sourcemap_ignore_list {
             let mut x_google_ignore_list = vec![];
+
             for (index, source) in map.get_sources().enumerate() {
               if source_map_ignore_list.call(source, map_path.to_string_lossy().as_ref()).await? {
                 #[allow(clippy::cast_possible_truncation)]
                 x_google_ignore_list.push(index as u32);
               }
             }
+
             if !x_google_ignore_list.is_empty() {
               map.set_x_google_ignore_list(x_google_ignore_list);
             }
@@ -92,18 +100,23 @@ impl<'a> GenerateStage<'a> {
 
           if let Some(sourcemap_path_transform) = &self.options.sourcemap_path_transform {
             let mut sources = Vec::with_capacity(map.get_sources().count());
+
             for source in map.get_sources() {
               sources.push(
                 sourcemap_path_transform.call(source, map_path.to_string_lossy().as_ref()).await?,
               );
             }
+
             map.set_sources(sources.iter().map(std::convert::AsRef::as_ref).collect::<Vec<_>>());
           }
 
           if self.options.sourcemap_debug_ids && self.options.sourcemap.is_some() {
             let debug_id_str = uuid_v4_string_from_u128(rendered_chunk.debug_id);
+
             map.set_debug_id(&debug_id_str);
+
             code.push_str("\n//# debugId=");
+
             code.push_str(debug_id_str.as_str());
           }
 
@@ -116,12 +129,14 @@ impl<'a> GenerateStage<'a> {
             match sourcemap {
               SourceMapType::File | SourceMapType::Hidden => {
                 let source = map.to_json_string();
+
                 output_assets.push(Output::Asset(Box::new(OutputAsset {
                   filename: map_filename.as_str().into(),
                   source: source.into(),
                   original_file_name: None,
                   name: None,
                 })));
+
                 if matches!(sourcemap, SourceMapType::File) {
                   code.push_str("\n//# sourceMappingURL=");
                   code.push_str(
@@ -134,7 +149,9 @@ impl<'a> GenerateStage<'a> {
               }
               SourceMapType::Inline => {
                 let data_url = map.to_data_url();
+
                 code.push_str("\n//# sourceMappingURL=");
+
                 code.push_str(&data_url);
               }
             }
@@ -147,6 +164,7 @@ impl<'a> GenerateStage<'a> {
           } else {
             Some(concat_string!(rendered_chunk.filename, ".map"))
           };
+
         output.push(Output::Chunk(Box::new(OutputChunk {
           name: rendered_chunk.name,
           filename: rendered_chunk.filename,
@@ -208,8 +226,10 @@ impl<'a> GenerateStage<'a> {
   ) -> anyhow::Result<(IndexInstantiatedChunks, IndexChunkToAssets)> {
     let mut index_chunk_to_assets: IndexChunkToAssets =
       index_vec![IndexSet::default(); chunk_graph.chunk_table.len()];
+
     let mut index_preliminary_assets: IndexInstantiatedChunks =
       IndexVec::with_capacity(chunk_graph.chunk_table.len());
+
     let chunk_index_to_codegen_rets = self.create_chunk_to_codegen_ret_map(chunk_graph);
 
     try_join_all(
@@ -271,6 +291,7 @@ impl<'a> GenerateStage<'a> {
           let asset_idx = index_preliminary_assets.push(asset);
           index_chunk_to_assets[origin_chunk].insert(asset_idx);
         });
+
         warnings.extend(generate_output.warnings);
       }
       Err(e) => errors.extend(e.into_vec()),
@@ -315,6 +336,7 @@ impl<'a> GenerateStage<'a> {
           .collect::<Vec<_>>()
       })
       .collect::<Vec<_>>();
+
     chunk_to_codegen_ret
   }
 }

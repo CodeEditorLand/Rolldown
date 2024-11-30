@@ -20,9 +20,11 @@ impl TryFrom<BindingPluginContextResolveOptions> for PluginContextResolveOptions
 
   fn try_from(value: BindingPluginContextResolveOptions) -> Result<Self, Self::Error> {
     let custom = TypedDashMap::new();
+
     if let Some(js_custom_id) = value.custom {
       custom.insert(JsPluginContextResolveCustomArgId, js_custom_id);
     }
+
     Ok(Self {
       import_kind: value.import_kind.as_deref().unwrap_or("import").try_into()?,
       skip_self: value.skip_self.unwrap_or(true),

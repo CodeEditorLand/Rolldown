@@ -61,7 +61,9 @@ fn regress_regexp_replace_all<'a>(
   let mut last = 0;
   for m in iter {
     ret.push_str(&haystack[last..m.start()]);
+
     ret.push_str(replacement);
+
     last = m.end();
   }
   ret.push_str(&haystack[last..]);
@@ -75,15 +77,18 @@ mod test {
   #[test]
   fn with_flags() {
     let reg = super::HybridRegex::with_flags("a", "i").unwrap();
+
     assert!(reg.matches("A"));
 
     let reg = super::HybridRegex::new("a").unwrap();
+
     assert!(!reg.matches("A"));
   }
 
   #[test]
   fn regress_replace_all() {
     let reg = regress::Regex::new("\\d+").unwrap();
+
     assert_eq!(regress_regexp_replace_all(&reg, "111aa111", "1"), "1aa1");
   }
 }

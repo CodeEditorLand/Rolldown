@@ -57,6 +57,7 @@ impl From<ArcStr> for ModuleId {
 impl ModuleId {
   pub fn relative_path(&self, root: impl AsRef<Path>) -> PathBuf {
     let path = self.0.as_path();
+
     path.relative(root)
   }
 }

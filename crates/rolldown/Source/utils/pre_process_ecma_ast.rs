@@ -42,10 +42,12 @@ impl PreProcessEcmaAst {
     has_lazy_export: bool,
   ) -> BuildResult<ParseToEcmaAstResult> {
     let mut warning = vec![];
+
     let source = ast.source().clone();
     // Build initial semantic data and check for semantic errors.
     let semantic_ret =
       ast.program.with_mut(|WithMutFields { program, .. }| SemanticBuilder::new().build(program));
+
     if !semantic_ret.errors.is_empty() {
       warning.extend(BuildDiagnostic::from_oxc_diagnostics(
         semantic_ret.errors,
@@ -56,6 +58,7 @@ impl PreProcessEcmaAst {
     }
 
     self.stats = semantic_ret.semantic.stats();
+
     let (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
 
     let (mut symbols, mut scopes) = ast.program.with_mut(|fields| {
@@ -64,6 +67,7 @@ impl PreProcessEcmaAst {
       if let Some(replace_global_define_config) = replace_global_define_config {
         let ret = ReplaceGlobalDefines::new(allocator, replace_global_define_config.clone())
           .build(symbols, scopes, program);
+
         self.ast_changed = true;
         (ret.symbols, ret.scopes)
       } else {
@@ -75,7 +79,9 @@ impl PreProcessEcmaAst {
     {
       let ret = ast.program.with_mut(|fields| {
         let target: OxcESTarget = bundle_options.target.into();
+
         let mut transformer_options = TransformOptions::from(target);
+
         match parse_type {
           OxcParseType::Js => {}
           OxcParseType::Jsx | OxcParseType::Tsx => {
@@ -83,6 +89,7 @@ impl PreProcessEcmaAst {
           }
           OxcParseType::Ts => {}
         }
+
         if let Some(jsx) = &bundle_options.jsx {
           transformer_options.jsx = jsx.clone();
         }
@@ -118,13 +125,17 @@ impl PreProcessEcmaAst {
         // TODO: real ast_changed hint https://github.com/oxc-project/oxc/pull/7205
         let semantic_ret = SemanticBuilder::new().with_stats(self.stats).build(program);
         (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
+
         let ret = InjectGlobalVariables::new(
           allocator,
           bundle_options.oxc_inject_global_variables_config.clone(),
         )
         .build(symbols, scopes, program);
+
         symbols = ret.symbols;
+
         scopes = ret.scopes;
+
         self.ast_changed = true;
       }
 
@@ -133,10 +144,12 @@ impl PreProcessEcmaAst {
         // Perform dead code elimination.
         // NOTE: `CompressOptions::dead_code_elimination` will remove `ParenthesizedExpression`s from the AST.
         let compressor = Compressor::new(allocator, CompressOptions::dead_code_elimination());
+
         if self.ast_changed {
           let semantic_ret = SemanticBuilder::new().with_stats(self.stats).build(program);
           (symbols, scopes) = semantic_ret.semantic.into_symbol_table_and_scope_tree();
         }
+
         compressor.build_with_symbols_and_scopes(symbols, scopes, program);
       }
 

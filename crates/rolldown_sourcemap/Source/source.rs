@@ -49,6 +49,7 @@ impl SourceMapSource {
     if pre_compute {
       self.pre_computed_lines_count = Some(lines_count(&self.content));
     }
+
     self
   }
 }

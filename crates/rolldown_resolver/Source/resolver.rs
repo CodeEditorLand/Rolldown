@@ -34,10 +34,13 @@ impl<F: FileSystem + Default> Resolver<F> {
   #[allow(clippy::too_many_lines)]
   pub fn new(raw_resolve: ResolveOptions, platform: Platform, cwd: PathBuf, fs: F) -> Self {
     let mut default_conditions = vec!["default".to_string()];
+
     let mut import_conditions = vec!["import".to_string()];
+
     let mut require_conditions = vec!["require".to_string()];
 
     default_conditions.extend(raw_resolve.condition_names.clone().unwrap_or_default());
+
     match platform {
       Platform::Node => {
         default_conditions.push("node".to_string());
@@ -47,10 +50,15 @@ impl<F: FileSystem + Default> Resolver<F> {
       }
       Platform::Neutral => {}
     }
+
     default_conditions = default_conditions.into_iter().unique().collect();
+
     import_conditions.extend(default_conditions.clone());
+
     require_conditions.extend(default_conditions.clone());
+
     import_conditions = import_conditions.into_iter().unique().collect();
+
     require_conditions = require_conditions.into_iter().unique().collect();
 
     let main_fields = raw_resolve.main_fields.clone().unwrap_or_else(|| match platform {
@@ -74,6 +82,7 @@ impl<F: FileSystem + Default> Resolver<F> {
     let resolve_options_with_default_conditions = OxcResolverOptions {
       tsconfig: raw_resolve.tsconfig_filename.map(|p| {
         let path = PathBuf::from(&p);
+
         TsconfigOptions {
           config_file: if path.is_relative() { cwd.join(path) } else { path },
           references: oxc_resolver::TsconfigReferences::Disabled,
@@ -115,10 +124,12 @@ impl<F: FileSystem + Default> Resolver<F> {
       symlinks: raw_resolve.symlinks.unwrap_or(true),
       builtin_modules,
     };
+
     let resolve_options_with_import_conditions = OxcResolverOptions {
       condition_names: import_conditions,
       ..resolve_options_with_default_conditions.clone()
     };
+
     let resolve_options_with_require_conditions = OxcResolverOptions {
       condition_names: require_conditions,
       ..resolve_options_with_default_conditions.clone()
@@ -136,11 +147,15 @@ impl<F: FileSystem + Default> Resolver<F> {
 
     let default_resolver =
       ResolverGeneric::new_with_file_system(fs, resolve_options_with_default_conditions);
+
     let import_resolver =
       default_resolver.clone_with_options(resolve_options_with_import_conditions);
+
     let require_resolver =
       default_resolver.clone_with_options(resolve_options_with_require_conditions);
+
     let css_resolver = default_resolver.clone_with_options(resolve_options_for_css);
+
     let new_url_resolver = default_resolver.clone_with_options(resolve_options_for_new_url);
 
     Self {
@@ -207,6 +222,7 @@ impl<F: FileSystem + Default> Resolver<F> {
         // // Related rollup code: https://github.com/rollup/rollup/blob/680912e2ceb42c8d5e571e01c6ece0e4889aecbb/src/utils/resolveId.ts#L56.
         let fallback = selected_resolver
           .resolve(context_dir, &self.cwd.join(specifier).normalize().to_string_lossy());
+
         if fallback.is_ok() {
           resolution = fallback;
         }
@@ -216,7 +232,9 @@ impl<F: FileSystem + Default> Resolver<F> {
     match resolution {
       Ok(info) => {
         let package_json = info.package_json().map(|p| self.cached_package_json(p));
+
         let module_type = infer_module_def_format(&info);
+
         Ok(Ok(build_resolve_ret(
           info.full_path().to_str().expect("Should be valid utf8").to_string(),
           module_type,
@@ -251,6 +269,7 @@ fn infer_module_def_format(info: &Resolution) -> ModuleDefFormat {
 
   if let Some(package_json) = info.package_json() {
     let type_value = package_json.r#type.as_ref().and_then(|v| v.as_str());
+
     if type_value == Some("module") {
       return ModuleDefFormat::EsmPackageJson;
     } else if type_value == Some("commonjs") {

@@ -88,6 +88,7 @@ impl LinkingMetadata {
         })
       }
     };
+
     self.canonical_exports().filter(move |(name, _)| match partial_used_exports {
       Some(set) => set.contains(name.as_str()),
       None => true,

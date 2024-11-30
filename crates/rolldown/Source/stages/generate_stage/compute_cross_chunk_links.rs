@@ -32,13 +32,17 @@ impl<'a> GenerateStage<'a> {
   pub fn compute_cross_chunk_links(&mut self, chunk_graph: &mut ChunkGraph) {
     let mut index_chunk_depended_symbols: IndexChunkDependedSymbols =
       index_vec![FxHashSet::<SymbolRef>::default(); chunk_graph.chunk_table.len()];
+
     let mut index_chunk_exported_symbols: IndexChunkExportedSymbols =
       index_vec![FxHashSet::<SymbolRef>::default(); chunk_graph.chunk_table.len()];
+
     let mut index_chunk_imports_from_external_modules: IndexChunkImportsFromExternalModules = index_vec![FxHashMap::<ModuleIdx, Vec<NamedImport>>::default(); chunk_graph.chunk_table.len()];
 
     let mut index_imports_from_other_chunks: IndexImportsFromOtherChunks = index_vec![FxHashMap::<ChunkIdx, Vec<CrossChunkImportItem>>::default(); chunk_graph.chunk_table.len()];
+
     let mut index_cross_chunk_imports: IndexCrossChunkImports =
       index_vec![FxHashSet::default(); chunk_graph.chunk_table.len()];
+
     let mut index_cross_chunk_dynamic_imports: IndexCrossChunkDynamicImports =
       index_vec![IndexSet::default(); chunk_graph.chunk_table.len()];
 
@@ -67,6 +71,7 @@ impl<'a> GenerateStage<'a> {
       .into_par_iter()
       .map(|cross_chunk_imports| {
         let mut cross_chunk_imports = cross_chunk_imports.into_iter().collect::<Vec<_>>();
+
         cross_chunk_imports.sort_by_cached_key(|chunk_id| {
           let mut module_ids = chunk_graph.chunk_table[*chunk_id]
             .modules
@@ -76,6 +81,7 @@ impl<'a> GenerateStage<'a> {
           module_ids.sort_unstable();
           module_ids
         });
+
         cross_chunk_imports
       })
       .collect::<Vec<_>>();
@@ -123,8 +129,11 @@ impl<'a> GenerateStage<'a> {
         cross_chunk_dynamic_imports,
       )| {
         chunk.imports_from_other_chunks = sorted_imports_from_other_chunks;
+
         chunk.imports_from_external_modules = imports_from_external_modules;
+
         chunk.cross_chunk_imports = cross_chunk_imports;
+
         chunk.cross_chunk_dynamic_imports =
           cross_chunk_dynamic_imports.into_iter().collect::<Vec<_>>();
       },
@@ -142,6 +151,7 @@ impl<'a> GenerateStage<'a> {
     index_cross_chunk_dynamic_imports: &mut IndexCrossChunkDynamicImports,
   ) {
     let symbols = &self.link_output.symbol_db;
+
     let chunk_id_to_symbols_vec = append_only_vec::AppendOnlyVec::new();
 
     let chunks_iter = multizip((
@@ -159,6 +169,7 @@ impl<'a> GenerateStage<'a> {
         cross_chunk_dynamic_imports,
       )| {
         let mut symbol_needs_to_assign = vec![];
+
         chunk.modules.iter().copied().for_each(|module_id| {
           let Module::Normal(module) = &self.link_output.module_table.modules[module_id] else {
             return;
@@ -175,6 +186,7 @@ impl<'a> GenerateStage<'a> {
                 if !importee_module.meta.is_included() {
                   return;
                 }
+
                 if matches!(rec.kind, ImportKind::DynamicImport) {
                   let importee_chunk = chunk_graph.module_to_chunk[importee_module.idx]
                     .expect("importee chunk should exist");
@@ -193,6 +205,7 @@ impl<'a> GenerateStage<'a> {
 
           module.named_imports.iter().for_each(|(_, import)| {
             let rec = &module.import_records[import.record_id];
+
             if let Module::External(importee) =
               &self.link_output.module_table.modules[rec.resolved_module]
             {
@@ -204,6 +217,7 @@ impl<'a> GenerateStage<'a> {
             if !stmt_info.is_included {
               return;
             }
+
             stmt_info.declared_symbols.iter().for_each(|declared| {
               symbol_needs_to_assign.push(*declared);
             });
@@ -217,15 +231,19 @@ impl<'a> GenerateStage<'a> {
                   }
                   depended_symbols.insert(canonical_ref);
                 }
+
                 rolldown_common::SymbolOrMemberExprRef::MemberExpr(member_expr) => {
                   if let Some(sym_ref) = member_expr.resolved_symbol_ref(
                     &self.link_output.metas[module.idx].resolved_member_expr_refs,
                   ) {
                     let mut canonical_ref = self.link_output.symbol_db.canonical_ref_for(sym_ref);
+
                     let symbol = symbols.get(canonical_ref);
+
                     if let Some(ref ns_alias) = symbol.namespace_alias {
                       canonical_ref = ns_alias.namespace_ref;
                     }
+
                     depended_symbols.insert(canonical_ref);
                   } else {
                     // `None` means the member expression resolve to a ambiguous export, which means it actually resolve to nothing.
@@ -261,14 +279,17 @@ impl<'a> GenerateStage<'a> {
             && matches!(entry.exports_kind, ExportsKind::Esm)
           {
             depended_symbols.insert(self.link_output.runtime.resolve_symbol("__toCommonJS"));
+
             depended_symbols.insert(entry.namespace_object_ref);
           }
         }
+
         chunk_id_to_symbols_vec.push((chunk_id, symbol_needs_to_assign));
       },
     );
     // shadowing previous immutable borrow
     let symbols = &mut self.link_output.symbol_db;
+
     for (chunk_id, symbol_list) in chunk_id_to_symbols_vec {
       for declared in symbol_list {
         if cfg!(debug_assertions) {
@@ -284,6 +305,7 @@ impl<'a> GenerateStage<'a> {
         }
 
         let symbol_data = symbols.get_mut(declared);
+
         symbol_data.chunk_id = Some(chunk_id);
       }
     }
@@ -309,7 +331,9 @@ impl<'a> GenerateStage<'a> {
         if self.link_output.module_table.modules[import_ref.owner].is_external() {
           continue;
         }
+
         let import_symbol = self.link_output.symbol_db.get(import_ref);
+
         let importee_chunk_id = import_symbol.chunk_id.unwrap_or_else(|| {
           let symbol_owner = &self.link_output.module_table.modules[import_ref.owner];
           let symbol_name = import_ref.name(&self.link_output.symbol_db);
@@ -339,7 +363,9 @@ impl<'a> GenerateStage<'a> {
           })
           .for_each(|(importee_chunk_id, _)| {
             index_cross_chunk_imports[chunk_id].insert(importee_chunk_id);
+
             let imports_from_other_chunks = &mut index_imports_from_other_chunks[chunk_id];
+
             imports_from_other_chunks.entry(importee_chunk_id).or_default();
           });
       }
@@ -362,13 +388,17 @@ impl<'a> GenerateStage<'a> {
       for chunk_export in index_chunk_exported_symbols[chunk_id].iter().copied() {
         let original_name: rolldown_rstr::Rstr =
           chunk_export.name(&self.link_output.symbol_db).to_rstr();
+
         let key: Cow<'_, Rstr> = Cow::Owned(original_name.clone());
+
         let count = name_count.entry(key).or_insert(0u32);
+
         let alias = if *count == 0 {
           original_name.clone()
         } else {
           format!("{original_name}${}", itoa::Buffer::new().format(*count)).into()
         };
+
         chunk.exports_to_other_chunks.insert(chunk_export, alias.clone());
         *count += 1;
       }

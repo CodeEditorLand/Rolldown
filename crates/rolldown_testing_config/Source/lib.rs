@@ -13,9 +13,11 @@ pub struct ConfigVariant {
 impl ConfigVariant {
   pub fn apply(&self, config: &rolldown_common::BundlerOptions) -> BundlerOptions {
     let mut config = config.clone();
+
     if let Some(format) = &self.format {
       config.format = Some(*format);
     }
+
     config
   }
 }

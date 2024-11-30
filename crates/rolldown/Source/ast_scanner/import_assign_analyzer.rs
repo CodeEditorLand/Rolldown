@@ -14,6 +14,7 @@ use super::AstScanner;
 impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
   pub fn check_import_assign(&mut self, ident: &IdentifierReference, symbol_id: SymbolId) {
     let symbol_flag = self.result.symbol_ref_db.get_flags(symbol_id);
+
     if symbol_flag.contains(SymbolFlags::Import) {
       let is_namespace = self
         .result
@@ -46,7 +47,9 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
 
   pub fn get_span_if_namespace_specifier_updated(&mut self) -> Option<(Span, &'ast str)> {
     let ancestor_cursor = self.visit_path.len() - 1;
+
     let parent_node = self.visit_path.get(ancestor_cursor)?;
+
     if let AstKind::MemberExpression(expr) = parent_node {
       let parent_parent_node = self.visit_path.get(ancestor_cursor - 1)?;
       let is_unary_expression_with_delete_operator = |kind| matches!(kind, AstKind::UnaryExpression(expr) if expr.operator == UnaryOperator::Delete);
@@ -62,6 +65,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
         return expr.static_property_info();
       }
     }
+
     None
   }
 }

@@ -30,7 +30,9 @@ mod test_locator {
     use super::ByteLocator;
     // cspell:ignore ncghi
     let source = "abc\ndef\ncghi";
+
     assert_eq!(ByteLocator::new(source).byte_offset(0, 0), 0);
+
     assert_eq!(ByteLocator::new(source).byte_offset(1, 0), 4);
   }
 }

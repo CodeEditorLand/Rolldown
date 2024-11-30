@@ -23,6 +23,7 @@ use super::LinkStage;
 impl<'link> LinkStage<'link> {
   pub fn generate_lazy_export(&mut self) {
     let module_idx_to_exports_kind = append_only_vec::AppendOnlyVec::new();
+
     self.module_table.modules.par_iter_mut().for_each(|module| {
       let Module::Normal(module) = module else {
         return;
@@ -41,6 +42,7 @@ impl<'link> LinkStage<'link> {
       if module.exports_kind == ExportsKind::CommonJs {
         // since the wrap arguments are generate on demand, we need to insert the module ref usage here.
         module.stmt_infos.infos[StmtInfoIdx::new(1)].side_effect = true;
+
         module.ecma_view.ast_usage.insert(EcmaModuleAstUsage::ModuleRef);
       }
     });
@@ -60,6 +62,7 @@ impl<'link> LinkStage<'link> {
           };
           *stmt = snippet.module_exports_expr_stmt(expr);
         });
+
         continue;
       }
       // ExportsKind == Esm && ModuleType == Json
@@ -69,7 +72,9 @@ impl<'link> LinkStage<'link> {
         }
         // if json is not a ObjectExpression, we will fallback to normal esm lazy export transform
         let module = &mut self.module_table.modules[module_idx];
+
         let module = module.as_normal_mut().unwrap();
+
         update_module_default_export_info(module, module.default_export_ref, 1.into());
       }
 
@@ -77,7 +82,9 @@ impl<'link> LinkStage<'link> {
       let Some((ecma_ast, _)) = self.ast_table.get_mut(ast_idx) else { unreachable!() };
       ecma_ast.program.with_mut(|fields| {
         let snippet = AstSnippet::new(fields.allocator);
+
         let Some(stmt) = fields.program.body.first_mut() else { unreachable!() };
+
         let expr = match stmt {
           ast::Statement::ExpressionStatement(stmt) => stmt.expression.take_in(snippet.alloc()),
           _ => {
@@ -120,18 +127,24 @@ fn json_object_expr_to_esm(
   let mut declaration_binding_names: Vec<(Rstr, Rstr, bool)> = vec![];
   let transformed = ecma_ast.program.with_mut(|fields| {
     let mut index_map = FxIndexMap::default();
+
     let snippet = AstSnippet::new(fields.allocator);
+
     let program = fields.program;
+
     let Some(stmts) = program.body.first_mut() else { unreachable!() };
+
     let expr = match stmts {
       ast::Statement::ExpressionStatement(stmt) => &mut stmt.expression,
       _ => {
         unreachable!()
       }
     };
+
     if !matches!(expr.without_parentheses(), Expression::ObjectExpression(_)) {
       return false;
     }
+
     let Expression::ObjectExpression(mut obj_expr) =
       snippet.expr_without_parentheses(expr.take_in(snippet.alloc()))
     else {
@@ -166,6 +179,7 @@ fn json_object_expr_to_esm(
             property.computed = true;
           } else if is_legal_ident {
             property.shorthand = is_legal_ident;
+
             property.key = ast::PropertyKey::StaticIdentifier(
               snippet.builder.alloc_identifier_name(SPAN, legitimized_ident.as_ref()),
             );
@@ -174,11 +188,13 @@ fn json_object_expr_to_esm(
             Entry::Occupied(mut occ) => {
               *occ.get_mut() = value;
             }
+
             Entry::Vacant(vac) => {
               vac.insert(value);
             }
           }
         }
+
         ast::ObjectPropertyKind::SpreadProperty(_) => unreachable!(),
       };
     }
@@ -196,7 +212,9 @@ fn json_object_expr_to_esm(
         snippet
           .statement_module_declaration_export_named_declaration(None, &declaration_binding_names),
       ));
+
     program.body.extend(stmts);
+
     true
   });
 
@@ -243,10 +261,15 @@ fn json_object_expr_to_esm(
   let mut all_declared_symbols = vec![];
   for (i, (local, exported, _)) in declaration_binding_names.iter().enumerate() {
     let symbol_id = ast_scope.get_root_binding(local.as_str()).expect("should have binding");
+
     let symbol_ref = (module_idx, symbol_id).into();
+
     all_declared_symbols.push(SymbolOrMemberExprRef::from(symbol_ref));
+
     let stmt_info = StmtInfo::default().with_stmt_idx(i).with_declared_symbols(vec![symbol_ref]);
+
     module.stmt_infos.add_stmt_info(stmt_info);
+
     module
       .named_exports
       .insert(exported.clone(), LocalExport { span: SPAN, referenced: symbol_ref });

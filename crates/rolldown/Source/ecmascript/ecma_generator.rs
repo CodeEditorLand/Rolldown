@@ -34,7 +34,9 @@ impl Generator for EcmaGenerator {
     ctx: &mut GenerateContext<'a>,
   ) -> Result<BuildResult<GenerateOutput>> {
     let mut rendered_modules = FxHashMap::default();
+
     let module_id_to_codegen_ret = std::mem::take(&mut ctx.module_id_to_codegen_ret);
+
     let rendered_module_sources = ctx
       .chunk
       .modules
@@ -64,9 +66,11 @@ impl Generator for EcmaGenerator {
       ctx.chunk.pre_rendered_chunk.as_ref().expect("Should have pre-rendered chunk"),
       ctx.chunk_graph,
     );
+
     let hashbang = match ctx.chunk.user_defined_entry_module(&ctx.link_output.module_table) {
       Some(normal_module) => {
         let source = &normal_module.source;
+
         normal_module
           .ecma_view
           .hashbang_range
@@ -204,6 +208,7 @@ impl Generator for EcmaGenerator {
         .expect("chunk file name should be generated before rendering")
         .as_str(),
     );
+
     let file_dir = file_path.parent().expect("chunk file name should have a parent");
 
     if let Some(map) = map.as_mut() {

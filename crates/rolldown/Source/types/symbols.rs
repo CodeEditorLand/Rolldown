@@ -41,6 +41,7 @@ impl Symbols {
 	pub fn create_symbol(&mut self, owner:ModuleIdx, name:CompactString) -> SymbolRef {
 		let symbol_id =
 			self.inner[owner].push(Symbol { name, link:None, chunk_id:None, namespace_alias:None });
+
 		SymbolRef { owner, symbol:symbol_id }
 	}
 
@@ -48,10 +49,13 @@ impl Symbols {
 	pub fn union(&mut self, a:SymbolRef, b:SymbolRef) {
 		// a link to b
 		let root_a = self.canonical_ref_for(a);
+
 		let root_b = self.canonical_ref_for(b);
+
 		if root_a == root_b {
 			return;
 		}
+
 		self.get_mut(root_a).link = Some(root_b);
 	}
 
@@ -63,6 +67,7 @@ impl Symbols {
 		canonical_names:&'name FxHashMap<SymbolRef, Rstr>,
 	) -> &'name Rstr {
 		let canonical_ref = self.par_canonical_ref_for(refer);
+
 		canonical_names.get(&canonical_ref).unwrap_or_else(|| {
 			panic!(
 				"canonical name not found for {canonical_ref:?}, original_name: {:?}",
@@ -79,21 +84,26 @@ impl Symbols {
 
 	pub fn canonical_ref_for(&mut self, target:SymbolRef) -> SymbolRef {
 		let canonical = self.par_canonical_ref_for(target);
+
 		if target != canonical {
 			// update the link to the canonical so that the next time we can get
 			// the canonical directly
 			self.get_mut(target).link = Some(canonical);
 		}
+
 		canonical
 	}
 
 	// Used for the situation where rust require `&self`
 	pub fn par_canonical_ref_for(&self, target:SymbolRef) -> SymbolRef {
 		let mut canonical = target;
+
 		while let Some(founded) = self.get(canonical).link {
 			debug_assert!(founded != target);
+
 			canonical = founded;
 		}
+
 		canonical
 	}
 }

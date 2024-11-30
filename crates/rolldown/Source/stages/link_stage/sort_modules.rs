@@ -40,12 +40,17 @@ impl<'a> LinkStage<'a> {
       .collect::<Vec<_>>();
 
     let mut stack_indexes_of_executing_id = FxHashMap::default();
+
     let mut executed_ids = FxHashSet::default();
+
     executed_ids.shrink_to(self.module_table.modules.len());
 
     let mut sorted_modules = Vec::with_capacity(self.module_table.modules.len());
+
     let mut next_exec_order = 0;
+
     let mut circular_dependencies = FxHashSet::default();
+
     while let Some(status) = execution_stack.pop() {
       match status {
         Status::ToBeExecuted(id) => {
@@ -63,17 +68,21 @@ impl<'a> LinkStage<'a> {
                   })
                   .chain(iter::once(id))
                   .collect::<Box<[_]>>();
+
                 circular_dependencies.insert(cycles);
               }
             }
             // It's already executed in other import chain, no need to execute again
           } else {
             executed_ids.insert(id);
+
             execution_stack.push(Status::WaitForExit(id));
+
             debug_assert!(
               !stack_indexes_of_executing_id.contains_key(&id),
               "A module should not be executing the same module twice"
             );
+
             stack_indexes_of_executing_id.insert(id, execution_stack.len() - 1);
 
             execution_stack.extend(
@@ -87,6 +96,7 @@ impl<'a> LinkStage<'a> {
             );
           }
         }
+
         Status::WaitForExit(id) => {
           executed_ids.insert(id);
           match &mut self.module_table.modules[id] {
@@ -95,6 +105,7 @@ impl<'a> LinkStage<'a> {
               module.exec_order = next_exec_order;
               sorted_modules.push(id);
             }
+
             Module::External(module) => {
               debug_assert!(module.exec_order == u32::MAX);
               module.exec_order = next_exec_order;
@@ -117,11 +128,13 @@ impl<'a> LinkStage<'a> {
           .filter_map(|id| self.module_table.modules[id].as_normal())
           .map(|module| module.id.to_string())
           .collect::<Vec<_>>();
+
         self.warnings.push(BuildDiagnostic::circular_dependency(paths).with_severity_warning());
       }
     }
 
     self.sorted_modules = sorted_modules;
+
     debug_assert_eq!(
       self.sorted_modules.first().copied(),
       Some(self.runtime.id()),

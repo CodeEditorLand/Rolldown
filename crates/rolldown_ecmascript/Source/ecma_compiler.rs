@@ -21,14 +21,18 @@ pub struct EcmaCompiler;
 impl EcmaCompiler {
   pub fn parse(filename: &str, source: impl Into<ArcStr>, ty: SourceType) -> BuildResult<EcmaAst> {
     let source: ArcStr = source.into();
+
     let allocator = oxc::allocator::Allocator::default();
+
     let inner =
       ProgramCell::try_new(ProgramCellOwner { source: source.clone(), allocator }, |owner| {
         let parser = Parser::new(&owner.allocator, &owner.source, ty).with_options(ParseOptions {
           allow_return_outside_function: true,
           ..ParseOptions::default()
         });
+
         let ret = parser.parse();
+
         if ret.panicked || !ret.errors.is_empty() {
           Err(BuildDiagnostic::from_oxc_diagnostics(
             ret.errors,
@@ -40,6 +44,7 @@ impl EcmaCompiler {
           Ok(ProgramCellDependent { program: ret.program })
         }
       })?;
+
     Ok(EcmaAst { program: inner, source_type: ty, contains_use_strict: false })
   }
 
@@ -58,6 +63,7 @@ impl EcmaCompiler {
       Either::Left(value) => (value, LegalComment::None),
       Either::Right(value) => (false, value),
     };
+
     CodeGenerator::new()
       .with_options(CodegenOptions {
         comments: is_print_full_comments,
@@ -74,10 +80,15 @@ impl EcmaCompiler {
     filename: &str,
   ) -> anyhow::Result<(String, Option<SourceMap>)> {
     let allocator = Allocator::default();
+
     let program = Parser::new(&allocator, source_text, SourceType::default()).parse().program;
+
     let program = allocator.alloc(program);
+
     let options = MinifierOptions { mangle: true, ..MinifierOptions::default() };
+
     let ret = Minifier::new(options).build(&allocator, program);
+
     let ret = Codegen::new()
       .with_options(CodegenOptions {
         source_map_path: enable_sourcemap.then(|| PathBuf::from(filename)),
@@ -86,6 +97,7 @@ impl EcmaCompiler {
       })
       .with_mangler(ret.mangler)
       .build(program);
+
     Ok((ret.code, ret.map))
   }
 }

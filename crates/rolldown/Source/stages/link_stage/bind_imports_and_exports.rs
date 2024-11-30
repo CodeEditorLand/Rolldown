@@ -151,6 +151,7 @@ impl<'link> LinkStage<'link> {
     });
 
     self.errors.extend(binding_ctx.errors);
+
     self.warnings.extend(binding_ctx.warnings);
 
     self.metas.par_iter_mut().for_each(|meta| {
@@ -163,11 +164,13 @@ impl<'link> LinkStage<'link> {
 
           for ambiguous_ref in potentially_ambiguous_symbol_refs {
             let ambiguous_ref = self.symbols.canonical_ref_for(*ambiguous_ref);
+
             if main_ref != ambiguous_ref {
               continue 'next_export;
             }
           }
         };
+
         sorted_and_non_ambiguous_resolved_exports.push(exported_name.clone());
       }
       sorted_and_non_ambiguous_resolved_exports.sort_unstable();
@@ -252,6 +255,7 @@ impl<'link> LinkStage<'link> {
   /// The final pointed `SymbolRef` of `foo_ns.bar_ns.c` is the `c` in `bar.js`.
   fn resolve_member_expr_refs(&mut self) {
     let warnings = append_only_vec::AppendOnlyVec::new();
+
     let resolved_maps = self
       .module_table
       .modules
@@ -264,15 +268,20 @@ impl<'link> LinkStage<'link> {
               if let SymbolOrMemberExprRef::MemberExpr(member_expr_ref) = symbol_ref {
                 // First get the canonical ref of `foo_ns`, then we get the `NormalModule#namespace_object_ref` of `foo.js`.
                 let mut canonical_ref = self.symbols.canonical_ref_for(member_expr_ref.object_ref);
+
                 let mut canonical_ref_owner: &NormalModule =
                   match &self.module_table.modules[canonical_ref.owner] {
                     Module::Normal(module) => module,
                     Module::External(_) => return,
                   };
+
                 let mut is_namespace_ref =
                   canonical_ref_owner.namespace_object_ref == canonical_ref;
+
                 let mut ns_symbol_list = vec![];
+
                 let mut cursor = 0;
+
                 while cursor < member_expr_ref.props.len() && is_namespace_ref {
                   let name = &member_expr_ref.props[cursor];
                   let meta = &self.metas[canonical_ref_owner.idx];
@@ -294,10 +303,12 @@ impl<'link> LinkStage<'link> {
                         .with_severity_warning(),
                       );
                     }
+
                     break;
                   };
                   if !meta.sorted_and_non_ambiguous_resolved_exports.contains(&name.to_rstr()) {
                     resolved.insert(member_expr_ref.span, None);
+
                     return;
                   };
 
@@ -317,6 +328,7 @@ impl<'link> LinkStage<'link> {
                   cursor += 1;
                   is_namespace_ref = canonical_ref_owner.namespace_object_ref == canonical_ref;
                 }
+
                 if cursor > 0 {
                   resolved.insert(
                     member_expr_ref.span,
@@ -329,12 +341,15 @@ impl<'link> LinkStage<'link> {
 
           resolved
         }
+
         Module::External(_) => FxHashMap::default(),
       })
       .collect::<Vec<_>>();
 
     debug_assert_eq!(self.metas.len(), resolved_maps.len());
+
     self.warnings.extend(warnings);
+
     self.metas.par_iter_mut().zip(resolved_maps).for_each(|(meta, resolved_map)| {
       meta.resolved_member_expr_refs = resolved_map;
     });
@@ -355,6 +370,7 @@ impl<'a> BindImportsAndExportsContext<'a> {
     let Module::Normal(module) = &self.normal_modules[module_id] else {
       return;
     };
+
     for (imported_as_ref, named_import) in &module.named_imports {
       let match_import_span = tracing::trace_span!(
         "MATCH_IMPORT",
@@ -378,6 +394,7 @@ impl<'a> BindImportsAndExportsContext<'a> {
       tracing::trace!("Got match result {:?}", ret);
       match ret {
         MatchImportKind::_Ignore | MatchImportKind::Cycle => {}
+
         MatchImportKind::Ambiguous { symbol_ref, potentially_ambiguous_symbol_refs } => {
           let importee = self.normal_modules[rec.resolved_module].stable_id().to_string();
 
@@ -400,6 +417,7 @@ impl<'a> BindImportsAndExportsContext<'a> {
                 if let Some(owner) = self.normal_modules[symbol_ref.owner].as_normal() {
                   if let Specifier::Literal(name) = &named_import.imported {
                     let named_export = &owner.named_exports[name];
+
                     return Some(AmbiguousExternalNamespaceModule {
                       source: owner.source.clone(),
                       filename: owner.stable_id.to_string(),
@@ -424,16 +442,20 @@ impl<'a> BindImportsAndExportsContext<'a> {
             exporter,
           ));
         }
+
         MatchImportKind::Normal { symbol } => {
           self.symbol_db.link(*imported_as_ref, symbol);
         }
+
         MatchImportKind::Namespace { namespace_ref } => {
           self.symbol_db.link(*imported_as_ref, namespace_ref);
         }
+
         MatchImportKind::NormalAndNamespace { namespace_ref, alias } => {
           self.symbol_db.get_mut(*imported_as_ref).namespace_alias =
             Some(NamespaceAlias { property_name: alias, namespace_ref });
         }
+
         MatchImportKind::NoMatch => {
           let importee = &self.normal_modules[rec.resolved_module];
           self.errors.push(BuildDiagnostic::missing_export(
@@ -450,13 +472,16 @@ impl<'a> BindImportsAndExportsContext<'a> {
 
   fn advance_import_tracker(&self, ctx: &mut MatchingContext) -> ImportStatus {
     let tracker = ctx.current_tracker();
+
     let importer = &self.normal_modules[tracker.importer]
       .as_normal()
       .expect("only normal module can be importer");
+
     let named_import = &importer.named_imports[&tracker.imported_as];
 
     // Is this an external file?
     let importee_id = importer.import_records[named_import.record_id].resolved_module;
+
     let importee_id = match &self.normal_modules[importee_id] {
       Module::Normal(importee) => importee.idx,
       Module::External(external) => return ImportStatus::External(external.namespace_ref),
@@ -465,6 +490,7 @@ impl<'a> BindImportsAndExportsContext<'a> {
     // Is this a named import of a file without any exports?
     let importee =
       &self.normal_modules[importee_id].as_normal().expect("external module is bailout above");
+
     debug_assert!(
       matches!(importee.exports_kind, ExportsKind::Esm | ExportsKind::CommonJs)
         || importee.meta.has_lazy_export()
@@ -514,9 +540,11 @@ impl<'a> BindImportsAndExportsContext<'a> {
       importee = normal_modules[tracker.importee].stable_id(),
       imported_specifier = tracker.imported.to_string()
     );
+
     let _enter = tracking_span.enter();
 
     let mut ambiguous_results = vec![];
+
     let ret = loop {
       for prev_tracker in ctx.tracker_stack.iter().rev() {
         if prev_tracker.importer == tracker.importer
@@ -552,9 +580,11 @@ impl<'a> BindImportsAndExportsContext<'a> {
         ImportStatus::NoMatch { .. } => {
           break MatchImportKind::NoMatch;
         }
+
         ImportStatus::Found { symbol, potentially_ambiguous_export_star_refs, .. } => {
           for ambiguous_ref in &potentially_ambiguous_export_star_refs {
             let ambiguous_ref_owner = &normal_modules[ambiguous_ref.owner];
+
             if let Some(another_named_import) =
               ambiguous_ref_owner.as_normal().unwrap().named_imports.get(ambiguous_ref)
             {
@@ -582,15 +612,20 @@ impl<'a> BindImportsAndExportsContext<'a> {
           if let Some(another_named_import) = owner.as_normal().unwrap().named_imports.get(&symbol)
           {
             let rec = &owner.as_normal().unwrap().import_records[another_named_import.record_id];
+
             match &self.normal_modules[rec.resolved_module] {
               Module::External(_) => {
                 break MatchImportKind::Normal { symbol: another_named_import.imported_as };
               }
               Module::Normal(importee) => {
                 tracker.importee = importee.idx;
+
                 tracker.importer = owner.idx();
+
                 tracker.imported = another_named_import.imported.clone();
+
                 tracker.imported_as = another_named_import.imported_as;
+
                 continue;
               }
             }
@@ -598,6 +633,7 @@ impl<'a> BindImportsAndExportsContext<'a> {
 
           break MatchImportKind::Normal { symbol };
         }
+
         ImportStatus::_CommonJSWithoutExports => todo!(),
         ImportStatus::_Disabled => todo!(),
         ImportStatus::External(symbol_ref) => {
@@ -620,6 +656,7 @@ impl<'a> BindImportsAndExportsContext<'a> {
     };
 
     tracing::trace!("ambiguous_results {:#?}", ambiguous_results);
+
     tracing::trace!("ret {:#?}", ret);
 
     for ambiguous_result in &ambiguous_results {
@@ -659,6 +696,7 @@ impl<'a> BindImportsAndExportsContext<'a> {
                   imported.clone().to_string().into(),
                 )
               });
+
             return MatchImportKind::Normal { symbol: *shimmed_symbol_ref };
           }
         }

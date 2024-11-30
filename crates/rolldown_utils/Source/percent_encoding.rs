@@ -12,9 +12,11 @@ pub fn encode_as_percent_escaped(buf: &[u8]) -> Option<String> {
       let mut trailing_start = chars.len();
       while trailing_start > 0 {
         let c = chars[trailing_start - 1];
+
         if c > 0x20 as char || matches!(c, '\t' | '\n' | '\r') {
           break;
         }
+
         trailing_start -= 1;
       }
       for (i, &c) in chars.iter().enumerate() {
@@ -43,7 +45,9 @@ mod tests {
 
   fn check(raw: &str, expected: &str) {
     let result = encode_as_percent_escaped(raw.as_bytes());
+
     assert!(result.is_some(), "Failed to encode {raw:?}");
+
     assert_eq!(result.unwrap(), expected, "Test failed for input {raw:?}");
   }
 
@@ -57,6 +61,7 @@ mod tests {
 
       if trailing_escape {
         check(&char_str, &format!("%{i:02X}"));
+
         check(&format!("foo{char_str}"), &format!("foo%{i:02X}"));
       } else {
         check(&format!("foo{char_str}"), &format!("foo{char_str}"));
@@ -71,9 +76,13 @@ mod tests {
 
     // Test leading vs. trailing
     check(" \t ", " %09%20");
+
     check(" \n ", " %0A%20");
+
     check(" \r ", " %0D%20");
+
     check(" # ", " %23%20");
+
     check("\x08#\x08", "\x08%23%08");
 
     // Only "%" symbols that could form an escape need to be escaped

@@ -5,6 +5,7 @@ use super::MagicString;
 impl<'text> MagicString<'text> {
   pub fn append(&mut self, source: impl Into<CowStr<'text>>) -> &mut Self {
     self.append_outro(source.into());
+
     self
   }
 
@@ -23,6 +24,7 @@ impl<'text> MagicString<'text> {
       }
       None => self.append_intro(content.into()),
     }
+
     self
   }
 
@@ -47,6 +49,7 @@ impl<'text> MagicString<'text> {
       }
       None => self.append_outro(content.into()),
     }
+
     self
   }
 }

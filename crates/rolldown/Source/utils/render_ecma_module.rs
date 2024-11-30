@@ -13,6 +13,7 @@ pub fn render_ecma_module(
     None
   } else {
     let mut sources: Vec<Box<dyn rolldown_sourcemap::Source + Send + Sync>> = vec![];
+
     sources.push(Box::new(concat_string!("//#region ", module.debug_id)));
 
     let enable_sourcemap = options.sourcemap.is_some() && !module.is_virtual();
@@ -26,9 +27,11 @@ pub fn render_ecma_module(
         render_output.map
       } else {
         let mut sourcemap_chain = module.sourcemap_chain.iter().collect::<Vec<_>>();
+
         if let Some(sourcemap) = render_output.map.as_ref() {
           sourcemap_chain.push(sourcemap);
         }
+
         Some(collapse_sourcemaps(sourcemap_chain))
       };
 

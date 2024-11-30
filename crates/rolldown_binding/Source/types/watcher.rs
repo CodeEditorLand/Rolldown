@@ -30,6 +30,7 @@ impl BindingWatcher {
     listener: MaybeAsyncJsCallback<BindingWatcherEvent, ()>,
   ) -> napi::Result<()> {
     let rx = Arc::clone(&self.inner.emitter.rx);
+
     let future = async move {
       let mut run = true;
       let rx = rx.lock().await;
@@ -39,6 +40,7 @@ impl BindingWatcher {
             if let rolldown_common::WatcherEvent::Close = &event {
               run = false;
             }
+
             if let Err(e) = listener.await_call(BindingWatcherEvent::new(event)).await {
               eprintln!("watcher listener error: {e:?}");
             }
@@ -61,6 +63,7 @@ impl BindingWatcher {
     tokio::spawn(future);
 
     self.inner.start().await;
+
     Ok(())
   }
 }

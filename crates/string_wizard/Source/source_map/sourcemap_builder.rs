@@ -43,7 +43,9 @@ impl SourcemapBuilder {
     } else {
       None
     };
+
     let mut loc = locator.locate(chunk_start_utf16);
+
     if let Some(edited_content) = &chunk.edited_content {
       if !edited_content.is_empty() {
         self.source_map_builder.add_token(
@@ -71,16 +73,22 @@ impl SourcemapBuilder {
             name_id,
           );
         }
+
         match char {
           '\n' => {
             loc.bump_line();
+
             self.bump_line();
+
             new_line = true;
           }
           _ => {
             let char_utf16_len = char.len_utf16();
+
             loc.column += char_utf16_len;
+
             self.generated_code_column += char_utf16_len;
+
             new_line = false;
           }
         }
@@ -92,20 +100,24 @@ impl SourcemapBuilder {
     if content.is_empty() {
       return;
     }
+
     let mut lines = content.split('\n');
 
     // SAFETY: In any cases, lines would have at least one element.
     // "".split('\n') would create `[""]`.
     // "\n".split('\n') would create `["", ""]`.
     let last_line = unsafe { lines.next_back().unwrap_unchecked() };
+
     for _ in lines {
       self.bump_line();
     }
+
     self.generated_code_column += last_line.chars().map(|c| c.len_utf16()).sum::<usize>();
   }
 
   fn bump_line(&mut self) {
     self.generated_code_line += 1;
+
     self.generated_code_column = 0;
   }
 }

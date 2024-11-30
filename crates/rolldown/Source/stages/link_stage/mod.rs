@@ -109,13 +109,21 @@ impl<'a> LinkStage<'a> {
     self.sort_modules();
 
     self.determine_module_exports_kind();
+
     self.wrap_modules();
+
     self.generate_lazy_export();
+
     self.bind_imports_and_exports();
+
     self.create_exports_for_ecma_modules();
+
     self.reference_needed_symbols();
+
     self.include_statements();
+
     self.patch_module_dependencies();
+
     tracing::trace!("meta {:#?}", self.metas.iter_enumerated().collect::<Vec<_>>());
 
     LinkStageOutput {
@@ -136,10 +144,12 @@ impl<'a> LinkStage<'a> {
   #[tracing::instrument(level = "debug", skip_all)]
   fn determine_module_exports_kind(&mut self) {
     let entry_ids_set = self.entries.iter().map(|e| e.id).collect::<FxHashSet<_>>();
+
     self.module_table.modules.iter().filter_map(Module::as_normal).for_each(|importer| {
       // TODO(hyf0): should check if importer is a js module
       importer.import_records.iter().for_each(|rec| {
         let importee_id = rec.resolved_module;
+
         let Module::Normal(importee) = &self.module_table.modules[importee_id] else {
           return;
         };
@@ -166,9 +176,11 @@ impl<'a> LinkStage<'a> {
             ExportsKind::Esm => {
               self.metas[importee.idx].wrap_kind = WrapKind::Esm;
             }
+
             ExportsKind::CommonJs => {
               self.metas[importee.idx].wrap_kind = WrapKind::Cjs;
             }
+
             ExportsKind::None => {
               self.metas[importee.idx].wrap_kind = WrapKind::Cjs;
               // SAFETY: If `importee` and `importer` are different, so this is safe. If they are the same, then behaviors are still expected.
@@ -187,9 +199,11 @@ impl<'a> LinkStage<'a> {
                 ExportsKind::Esm => {
                   self.metas[importee.idx].wrap_kind = WrapKind::Esm;
                 }
+
                 ExportsKind::CommonJs => {
                   self.metas[importee.idx].wrap_kind = WrapKind::Cjs;
                 }
+
                 ExportsKind::None => {
                   self.metas[importee.idx].wrap_kind = WrapKind::Cjs;
                   // SAFETY: If `importee` and `importer` are different, so this is safe. If they are the same, then behaviors are still expected.
@@ -225,7 +239,9 @@ impl<'a> LinkStage<'a> {
   #[tracing::instrument(level = "debug", skip_all)]
   fn reference_needed_symbols(&mut self) {
     let symbols = Mutex::new(&mut self.symbols);
+
     let record_meta_update_pending_pairs_list = AppendOnlyVec::new();
+
     self.module_table.modules.par_iter().filter_map(Module::as_normal).for_each(|importer| {
       let mut record_meta_pairs: Vec<(ImportRecordIdx, ImportRecordMeta)> = vec![];
       let importer_idx = importer.idx;
@@ -248,6 +264,7 @@ impl<'a> LinkStage<'a> {
             {
               if self.options.format.should_call_runtime_require() {
                 stmt_info.referenced_symbols.push(self.runtime.resolve_symbol("__require").into());
+
                 record_meta_pairs.push((*rec_id, ImportRecordMeta::CALL_RUNTIME_REQUIRE));
               }
             }
@@ -278,9 +295,11 @@ impl<'a> LinkStage<'a> {
                     }
                   }
                 }
+
                 _ => {}
               }
             }
+
             Module::Normal(importee) => {
               let importee_linking_info = &self.metas[importee.idx];
               match rec.kind {
@@ -302,6 +321,7 @@ impl<'a> LinkStage<'a> {
                       // ```
                       if is_reexport_all {
                         let meta = &self.metas[importee.idx];
+
                         if meta.has_dynamic_exports {
                           stmt_info.side_effect = true;
                           stmt_info
@@ -312,6 +332,7 @@ impl<'a> LinkStage<'a> {
                         }
                       }
                     }
+
                     WrapKind::Cjs => {
                       if is_reexport_all {
                         stmt_info.side_effect = true;
@@ -320,12 +341,15 @@ impl<'a> LinkStage<'a> {
                         stmt_info
                           .referenced_symbols
                           .push(importee_linking_info.wrapper_ref.unwrap().into());
+
                         stmt_info
                           .referenced_symbols
                           .push(self.runtime.resolve_symbol("__toESM").into());
+
                         stmt_info
                           .referenced_symbols
                           .push(self.runtime.resolve_symbol("__reExport").into());
+
                         stmt_info.referenced_symbols.push(importer.namespace_object_ref.into());
                       } else {
                         stmt_info.side_effect = importee.side_effects.has_side_effects();
@@ -336,16 +360,20 @@ impl<'a> LinkStage<'a> {
                           .referenced_symbols
                           .push(importee_linking_info.wrapper_ref.unwrap().into());
                         // dbg!(&importee_linking_info.wrapper_ref);
+
                         stmt_info
                           .referenced_symbols
                           .push(self.runtime.resolve_symbol("__toESM").into());
+
                         declared_symbol_for_stmt_pairs.push((stmt_idx, rec.namespace_ref));
+
                         rec.namespace_ref.set_name(
                           &mut symbols.lock().unwrap(),
                           &concat_string!("import_", importee.repr_name),
                         );
                       }
                     }
+
                     WrapKind::Esm => {
                       stmt_info.side_effect = true;
                       // Turn `import ... from 'bar_esm'` into `init_bar_esm()`
@@ -359,12 +387,15 @@ impl<'a> LinkStage<'a> {
                         stmt_info
                           .referenced_symbols
                           .push(self.runtime.resolve_symbol("__reExport").into());
+
                         stmt_info.referenced_symbols.push(importer.namespace_object_ref.into());
+
                         stmt_info.referenced_symbols.push(importee.namespace_object_ref.into());
                       }
                     }
                   }
                 }
+
                 ImportKind::Require => match importee_linking_info.wrap_kind {
                   WrapKind::None => {}
                   WrapKind::Cjs => {
@@ -380,6 +411,7 @@ impl<'a> LinkStage<'a> {
                     stmt_info
                       .referenced_symbols
                       .push(importee_linking_info.wrapper_ref.unwrap().into());
+
                     stmt_info.referenced_symbols.push(importee.namespace_object_ref.into());
 
                     if !rec.meta.contains(ImportRecordMeta::IS_REQUIRE_UNUSED) {
@@ -398,6 +430,7 @@ impl<'a> LinkStage<'a> {
                         stmt_info
                           .referenced_symbols
                           .push(importee_linking_info.wrapper_ref.unwrap().into());
+
                         stmt_info
                           .referenced_symbols
                           .push(self.runtime.resolve_symbol("__toESM").into());
@@ -407,17 +440,21 @@ impl<'a> LinkStage<'a> {
                         stmt_info
                           .referenced_symbols
                           .push(importee_linking_info.wrapper_ref.unwrap().into());
+
                         stmt_info.referenced_symbols.push(importee.namespace_object_ref.into());
                       }
                     }
                   }
                 }
+
                 ImportKind::AtImport => {
                   unreachable!("A Js module would never import a CSS module via `@import`");
                 }
+
                 ImportKind::UrlImport => {
                   unreachable!("A Js module would never import a CSS module via `url()`");
                 }
+
                 ImportKind::NewUrl => {}
               }
             }
@@ -447,6 +484,7 @@ impl<'a> LinkStage<'a> {
         let linking_info = &mut self.metas[ecma_module.idx];
 
         create_wrapper(ecma_module, linking_info, &mut self.symbols, &self.runtime, self.options);
+
         if let Some(entry) = self.entries.iter().find(|entry| entry.id == ecma_module.idx) {
           init_entry_point_stmt_info(linking_info, entry, &self.dynamic_import_exports_usage_map);
         }
@@ -478,11 +516,13 @@ impl<'a> LinkStage<'a> {
           let mut declared_symbols = vec![];
           if !meta.is_canonical_exports_empty() {
             referenced_symbols.push(self.runtime.resolve_symbol("__export").into());
+
             referenced_symbols
               .extend(meta.canonical_exports().map(|(_, export)| export.symbol_ref.into()));
           }
           if !meta.star_exports_from_external_modules.is_empty() {
             referenced_symbols.push(self.runtime.resolve_symbol("__reExport").into());
+
             match self.options.format {
               OutputFormat::Esm => {
                 meta.star_exports_from_external_modules.iter().copied().for_each(|rec_idx| {
@@ -516,6 +556,7 @@ impl<'a> LinkStage<'a> {
       // Symbols from runtime are referenced by bundler not import statements.
       meta.referenced_symbols_by_entry_point_chunk.iter().for_each(|symbol_ref| {
         let canonical_ref = self.symbols.canonical_ref_for(*symbol_ref);
+
         meta.dependencies.insert(canonical_ref.owner);
       });
 
@@ -532,11 +573,13 @@ impl<'a> LinkStage<'a> {
               let canonical_ref = self.symbols.canonical_ref_for(*sym_ref);
               meta.dependencies.insert(canonical_ref.owner);
             }
+
             rolldown_common::SymbolOrMemberExprRef::MemberExpr(member_expr) => {
               if let Some(sym_ref) =
                 member_expr.resolved_symbol_ref(&meta.resolved_member_expr_refs)
               {
                 let canonical_ref = self.symbols.canonical_ref_for(sym_ref);
+
                 meta.dependencies.insert(canonical_ref.owner);
               } else {
                 // `None` means the member expression resolve to a ambiguous export, which means it actually resolve to nothing.

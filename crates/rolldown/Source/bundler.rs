@@ -89,6 +89,7 @@ impl Bundler {
     }
 
     self.closed = true;
+
     self.plugin_driver.close_bundle().await?;
 
     Ok(())
@@ -112,11 +113,14 @@ impl Bundler {
       Err(errs) => {
         // TODO: So far we even call build end hooks on unhandleable errors . But should we call build end hook even for unhandleable errors?
         error_for_build_end_hook = Some(errs.first().unpack_ref().to_string());
+
         self
           .plugin_driver
           .build_end(error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref())
           .await?;
+
         self.plugin_driver.close_bundle().await?;
+
         return Err(errs);
       }
     };
@@ -131,6 +135,7 @@ impl Bundler {
 
   async fn try_build(&mut self) -> BuildResult<LinkStageOutput> {
     let build_info = self.scan().await?;
+
     Ok(LinkStage::new(build_info, &self.options).link())
   }
 

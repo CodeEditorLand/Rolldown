@@ -23,6 +23,7 @@ impl BuildEvent for UnsupportedFeature {
 
     let file_id =
       diagnostic.add_file(opts.stabilize_path(self.filename.as_str()), self.source.clone());
+
     diagnostic.add_label(&file_id, self.span.start..self.span.end, String::new());
   }
 

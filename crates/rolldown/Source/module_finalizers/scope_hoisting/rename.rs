@@ -21,6 +21,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     let symbol_id = self.scope.symbol_id_for(reference_id)?;
 
     let symbol_ref: SymbolRef = (self.ctx.id, symbol_id).into();
+
     let mut expr = self.finalized_expr_for_symbol_ref(symbol_ref, is_callee);
 
     // See https://github.com/oxc-project/oxc/issues/4606
@@ -31,7 +32,9 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
       }
       ast::Expression::StaticMemberExpression(ref mut it) => {
         it.span = id_ref.span;
+
         it.property.span = id_ref.span;
+
         if let Some(object) = it.object.as_identifier_mut() {
           object.span = id_ref.span;
         }
@@ -57,7 +60,9 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     let symbol_id = self.scope.symbol_id_for(reference_id)?;
 
     let symbol_ref: SymbolRef = (self.ctx.id, symbol_id).into();
+
     let canonical_ref = self.ctx.symbol_db.canonical_ref_for(symbol_ref);
+
     let symbol = self.ctx.symbol_db.get(canonical_ref);
 
     if let Some(ns_alias) = &symbol.namespace_alias {
@@ -69,6 +74,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     }
 
     let canonical_name = self.canonical_name_for(canonical_ref);
+
     if id_ref.name != canonical_name.as_str() {
       return Some(ast::SimpleAssignmentTarget::AssignmentTargetIdentifier(
         self.snippet.alloc_id_ref(canonical_name, id_ref.span),
@@ -107,7 +113,9 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     let symbol_id = self.scope.symbol_id_for(reference_id)?;
 
     let symbol_ref: SymbolRef = (self.ctx.id, symbol_id).into();
+
     let canonical_ref = self.ctx.symbol_db.canonical_ref_for(symbol_ref);
+
     let symbol = self.ctx.symbol_db.get(canonical_ref);
 
     if let Some(ns_alias) = &symbol.namespace_alias {
@@ -122,6 +130,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
       }
       *target_id_ref.reference_id.get_mut() = None;
     }
+
     None
   }
 
@@ -133,10 +142,12 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
         ast::BindingPatternKind::BindingIdentifier(ident) if prop.shorthand => {
           if let Some(symbol_id) = ident.symbol_id.get() {
             let canonical_name = self.canonical_name_for((self.ctx.id, symbol_id).into());
+
             if ident.name != canonical_name.as_str() {
               ident.name = self.snippet.atom(canonical_name);
               prop.shorthand = false;
             }
+
             ident.symbol_id.get_mut().take();
           }
         }
@@ -148,13 +159,16 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
           };
           if let Some(symbol_id) = ident.symbol_id.get() {
             let canonical_name = self.canonical_name_for((self.ctx.id, symbol_id).into());
+
             if ident.name != canonical_name.as_str() {
               ident.name = self.snippet.atom(canonical_name);
               prop.shorthand = false;
             }
+
             ident.symbol_id.get_mut().take();
           }
         }
+
         _ => {
           // For other patterns:
           // - `const [a] = ...` or `function foo([a]) {}`

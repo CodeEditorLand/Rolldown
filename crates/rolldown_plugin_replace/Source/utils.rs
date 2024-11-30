@@ -33,18 +33,22 @@ mod tests {
 
   fn run_test(keys: &[&str], expected: &[(&str, &str)]) {
     let map = keys.iter().copied().map(|key| (key.to_string(), "x".to_string())).collect();
+
     let result = expand_typeof_replacements(&map).into_iter().collect::<HashMap<_, _>>();
+
     let expected = expected
       .iter()
       .copied()
       .map(|(key, replacement)| (key.to_string(), replacement.to_string()))
       .collect::<HashMap<_, _>>();
+
     assert_eq!(result, expected);
   }
 
   #[test]
   fn test_expand() {
     run_test(&["a"], &[]);
+
     run_test(&["abc"], &[]);
 
     run_test(&["abc.def"], &[("typeof abc", "\"object\"")]);
@@ -86,19 +90,33 @@ mod tests {
   #[test]
   fn test_expand_invalid() {
     run_test(&[""], &[]);
+
     run_test(&["~"], &[]);
+
     run_test(&["."], &[]);
+
     run_test(&["a."], &[]);
+
     run_test(&[".a"], &[]);
+
     run_test(&["a.b."], &[]);
+
     run_test(&["a.b..c"], &[]);
+
     run_test(&["!a.b.c"], &[]);
+
     run_test(&["a!.b.c"], &[]);
+
     run_test(&["a.!b.c"], &[]);
+
     run_test(&["a.b!.d"], &[]);
+
     run_test(&["a.b!c.d"], &[]);
+
     run_test(&["a.b.!cde"], &[]);
+
     run_test(&["a.b.cde!"], &[]);
+
     run_test(&["a.b.c.d!e"], &[]);
 
     run_test(&["a.x", "!", "b.y"], &[("typeof a", "\"object\""), ("typeof b", "\"object\"")]);

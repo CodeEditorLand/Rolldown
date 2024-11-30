@@ -33,10 +33,12 @@ impl SideEffects {
       serde_json::Value::String(v) => Some(SideEffects::String(v.to_string())),
       serde_json::Value::Array(v) => {
         let mut side_effects = vec![];
+
         for value in v {
           let str = value.as_str()?;
           side_effects.push(str.to_string());
         }
+
         Some(SideEffects::Array(side_effects))
       }
       _ => None,

@@ -51,6 +51,7 @@ pub fn parse_to_ecma_ast(
 
   let oxc_source_type = {
     let default = pure_esm_js_oxc_source_type();
+
     match parsed_type {
       OxcParseType::Js => default,
       OxcParseType::Jsx => default.with_jsx(true),
@@ -99,23 +100,27 @@ fn pre_process_source(
         ("({})".to_owned(), OxcParseType::Js)
       }
     }
+
     ModuleType::Json => {
       has_lazy_export = true;
       let content = source.try_into_string()?;
       let content = concat_string!("(", content, ")");
       (content, OxcParseType::Js)
     }
+
     ModuleType::Text => {
       let content = text_to_string_literal(&source.try_into_string()?)?;
       has_lazy_export = true;
       (content, OxcParseType::Js)
     }
+
     ModuleType::Base64 => {
       let source = source.into_bytes();
       let encoded = rolldown_utils::base64::to_standard_base64(source);
       has_lazy_export = true;
       (text_to_string_literal(&encoded)?, OxcParseType::Js)
     }
+
     ModuleType::Dataurl => {
       let data = source.into_bytes();
       let guessed_mime = guess_mime(path, &data)?;
@@ -123,16 +128,19 @@ fn pre_process_source(
       has_lazy_export = true;
       (text_to_string_literal(&dataurl)?, OxcParseType::Js)
     }
+
     ModuleType::Binary => {
       let source = source.into_bytes();
       let encoded = rolldown_utils::base64::to_standard_base64(source);
       (binary_to_esm(&encoded, options.platform, RUNTIME_MODULE_ID), OxcParseType::Js)
     }
+
     ModuleType::Asset => {
       let content = "import.meta.__ROLLDOWN_ASSET_FILENAME".to_string();
       has_lazy_export = true;
       (content, OxcParseType::Js)
     }
+
     ModuleType::Empty => (String::new(), OxcParseType::Js),
     ModuleType::Custom(custom_type) => {
       // TODO: should provide friendly error message to say that this type is not supported by rolldown.

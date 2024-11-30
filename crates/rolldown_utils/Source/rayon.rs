@@ -14,6 +14,7 @@ mod wasm_shims {
 
   pub trait IntoParallelIterator: Sized {
     type Item;
+
     type Iter: Iterator<Item = Self::Item>;
 
     fn into_par_iter(self) -> Self::Iter;
@@ -24,6 +25,7 @@ mod wasm_shims {
     I: IntoIterator,
   {
     type Item = I::Item;
+
     type Iter = I::IntoIter;
 
     fn into_par_iter(self) -> Self::Iter {
@@ -33,6 +35,7 @@ mod wasm_shims {
 
   pub trait IntoParallelRefIterator<'data> {
     type Item: 'data;
+
     type Iter: ParallelIterator<Item = Self::Item>;
 
     fn par_iter(&'data self) -> Self::Iter;
@@ -43,6 +46,7 @@ mod wasm_shims {
     &'data I: IntoParallelIterator,
   {
     type Iter = <&'data I as IntoParallelIterator>::Iter;
+
     type Item = <&'data I as IntoParallelIterator>::Item;
 
     fn par_iter(&'data self) -> Self::Iter {
@@ -52,6 +56,7 @@ mod wasm_shims {
 
   pub trait IntoParallelRefMutIterator<'data> {
     type Item: 'data;
+
     type Iter: ParallelIterator<Item = Self::Item>;
 
     fn par_iter_mut(&'data mut self) -> Self::Iter;
@@ -62,6 +67,7 @@ mod wasm_shims {
     &'data mut I: IntoParallelIterator,
   {
     type Iter = <&'data mut I as IntoParallelIterator>::Iter;
+
     type Item = <&'data mut I as IntoParallelIterator>::Item;
 
     fn par_iter_mut(&'data mut self) -> Self::Iter {

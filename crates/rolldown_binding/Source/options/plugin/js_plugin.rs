@@ -64,6 +64,7 @@ impl Plugin for JsPlugin {
       cb.await_call((ctx.clone().into(), BindingNormalizedOptions::new(Arc::clone(args.options))))
         .await?;
     }
+
     Ok(())
   }
 
@@ -183,6 +184,7 @@ impl Plugin for JsPlugin {
     if let Some(cb) = &self.module_parsed {
       cb.await_call((ctx.clone().into(), BindingModuleInfo::new(module_info))).await?;
     }
+
     Ok(())
   }
 
@@ -198,6 +200,7 @@ impl Plugin for JsPlugin {
     if let Some(cb) = &self.build_end {
       cb.await_call((ctx.clone().into(), args.map(|a| a.error.to_string()))).await?;
     }
+
     Ok(())
   }
 
@@ -216,6 +219,7 @@ impl Plugin for JsPlugin {
       cb.await_call((ctx.clone().into(), BindingNormalizedOptions::new(Arc::clone(args.options))))
         .await?;
     }
+
     Ok(())
   }
 
@@ -357,6 +361,7 @@ impl Plugin for JsPlugin {
     if let Some(cb) = &self.render_error {
       cb.await_call((ctx.clone().into(), args.error.to_string())).await?;
     }
+
     Ok(())
   }
 
@@ -380,6 +385,7 @@ impl Plugin for JsPlugin {
         .await?;
       update_outputs(args.bundle, changed)?;
     }
+
     Ok(())
   }
 
@@ -402,6 +408,7 @@ impl Plugin for JsPlugin {
         .await?;
       update_outputs(args.bundle, changed)?;
     }
+
     Ok(())
   }
 
@@ -416,6 +423,7 @@ impl Plugin for JsPlugin {
     if let Some(cb) = &self.close_bundle {
       cb.await_call(ctx.clone().into()).await?;
     }
+
     Ok(())
   }
 
@@ -432,6 +440,7 @@ impl Plugin for JsPlugin {
     if let Some(cb) = &self.watch_change {
       cb.await_call((ctx.clone().into(), path.to_string(), event.to_string())).await?;
     }
+
     Ok(())
   }
 
@@ -446,6 +455,7 @@ impl Plugin for JsPlugin {
     if let Some(cb) = &self.close_watcher {
       cb.await_call(ctx.clone().into()).await?;
     }
+
     Ok(())
   }
 
@@ -457,6 +467,7 @@ impl Plugin for JsPlugin {
     match self.inner.transform_filter {
       Some(ref item) => {
         let filter = TransformHookFilter::try_from(item.clone())?;
+
         Ok(Some(filter))
       }
       None => Ok(None),
@@ -467,6 +478,7 @@ impl Plugin for JsPlugin {
     match self.inner.resolve_id_filter {
       Some(ref item) => {
         let filter = ResolvedIdHookFilter::try_from(item.clone())?;
+
         Ok(Some(filter))
       }
       None => Ok(None),
@@ -477,6 +489,7 @@ impl Plugin for JsPlugin {
     match self.inner.load_filter {
       Some(ref item) => {
         let filter = LoadHookFilter::try_from(item.clone())?;
+
         Ok(Some(filter))
       }
       None => Ok(None),

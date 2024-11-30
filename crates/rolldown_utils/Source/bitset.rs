@@ -33,6 +33,7 @@ impl Display for BitSet {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let bit_string =
       self.entries.iter().map(|e| format!("{e:08b}")).collect::<Vec<String>>().join("_");
+
     f.write_str(&bit_string)
   }
 }
@@ -41,6 +42,7 @@ impl Debug for BitSet {
   fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
     let bit_string =
       self.entries.iter().map(|e| format!("{e:08b}")).collect::<Vec<String>>().join("_");
+
     f.debug_tuple("BitSet").field(&bit_string).finish()
   }
 }
@@ -52,38 +54,62 @@ mod tests {
   #[test]
   fn basic() {
     let mut bs = BitSet::new(1);
+
     assert_eq!(bs.to_string(), "00000000");
+
     bs.set_bit(0);
+
     bs.set_bit(1);
+
     bs.set_bit(7);
+
     assert_eq!(bs.to_string(), "10000011");
 
     let mut bs = BitSet::new(9);
+
     assert_eq!(bs.to_string(), "00000000_00000000");
+
     bs.set_bit(0);
+
     bs.set_bit(1);
+
     bs.set_bit(7);
+
     assert_eq!(bs.to_string(), "10000011_00000000");
+
     bs.set_bit(8);
+
     assert_eq!(bs.to_string(), "10000011_00000001");
+
     bs.set_bit(15);
+
     assert_eq!(bs.to_string(), "10000011_10000001");
   }
 
   #[test]
   fn union() {
     let mut bs = BitSet::new(9);
+
     assert_eq!(bs.to_string(), "00000000_00000000");
+
     let mut bs2 = bs.clone();
+
     bs.set_bit(0);
+
     bs.set_bit(1);
+
     bs.set_bit(7);
+
     assert_eq!(bs.to_string(), "10000011_00000000");
+
     bs2.set_bit(8);
+
     bs2.set_bit(15);
+
     assert_eq!(bs2.to_string(), "00000000_10000001");
     //
     bs.union(&bs2);
+
     assert_eq!(bs.to_string(), "10000011_10000001");
   }
 }

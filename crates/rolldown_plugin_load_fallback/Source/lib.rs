@@ -19,9 +19,12 @@ impl Plugin for LoadFallbackPlugin {
     if DATA_URL_RE.is_match(args.id) {
       return Ok(None);
     }
+
     let normalized_id = clean_url(args.id);
+
     let code =
       std::fs::read_to_string(normalized_id).or_else(|_| std::fs::read_to_string(args.id))?;
+
     Ok(Some(HookLoadOutput { code, ..Default::default() }))
   }
 }

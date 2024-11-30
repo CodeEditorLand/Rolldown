@@ -80,6 +80,7 @@ impl EcmaModule {
 	pub fn star_export_module_ids(&self) -> impl Iterator<Item = ModuleIdx> + '_ {
 		self.star_exports.iter().map(|rec_id| {
 			let rec = &self.import_records[*rec_id];
+
 			rec.resolved_module
 		})
 	}
@@ -103,12 +104,16 @@ impl EcmaModule {
 			is_entry:self.is_user_defined_entry,
 			importers:{
 				let mut value = self.importers.clone();
+
 				value.sort_unstable();
+
 				value
 			},
 			dynamic_importers:{
 				let mut value = self.dynamic_importers.clone();
+
 				value.sort_unstable();
+
 				value
 			},
 			imported_ids:self.imported_ids.clone(),
@@ -138,6 +143,7 @@ impl EcmaModule {
 		self.star_export_module_ids()
 			.filter_map(|id| modules[id].as_ecma())
 			.for_each(|module| module.get_exported_names(export_star_set, modules, false, ret));
+
 		if include_default {
 			ret.extend(self.named_exports.keys());
 		} else {
@@ -176,6 +182,7 @@ impl EcmaModule {
 	) -> impl Iterator<Item = ImportRecordIdx> + 'me {
 		self.star_exports.iter().filter_map(move |rec_id| {
 			let rec = &self.import_records[*rec_id];
+
 			match modules[rec.resolved_module] {
 				Module::External(_) => Some(*rec_id),
 				Module::Ecma(_) => None,

@@ -65,6 +65,7 @@ impl<'a> GenerateStage<'a> {
   #[tracing::instrument(level = "debug", skip_all)]
   pub async fn generate(&mut self) -> BuildResult<BundleOutput> {
     let mut chunk_graph = self.generate_chunks().await?;
+
     if chunk_graph.chunk_table.len() > 1 {
       validate_options_for_multi_chunk_output(self.options)?;
     }
@@ -73,6 +74,7 @@ impl<'a> GenerateStage<'a> {
 
     let index_chunk_id_to_name =
       self.generate_chunk_name_and_preliminary_filenames(&mut chunk_graph).await?;
+
     self.patch_asset_modules(&chunk_graph);
 
     chunk_graph.chunk_table.par_iter_mut().for_each(|chunk| {
@@ -85,6 +87,7 @@ impl<'a> GenerateStage<'a> {
     });
 
     let ast_table_iter = self.link_output.ast_table.par_iter_mut();
+
     ast_table_iter
       .filter(|(_ast, owner)| {
         self.link_output.module_table.modules[*owner]
@@ -95,9 +98,13 @@ impl<'a> GenerateStage<'a> {
         let Module::Normal(module) = &self.link_output.module_table.modules[*owner] else {
           return;
         };
+
         let chunk_id = chunk_graph.module_to_chunk[module.idx].unwrap();
+
         let chunk = &chunk_graph.chunk_table[chunk_id];
+
         let linking_info = &self.link_output.metas[module.idx];
+
         if self.options.format.requires_scope_hoisting() {
           finalize_normal_module(
             module,
@@ -118,6 +125,7 @@ impl<'a> GenerateStage<'a> {
         } else {
           ast.program.with_mut(|fields| {
             let (oxc_program, alloc) = (fields.program, fields.allocator);
+
             let mut finalizer = IsolatingModuleFinalizer {
               alloc,
               scope: &module.scope,
@@ -131,6 +139,7 @@ impl<'a> GenerateStage<'a> {
               generated_imports: oxc::allocator::Vec::new_in(alloc),
               generated_exports: oxc::allocator::Vec::new_in(alloc),
             };
+
             finalizer.visit_program(oxc_program);
           });
         }
@@ -150,6 +159,7 @@ impl<'a> GenerateStage<'a> {
     let modules = &self.link_output.module_table.modules;
 
     let mut index_chunk_id_to_name = FxHashMap::default();
+
     let mut index_pre_generated_names: IndexVec<ChunkIdx, ArcStr> = chunk_graph
       .chunk_table
       .par_iter()
@@ -157,9 +167,11 @@ impl<'a> GenerateStage<'a> {
         if let Some(name) = &chunk.name {
           return name.clone();
         }
+
         match chunk.kind {
           ChunkKind::EntryPoint { module: entry_module_id, is_user_defined, .. } => {
             let module = &modules[entry_module_id];
+
             let generated = if is_user_defined {
               try_extract_meaningful_input_name_from_path(module.id())
                 .map(ArcStr::from)
@@ -167,6 +179,7 @@ impl<'a> GenerateStage<'a> {
             } else {
               ArcStr::from(sanitize_file_name(module.id().as_path().representative_file_name()))
             };
+
             generated
           }
           ChunkKind::Common => {
@@ -174,10 +187,12 @@ impl<'a> GenerateStage<'a> {
             // - esbuild always use 'chunk' as the `[name]`. However we try to make the name more meaningful here.
             let first_executed_non_runtime_module =
               chunk.modules.iter().rev().find(|each| **each != self.link_output.runtime.id());
+
             first_executed_non_runtime_module.map_or_else(
               || arcstr::literal!("chunk"),
               |module_id| {
                 let module = &modules[*module_id];
+
                 ArcStr::from(sanitize_file_name(module.id().as_path().representative_file_name()))
               },
             )
@@ -192,6 +207,7 @@ impl<'a> GenerateStage<'a> {
     let create_make_unique_name = |mut used_name_counts: FxHashMap<ArcStr, u32>| {
       move |name: &ArcStr| {
         let mut candidate = name.clone();
+
         loop {
           match used_name_counts.entry(candidate.clone()) {
             Entry::Occupied(mut occ) => {
@@ -201,6 +217,7 @@ impl<'a> GenerateStage<'a> {
               candidate =
                 ArcStr::from(concat_string!(name, itoa::Buffer::new().format(next_count)).as_str());
             }
+
             Entry::Vacant(vac) => {
               // This is the first time we see this name
               let name = vac.key().clone();
@@ -211,7 +228,9 @@ impl<'a> GenerateStage<'a> {
         }
       }
     };
+
     let mut make_unique_name_for_ecma_chunk = create_make_unique_name(FxHashMap::default());
+
     let mut make_unique_name_for_css_chunk = create_make_unique_name(FxHashMap::default());
 
     for chunk_id in &chunk_graph.sorted_chunk_idx_vec {
@@ -290,6 +309,7 @@ impl<'a> GenerateStage<'a> {
       chunk.preliminary_filename = Some(preliminary_filename);
       chunk.css_preliminary_filename = Some(css_preliminary_filename);
     }
+
     Ok(index_chunk_id_to_name)
   }
 
@@ -301,15 +321,19 @@ impl<'a> GenerateStage<'a> {
         let Module::Normal(module) = &mut self.link_output.module_table.modules[*module_idx] else {
           return;
         };
+
         let asset_filename: ArcStr = preliminary.as_str().into();
+
         module.ecma_view.mutations.push(Box::new(ImportMetaRolldownAssetReplacer {
           asset_filename: asset_filename.clone(),
         }));
+
         module_idx_to_filenames.insert(module_idx, asset_filename);
       });
       // replace asset name in css view
       chunk.modules.iter().for_each(|module_idx| {
         let module = &mut self.link_output.module_table.modules[*module_idx];
+
         if let Some(css_view) =
           module.as_normal_mut().and_then(|normal_module| normal_module.css_view.as_mut())
         {

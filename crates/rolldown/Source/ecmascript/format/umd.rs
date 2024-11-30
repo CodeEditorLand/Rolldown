@@ -65,7 +65,9 @@ pub async fn render_umd<'code>(
   let factory_parameters = render_factory_parameters(ctx, &externals, has_exports && named_exports);
   let cjs_intro = if need_global {
     let cjs_export = if has_exports && !named_exports { "module.exports = " } else { "" };
+
     let cjs_dependencies = render_cjs_dependencies(&externals, has_exports && named_exports);
+
     format!("typeof exports === 'object' && typeof module !== 'undefined' ? {cjs_export} factory({cjs_dependencies}) :",)
   } else {
     String::new()
@@ -112,6 +114,7 @@ pub async fn render_umd<'code>(
         }
       }
     }
+
     _ => {}
   }
 
@@ -129,6 +132,7 @@ pub async fn render_umd<'code>(
 
   if let ChunkKind::EntryPoint { module: entry_id, .. } = ctx.chunk.kind {
     let entry_meta = &ctx.link_output.metas[entry_id];
+
     match entry_meta.wrap_kind {
       WrapKind::Esm => {
         let wrapper_ref = entry_meta.wrapper_ref.as_ref().unwrap();
@@ -138,6 +142,7 @@ pub async fn render_umd<'code>(
           ctx.chunk_idx,
           &ctx.chunk.canonical_names,
         );
+
         source_joiner.append_source(concat_string!(wrapper_ref_name, "();"));
       }
       WrapKind::Cjs => {
@@ -181,6 +186,7 @@ fn render_amd_dependencies(externals: &[&ExternalModule], has_exports: bool) -> 
   let mut dependencies = Vec::with_capacity(externals.len());
   if has_exports {
     dependencies.reserve(1);
+
     dependencies.push("exports".to_string());
   }
   externals.iter().for_each(|external| {
@@ -193,6 +199,7 @@ fn render_cjs_dependencies(externals: &[&ExternalModule], has_exports: bool) -> 
   let mut dependencies = Vec::with_capacity(externals.len());
   if has_exports {
     dependencies.reserve(1);
+
     dependencies.push("exports".to_string());
   }
   externals.iter().for_each(|external| {
@@ -215,17 +222,21 @@ async fn render_iife_export(
 
   for external in externals {
     let global = ctx.options.globals.call(external.name.as_str()).await;
+
     let target = match &global {
       Some(global_name) => global_name.split('.').map(render_property_access).collect::<String>(),
       None => {
         let target = legitimize_identifier_name(external.name.as_str()).to_string();
+
         warnings.push(
           BuildDiagnostic::missing_global_name(external.name.clone(), ArcStr::from(&target))
             .with_severity_warning(),
         );
+
         render_property_access(&target)
       }
     };
+
     dependencies.push(format!("global{target}"));
   }
 
@@ -236,6 +247,7 @@ async fn render_iife_export(
       "global",
       ",",
     );
+
     if named_exports {
       Ok(format!(
         "factory(({stmt}{namespace} = {}){})",

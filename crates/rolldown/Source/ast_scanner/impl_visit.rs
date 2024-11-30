@@ -55,9 +55,12 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
       self.visit_statement(stmt);
       self.result.stmt_infos.add_stmt_info(std::mem::take(&mut self.current_stmt_info));
     }
+
     self.result.hashbang_range = program.hashbang.as_ref().map(GetSpan::span);
+
     self.result.dynamic_import_rec_exports_usage =
       std::mem::take(&mut self.dynamic_import_usage_info.dynamic_import_exports_usage);
+
     if self.result.has_eval {
       // if there exists `eval` in current module, assume all dynamic import are completely used;
       for usage in self.result.dynamic_import_rec_exports_usage.values_mut() {
@@ -68,6 +71,7 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
 
   fn visit_binding_identifier(&mut self, ident: &ast::BindingIdentifier) {
     let symbol_id = ident.symbol_id.get().unpack();
+
     if self.is_root_symbol(symbol_id) {
       self.add_declared_id(symbol_id);
     }
@@ -103,12 +107,15 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
         ));
       }
     }
+
     walk::walk_await_expression(self, it);
   }
 
   fn visit_identifier_reference(&mut self, ident: &IdentifierReference) {
     self.process_identifier_ref_by_scope(ident);
+
     self.try_diagnostic_forbid_const_assign(ident);
+
     self.update_dynamic_import_binding_usage_info(ident);
   }
 
@@ -116,6 +123,7 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
     if let Some(decl) = stmt.as_module_declaration() {
       self.scan_module_decl(decl);
     }
+
     walk::walk_statement(self, stmt);
   }
 
@@ -134,6 +142,7 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
       self.init_dynamic_import_binding_usage_info(import_rec_idx);
       self.result.imports.insert(expr.span, import_rec_idx);
     }
+
     walk::walk_import_expression(self, expr);
   }
 
@@ -141,6 +150,7 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
     if let ast::Declaration::ClassDeclaration(class) = it {
       self.scan_class_declaration(class);
     }
+
     walk::walk_declaration(self, it);
   }
 
@@ -170,15 +180,18 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
             }
           }
         }
+
         _ => {}
       },
       _ => {}
     }
+
     walk::walk_assignment_expression(self, node);
   }
 
   fn visit_new_expression(&mut self, it: &ast::NewExpression<'ast>) {
     self.handle_new_url_with_string_literal_and_import_meta_url(it);
+
     walk::walk_new_expression(self, it);
   }
 }
@@ -189,11 +202,16 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     let Some(id) = class.id.as_ref() else {
       return;
     };
+
     let symbol_id = *id.symbol_id.get().unpack_ref();
+
     let previous_reference_id = self.cur_class_decl_and_symbol_referenced_ids.take();
+
     self.cur_class_decl_and_symbol_referenced_ids =
       Some((symbol_id, &self.scopes.resolved_references[symbol_id]));
+
     walk::walk_class(self, class);
+
     self.cur_class_decl_and_symbol_referenced_ids = previous_reference_id;
   }
 
@@ -207,12 +225,14 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
             _ => {}
           }
         }
+
         self.process_global_identifier_ref_by_ancestor(ident_ref);
       }
       super::IdentifierReferenceKind::Root(root_symbol_id) => {
         // if the identifier_reference is a NamedImport MemberExpr access, we store it as a `MemberExpr`
         // use this flag to avoid insert it as `Symbol` at the same time.
         let mut is_inserted_before = false;
+
         if self.result.named_imports.contains_key(&root_symbol_id) {
           if let Some((span, props)) = self.try_extract_parent_static_member_expr_chain(usize::MAX)
           {
@@ -222,6 +242,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
             }
           }
         }
+
         if !is_inserted_before {
           self.add_referenced_symbol(root_symbol_id);
         }
@@ -243,6 +264,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     ident_ref: &IdentifierReference,
   ) -> Option<()> {
     let parent = self.visit_path.last()?;
+
     match parent {
       AstKind::CallExpression(call_expr) => {
         match ident_ref.name.as_str() {
@@ -250,6 +272,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
             // TODO: esbuild track has_eval for each scope, this could reduce bailout range, and may
             // improve treeshaking performance. https://github.com/evanw/esbuild/blob/360d47230813e67d0312ad754cad2b6ee09b151b/internal/js_ast/js_ast.go#L1288-L1291
             self.result.has_eval = true;
+
             self.result.warnings.push(
               BuildDiagnostic::eval(
                 self.file_path.to_string(),
@@ -267,6 +290,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       }
       _ => {}
     }
+
     None
   }
 
@@ -288,6 +312,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
               AstKind::ParenthesizedExpression(_) => {}
               AstKind::ExpressionStatement(_) => {
                 meta.insert(ImportRecordMeta::IS_REQUIRE_UNUSED);
+
                 break;
               }
               AstKind::SequenceExpression(seq_expr) => {

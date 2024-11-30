@@ -30,15 +30,19 @@ pub trait BindingPatternExt<'ast> {
 impl<'ast> BindingPatternExt<'ast> for ast::BindingPattern<'ast> {
   fn binding_identifiers(&self) -> smallvec::SmallVec<[&Box<ast::BindingIdentifier<'ast>>; 1]> {
     let mut queue = vec![&self.kind];
+
     let mut ret = SmallVec::default();
+
     while let Some(binding_kind) = queue.pop() {
       match binding_kind {
         ast::BindingPatternKind::BindingIdentifier(id) => {
           ret.push(id);
         }
+
         ast::BindingPatternKind::ArrayPattern(arr_pat) => {
           queue.extend(arr_pat.elements.iter().flatten().map(|pat| &pat.kind).rev());
         }
+
         ast::BindingPatternKind::ObjectPattern(obj_pat) => {
           queue.extend(obj_pat.properties.iter().map(|prop| &prop.value.kind).rev());
         }
@@ -48,6 +52,7 @@ impl<'ast> BindingPatternExt<'ast> for ast::BindingPattern<'ast> {
         }
       };
     }
+
     ret
   }
 
@@ -104,6 +109,7 @@ impl<'ast> BindingPatternExt<'ast> for ast::BindingPattern<'ast> {
                 .into_in(alloc)
               }
             }
+
             ast::BindingPatternKind::BindingIdentifier(ref id) => {
               if binding_prop.shorthand {
                 ast::AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
@@ -131,6 +137,7 @@ impl<'ast> BindingPatternExt<'ast> for ast::BindingPattern<'ast> {
                 .into_in(alloc)
               }
             }
+
             _ => {
               unreachable!(
                 "The kind of `BindingProperty`'s value should not be `ObjectPattern` and `ArrayPattern`"
@@ -150,6 +157,7 @@ impl<'ast> BindingPatternExt<'ast> for ast::BindingPattern<'ast> {
           }),
           ..TakeIn::dummy(alloc)
         };
+
         arr_pat.elements.take_in(alloc).into_iter().for_each(|binding_pat| {
           arr_target.elements.push(binding_pat.map(|binding_pat| match binding_pat.kind {
             ast::BindingPatternKind::AssignmentPattern(assign_pat) => {
@@ -163,15 +171,18 @@ impl<'ast> BindingPatternExt<'ast> for ast::BindingPattern<'ast> {
                 .into_in(alloc),
               )
             }
+
             _ => ast::AssignmentTargetMaybeDefault::from(binding_pat.into_assignment_target(alloc)),
           }));
         });
+
         ast::AssignmentTarget::ArrayAssignmentTarget(arr_target.into_in(alloc))
       }
       ast::BindingPatternKind::AssignmentPattern(_) => {
         unreachable!("`BindingPatternKind::AssignmentPattern` should be pre-handled in above")
       }
     };
+
     left
   }
 }
@@ -201,6 +212,7 @@ impl<'me, 'ast> StatementExt<'me, 'ast> for ast::Statement<'ast> {
     if let ast::Statement::ImportDeclaration(import_decl) = self {
       return Some(&**import_decl);
     }
+
     None
   }
 
@@ -210,6 +222,7 @@ impl<'me, 'ast> StatementExt<'me, 'ast> for ast::Statement<'ast> {
     if let ast::Statement::ExportDefaultDeclaration(export_default_decl) = self {
       return Some(&mut **export_default_decl);
     }
+
     None
   }
 
@@ -217,6 +230,7 @@ impl<'me, 'ast> StatementExt<'me, 'ast> for ast::Statement<'ast> {
     if let ast::Statement::ExportAllDeclaration(export_all_decl) = self {
       return Some(&**export_all_decl);
     }
+
     None
   }
 
@@ -224,6 +238,7 @@ impl<'me, 'ast> StatementExt<'me, 'ast> for ast::Statement<'ast> {
     if let ast::Statement::ExportNamedDeclaration(export_named_decl) = self {
       return Some(&**export_named_decl);
     }
+
     None
   }
 
@@ -231,6 +246,7 @@ impl<'me, 'ast> StatementExt<'me, 'ast> for ast::Statement<'ast> {
     if let ast::Statement::ExportNamedDeclaration(export_named_decl) = self {
       return Some(&mut **export_named_decl);
     }
+
     None
   }
 
@@ -300,6 +316,7 @@ impl<'ast> ExpressionExt<'ast> for ast::Expression<'ast> {
     let ast::Expression::UnaryExpression(expr) = self else {
       return None;
     };
+
     Some(expr)
   }
 
@@ -307,6 +324,7 @@ impl<'ast> ExpressionExt<'ast> for ast::Expression<'ast> {
     let ast::Expression::StringLiteral(expr) = self else {
       return None;
     };
+
     Some(expr)
   }
 
@@ -314,6 +332,7 @@ impl<'ast> ExpressionExt<'ast> for ast::Expression<'ast> {
     let ast::Expression::BinaryExpression(expr) = self else {
       return None;
     };
+
     Some(expr)
   }
 }

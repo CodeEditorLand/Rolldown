@@ -107,6 +107,7 @@ impl PluginContextImpl {
     load_callback_fn: Box<LoadCallbackFn>,
   ) -> anyhow::Result<()> {
     self.context_load_modules.insert(specifier.into(), LoadCallback(Box::new(load_callback_fn)));
+
     self
       .tx
       .lock()
@@ -125,6 +126,7 @@ impl PluginContextImpl {
         is_external_without_side_effects: false,
       }))
       .await?;
+
     Ok(())
   }
 
@@ -150,12 +152,15 @@ impl PluginContextImpl {
       normalized_extra_options.import_kind,
       if normalized_extra_options.skip_self {
         let mut skipped_resolve_calls = Vec::with_capacity(self.skipped_resolve_calls.len() + 1);
+
         skipped_resolve_calls.extend(self.skipped_resolve_calls.clone());
+
         skipped_resolve_calls.push(Arc::new(HookResolveIdSkipped {
           plugin_idx: self.plugin_idx,
           importer: importer.map(Into::into),
           specifier: specifier.into(),
         }));
+
         Some(skipped_resolve_calls)
       } else if !self.skipped_resolve_calls.is_empty() {
         Some(self.skipped_resolve_calls.clone())

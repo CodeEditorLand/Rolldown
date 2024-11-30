@@ -45,6 +45,7 @@ impl<'name> Renamer<'name> {
       OutputFormat::Cjs => vec!["module", "require", "__filename", "__dirname", "exports"],
       OutputFormat::Iife | OutputFormat::Umd => vec!["exports"], // Also for  AMD, but we don't support them yet.
     };
+
     Self {
       canonical_names: FxHashMap::default(),
       canonical_token_to_name: FxHashMap::default(),
@@ -64,10 +65,13 @@ impl<'name> Renamer<'name> {
 
   pub fn add_symbol_in_root_scope(&mut self, symbol_ref: SymbolRef) {
     let canonical_ref = symbol_ref.canonical_ref(self.symbol_db);
+
     let original_name = canonical_ref.name(self.symbol_db).to_rstr();
+
     match self.canonical_names.entry(canonical_ref) {
       Entry::Vacant(vacant) => {
         let mut candidate_name = original_name.clone();
+
         loop {
           match self.used_canonical_names.entry(candidate_name.clone()) {
             Entry::Occupied(mut occ) => {
@@ -77,12 +81,14 @@ impl<'name> Renamer<'name> {
                 concat_string!(original_name, "$", itoa::Buffer::new().format(next_conflict_index))
                   .into();
             }
+
             Entry::Vacant(vac) => {
               vac.insert(0);
               break;
             }
           }
         }
+
         vacant.insert(candidate_name);
       }
       Entry::Occupied(_) => {
@@ -93,7 +99,9 @@ impl<'name> Renamer<'name> {
 
   pub fn create_conflictless_name(&mut self, hint: &str) -> String {
     let hint = Rstr::new(hint);
+
     let mut conflictless_name = hint.clone();
+
     loop {
       match self.used_canonical_names.entry(conflictless_name.clone()) {
         Entry::Occupied(mut occ) => {
@@ -102,19 +110,23 @@ impl<'name> Renamer<'name> {
           conflictless_name =
             concat_string!(hint, "$", itoa::Buffer::new().format(next_conflict_index)).into();
         }
+
         Entry::Vacant(vac) => {
           vac.insert(0);
           break;
         }
       }
     }
+
     conflictless_name.to_string()
   }
 
   #[allow(dead_code)]
   pub fn add_symbol_name_ref_token(&mut self, token: &SymbolNameRefToken) {
     let hint = Rstr::new(token.value());
+
     let mut conflictless_name = hint.clone();
+
     loop {
       match self.used_canonical_names.entry(conflictless_name.clone()) {
         Entry::Occupied(mut occ) => {
@@ -123,12 +135,14 @@ impl<'name> Renamer<'name> {
           conflictless_name =
             concat_string!(hint, "$", itoa::Buffer::new().format(next_conflict_index)).into();
         }
+
         Entry::Vacant(vac) => {
           vac.insert(0);
           break;
         }
       }
     }
+
     self.canonical_token_to_name.insert(token.clone(), conflictless_name.clone());
   }
 
@@ -149,7 +163,9 @@ impl<'name> Renamer<'name> {
         let binding_ref: SymbolRef = (module.idx, *symbol_id).into();
 
         let mut count = 1;
+
         let mut candidate_name = binding_name.to_rstr();
+
         match canonical_names.entry(binding_ref) {
           Entry::Vacant(slot) => loop {
             let is_shadowed = stack
@@ -171,6 +187,7 @@ impl<'name> Renamer<'name> {
             // The symbol is already renamed
           }
         }
+
         used_canonical_names_for_this_scope.insert(binding_name.to_rstr(), 0);
       });
 
@@ -189,13 +206,16 @@ impl<'name> Renamer<'name> {
 
           child_scopes.into_par_iter().map(|child_scope_id| {
             let mut stack = vec![Cow::Borrowed(&self.used_canonical_names)];
+
             let mut canonical_names = FxHashMap::default();
+
             rename_symbols_of_nested_scopes(
               module,
               *child_scope_id,
               &mut stack,
               &mut canonical_names,
             );
+
             canonical_names
           })
         },
@@ -205,12 +225,14 @@ impl<'name> Renamer<'name> {
     let canonical_names_of_nested_scopes =
       copied_scope_iter.reduce(FxHashMap::default, |mut acc, canonical_names| {
         acc.extend(canonical_names);
+
         acc
       });
     #[cfg(target_family = "wasm")]
     let canonical_names_of_nested_scopes = copied_scope_iter
       .reduce(|mut acc, canonical_names| {
         acc.extend(canonical_names);
+
         acc
       })
       .unwrap_or_default();

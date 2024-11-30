@@ -29,9 +29,11 @@ pub struct FileNameRenderOptions<'me> {
 impl FilenameTemplate {
   pub fn render(&self, options: &FileNameRenderOptions) -> String {
     let mut tmp = self.template.clone();
+
     if let Some(name) = options.name {
       tmp = tmp.replace("[name]", name);
     }
+
     if let Some(hash) = options.hash {
       if let Some(start) = tmp.find("[hash") {
         if let Some(end) = tmp[start + 5..].find(']') {
@@ -39,9 +41,11 @@ impl FilenameTemplate {
         }
       }
     }
+
     if let Some(ext) = options.ext {
       tmp = tmp.replace("[ext]", ext).replace("[extname]", &format!(".{ext}"));
     }
+
     tmp
   }
 }
