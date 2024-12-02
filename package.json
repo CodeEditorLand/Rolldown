@@ -63,7 +63,6 @@
 		"lint-spell": "cspell \"**\" --no-progress  --gitignore",
 		"lint-toml": "taplo format --check",
 		"lint-toml:fix": "taplo format",
-		"prepare": "husky install",
 		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"type-check": "pnpm --recursive run type-check"
 	},
