@@ -4,21 +4,24 @@ use oxc::{
   allocator::{self, IntoIn},
   ast::{
     ast::{self, Expression, ImportExpression, SimpleAssignmentTarget, VariableDeclarationKind},
+    match_member_expression,
     visit::walk_mut,
     VisitMut, NONE,
   },
   span::{GetSpan, Span, SPAN},
 };
 use rolldown_common::{
-  ExportsKind, ImportRecordMeta, Module, ModuleType, StmtInfoIdx, SymbolRef, WrapKind,
+  ExportsKind, ImportRecordMeta, Module, ModuleType, OutputFormat, StmtInfoIdx, SymbolRef,
+  ThisExprReplaceKind, WrapKind,
 };
 use rolldown_ecmascript_utils::{AllocatorExt, ExpressionExt, StatementExt, TakeIn};
+use rolldown_rstr::Rstr;
 
 use crate::utils::call_expression_ext::CallExpressionExt;
 
 use super::ScopeHoistingFinalizer;
 
-impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
+impl<'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'_, 'ast> {
   #[allow(clippy::too_many_lines)]
   fn visit_program(&mut self, program: &mut ast::Program<'ast>) {
     // Drop the hashbang since we already store them in ast_scan phase and
@@ -223,6 +226,24 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
     walk_mut::walk_statement(self, it);
   }
 
+  fn visit_statements(&mut self, it: &mut allocator::Vec<'ast, ast::Statement<'ast>>) {
+    let previous_stmt_index = self.ctx.cur_stmt_index;
+    let previous_keep_name_statement = std::mem::take(&mut self.ctx.keep_name_statement_to_insert);
+    for (i, stmt) in it.iter_mut().enumerate() {
+      self.ctx.cur_stmt_index = i;
+      self.visit_statement(stmt);
+    }
+
+    // TODO: perf it
+    for (stmt_index, _symbol_id, original_name, new_name) in
+      self.ctx.keep_name_statement_to_insert.iter().rev()
+    {
+      it.insert(*stmt_index, self.snippet.keep_name_call_expr_stmt(original_name, new_name));
+    }
+    self.ctx.cur_stmt_index = previous_stmt_index;
+    self.ctx.keep_name_statement_to_insert = previous_keep_name_statement;
+  }
+
   fn visit_identifier_reference(&mut self, ident: &mut ast::IdentifierReference) {
     // This ensure all `IdentifierReference`s are processed
     debug_assert!(
@@ -252,29 +273,6 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
           *expr = new_expr;
         }
       }
-      // rewrite `foo_exports.bar` to `bar` directly
-      ast::Expression::StaticMemberExpression(inner_expr) => {
-        if let Some(resolved) =
-          self.ctx.linking_info.resolved_member_expr_refs.get(&inner_expr.span)
-        {
-          match resolved {
-            Some((object_ref, props)) => {
-              let object_ref_expr = self.finalized_expr_for_symbol_ref(*object_ref, false);
-
-              let replaced_expr =
-                self.snippet.member_expr_or_ident_ref(object_ref_expr, props, inner_expr.span);
-              *expr = replaced_expr;
-            }
-
-            None => {
-              *expr = self.snippet.void_zero();
-            }
-          }
-          // these two branch are exclusive since `import.meta` is a global member_expr
-        } else if let Some(new_expr) = self.try_rewrite_import_meta_prop_expr(inner_expr) {
-          *expr = new_expr;
-        }
-      }
       // inline dynamic import
       ast::Expression::ImportExpression(import_expr) => {
         if let Some(new_expr) = self.try_rewrite_inline_dynamic_import_expr(import_expr) {
@@ -289,10 +287,46 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
           *expr = new_expr;
         }
       }
-      _ => {}
+      ast::Expression::ThisExpression(this_expr) => {
+        if let Some(kind) = self.ctx.module.ecma_view.this_expr_replace_map.get(&this_expr.span) {
+          match kind {
+            ThisExprReplaceKind::Exports => {
+              *expr = self.snippet.builder.expression_identifier_reference(SPAN, "exports");
+            }
+            ThisExprReplaceKind::Undefined => {
+              *expr = self.snippet.void_zero();
+            }
+          }
+        }
+      }
+      _ => {
+        if let Some(new_expr) =
+          expr.as_member_expression().and_then(|expr| self.try_rewrite_member_expr(expr))
+        {
+          *expr = new_expr;
+        }
+      }
     };
 
     walk_mut::walk_expression(self, expr);
+  }
+
+  // foo.js `export const bar = { a: 0 }`
+  // main.js `import * as foo_exports from './foo.js';\n foo_exports.bar.a = 1;`
+  // The `foo_exports.bar.a` ast is `StaticMemberExpression(StaticMemberExpression)`, The outer StaticMemberExpression span is `foo_exports.bar.a`, the `visit_expression(Exprssion::MemberExpression)` is called with `foo_exports.bar`, the span is inner StaticMemberExpression.
+  fn visit_member_expression(&mut self, expr: &mut ast::MemberExpression<'ast>) {
+    if let Some(new_expr) = self.try_rewrite_member_expr(expr) {
+      match new_expr {
+        match_member_expression!(Expression) => {
+          *expr = new_expr.into_member_expression();
+        }
+        _ => {
+          unreachable!("Always rewrite to MemberExpression for nested MemberExpression")
+        }
+      }
+    } else {
+      walk_mut::walk_member_expression(self, expr);
+    }
   }
 
   fn visit_object_property(&mut self, prop: &mut ast::ObjectProperty<'ast>) {
@@ -398,25 +432,38 @@ impl<'me, 'ast> VisitMut<'ast> for ScopeHoistingFinalizer<'me, 'ast> {
 
     walk_mut::walk_simple_assignment_target(self, target);
   }
+
   fn visit_declaration(&mut self, it: &mut ast::Declaration<'ast>) {
-    if let Some(decl) = self.get_transformed_class_decl(it) {
-      *it = decl;
+    match it {
+      ast::Declaration::VariableDeclaration(_) => {}
+      ast::Declaration::FunctionDeclaration(decl) => {
+        self.process_fn_decl(decl);
+      }
+      ast::Declaration::ClassDeclaration(decl) => {
+        // need to insert `keep_names` helper, because `get_transformed_class_decl`
+        // will remove id in `class.id`
+        self.insert_keep_name_helper_for_class_decl(decl);
+        if let Some(decl) = self.get_transformed_class_decl(decl) {
+          *it = decl;
+        }
+        // deconflict class name
+      }
+      ast::Declaration::TSTypeAliasDeclaration(_)
+      | ast::Declaration::TSInterfaceDeclaration(_)
+      | ast::Declaration::TSEnumDeclaration(_)
+      | ast::Declaration::TSModuleDeclaration(_)
+      | ast::Declaration::TSImportEqualsDeclaration(_) => unreachable!(),
     }
-    // deconflict class name
     walk_mut::walk_declaration(self, it);
   }
 }
 
-impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
+impl<'ast> ScopeHoistingFinalizer<'_, 'ast> {
   /// rewrite toplevel `class ClassName {}` to `var ClassName = class {}`
   fn get_transformed_class_decl(
     &mut self,
-    it: &mut ast::Declaration<'ast>,
+    class: &mut allocator::Box<'ast, ast::Class<'ast>>,
   ) -> Option<ast::Declaration<'ast>> {
-    let ast::Declaration::ClassDeclaration(class) = it else {
-      return None;
-    };
-
     let scope_id = class.scope_id.get()?;
 
     if self.scope.get_parent_id(scope_id) != Some(self.scope.root_scope_id()) {
@@ -664,7 +711,43 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
         }
       }
     }
-
+    if matches!(self.ctx.options.format, OutputFormat::Cjs) {
+      // Convert `import('./foo.mjs')` to `Promise.resolve().then(function() { return require('foo.mjs') })`
+      let rec_id = self.ctx.module.imports.get(&import_expr.span)?;
+      let rec = &self.ctx.module.import_records[*rec_id];
+      let importee_id = rec.resolved_module;
+      match &self.ctx.modules[importee_id] {
+        Module::Normal(_importee) => {
+          let importer_chunk_id = self.ctx.chunk_graph.module_to_chunk[self.ctx.module.idx]
+            .expect("Normal module should belong to a chunk");
+          let importer_chunk = &self.ctx.chunk_graph.chunk_table[importer_chunk_id];
+          let importee_chunk_id = self.ctx.chunk_graph.entry_module_to_entry_chunk[&importee_id];
+          let importee_chunk = &self.ctx.chunk_graph.chunk_table[importee_chunk_id];
+          let import_path = importer_chunk.import_path_for(importee_chunk);
+          let new_expr = self.snippet.promise_resolve_then_call_expr(
+            import_expr.span,
+            self.snippet.builder.vec1(ast::Statement::ReturnStatement(
+              self.snippet.builder.alloc_return_statement(
+                SPAN,
+                Some(ast::Expression::CallExpression(self.snippet.builder.alloc_call_expression(
+                  SPAN,
+                  self.snippet.builder.expression_identifier_reference(SPAN, "require"),
+                  NONE,
+                  self.snippet.builder.vec1(ast::Argument::StringLiteral(
+                    self.snippet.alloc_string_literal(&import_path, import_expr.span),
+                  )),
+                  false,
+                ))),
+              ),
+            )),
+          );
+          return Some(new_expr);
+        }
+        Module::External(_) => {
+          // For `import('external')`, we just keep it as it is to preserve user's intention
+        }
+      }
+    }
     None
   }
 
@@ -840,5 +923,38 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
         program.body.push(top_stmt);
       },
     );
+  }
+
+  fn process_fn_decl(
+    &mut self,
+    decl: &mut allocator::Box<'ast, ast::Function<'ast>>,
+  ) -> Option<()> {
+    if !self.ctx.options.keep_names {
+      return None;
+    }
+    let (symbol_id, original_name, canonical_name) = self.get_conflicted_info(decl.id.as_ref()?)?;
+    let original_name: Rstr = original_name.into();
+    let new_name = canonical_name.clone();
+    let insert_position = self.ctx.cur_stmt_index + 1;
+    self.ctx.keep_name_statement_to_insert.push((
+      insert_position,
+      symbol_id,
+      original_name,
+      new_name,
+    ));
+    None
+  }
+
+  fn insert_keep_name_helper_for_class_decl(
+    &mut self,
+    decl: &mut allocator::Box<'ast, ast::Class<'ast>>,
+  ) -> Option<()> {
+    if !self.ctx.options.keep_names {
+      return None;
+    }
+    let (_, original_name, _) = self.get_conflicted_info(decl.id.as_ref()?)?;
+    let original_name: Rstr = original_name.into();
+    decl.body.body.insert(0, self.snippet.static_block_keep_name_helper(&original_name));
+    None
   }
 }

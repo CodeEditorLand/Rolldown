@@ -98,8 +98,6 @@ impl Bundler {
   pub async fn scan(&mut self) -> BuildResult<ScanStageOutput> {
     self.plugin_driver.build_start(&self.options).await?;
 
-    let mut error_for_build_end_hook = None;
-
     let scan_stage_output = match ScanStage::new(
       Arc::clone(&self.options),
       Arc::clone(&self.plugin_driver),
@@ -111,24 +109,25 @@ impl Bundler {
     {
       Ok(v) => v,
       Err(errs) => {
-        // TODO: So far we even call build end hooks on unhandleable errors . But should we call build end hook even for unhandleable errors?
-        error_for_build_end_hook = Some(errs.first().unpack_ref().to_string());
-
+        let errors = Arc::new(errs.into_vec());
         self
           .plugin_driver
-          .build_end(error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref())
+          .build_end(Some(&HookBuildEndArgs {
+            errors: Arc::clone(&errors),
+            cwd: &self.options.cwd,
+          }))
           .await?;
 
         self.plugin_driver.close_bundle().await?;
-
-        return Err(errs);
+        return Err(
+          Arc::<std::vec::Vec<BuildDiagnostic>>::into_inner(errors)
+            .expect("Arc into_inner should success after call buildEnd hook")
+            .into(),
+        );
       }
     };
 
-    self
-      .plugin_driver
-      .build_end(error_for_build_end_hook.map(|error| HookBuildEndArgs { error }).as_ref())
-      .await?;
+    self.plugin_driver.build_end(None).await?;
 
     Ok(scan_stage_output)
   }
@@ -193,11 +192,11 @@ impl Bundler {
 
 fn _test_bundler() {
   #[allow(clippy::needless_pass_by_value)]
-  fn _assert_send(_foo: impl Send) {}
+  fn assert_send(_foo: impl Send) {}
   let mut bundler = Bundler::new(BundlerOptions::default());
   let write_fut = bundler.write();
-  _assert_send(write_fut);
+  assert_send(write_fut);
   let mut bundler = Bundler::new(BundlerOptions::default());
   let generate_fut = bundler.generate();
-  _assert_send(generate_fut);
+  assert_send(generate_fut);
 }

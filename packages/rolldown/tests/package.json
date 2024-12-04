@@ -1,0 +1,15 @@
+{
+  "name": "rolldown-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "go": "cross-env RUST_BACKTRACE=1 ROLLDOWN_TEST=1 vitest run --reporter verbose --hideSkippedTests",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "rolldown": "workspace:*",
+    "vite": "^5.0.0",
+    "vitest": "^2.0.0"
+  }
+}

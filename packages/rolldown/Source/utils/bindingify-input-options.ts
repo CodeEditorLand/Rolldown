@@ -5,7 +5,7 @@ import { bindingifyBuiltInPlugin } from '../builtin-plugin/utils'
 import { BuiltinPlugin } from '../builtin-plugin/constructors'
 import { arraify, unsupported } from './misc'
 import { normalizedStringOrRegex } from './normalize-string-or-regex'
-import type { RolldownPlugin } from '..'
+import type { RolldownPlugin } from 'rolldown'
 import type { InputOptions } from '../options/input-options'
 import type { OutputOptions } from '../options/output-options'
 import type {
@@ -68,11 +68,13 @@ export function bindingifyInputOptions(
       strictExecutionOrder: inputOptions.experimental?.strictExecutionOrder,
       disableLiveBindings: inputOptions.experimental?.disableLiveBindings,
       viteMode: inputOptions.experimental?.viteMode,
+      resolveNewUrlToAsset: inputOptions.experimental?.resolveNewUrlToAsset,
     },
     profilerNames: inputOptions?.profilerNames,
     jsx: bindingifyJsx(inputOptions.jsx),
     watch: bindingifyWatch(inputOptions.watch),
     dropLabels: inputOptions.dropLabels,
+    keepNames: inputOptions.keepNames,
   }
 }
 

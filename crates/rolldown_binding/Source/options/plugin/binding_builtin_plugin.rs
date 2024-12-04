@@ -19,8 +19,9 @@ use rolldown_plugin_vite_resolve::{
 };
 use rolldown_plugin_wasm_fallback::WasmFallbackPlugin;
 use rolldown_plugin_wasm_helper::WasmHelperPlugin;
+use rustc_hash::FxHashMap;
 use serde::Deserialize;
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use super::types::binding_builtin_plugin_name::BindingBuiltinPluginName;
 use super::types::binding_js_or_regex::{bindingify_string_or_regex_array, BindingStringOrRegex};
@@ -101,6 +102,7 @@ pub struct BindingTransformPluginConfig {
   pub include: Option<Vec<BindingStringOrRegex>>,
   pub exclude: Option<Vec<BindingStringOrRegex>>,
   pub jsx_inject: Option<String>,
+  pub react_refresh: Option<bool>,
   pub targets: Option<String>,
 }
 
@@ -303,6 +305,7 @@ impl TryFrom<BindingTransformPluginConfig> for TransformPlugin {
       include: value.include.map(bindingify_string_or_regex_array).transpose()?.unwrap_or_default(),
       exclude: value.exclude.map(bindingify_string_or_regex_array).transpose()?.unwrap_or_default(),
       jsx_inject: value.jsx_inject,
+      react_refresh: value.react_refresh.unwrap_or_default(),
       targets: value.targets,
     })
   }
@@ -426,7 +429,9 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
 #[serde(rename_all = "camelCase")]
 pub struct BindingReplacePluginConfig {
   // It's ok we use `HashMap` here, because we don't care about the order of the keys.
-  pub values: HashMap<String, String>,
+  // TODO(sapphi-red): remove `ts_type` and use HashMap<K, V, S> instead once https://github.com/napi-rs/napi-rs/pull/2384 is released
+  #[napi(ts_type = "Record<string, string>")]
+  pub values: FxHashMap<String, String>,
   #[napi(ts_type = "[string, string]")]
   pub delimiters: Option<Vec<String>>,
   pub prevent_assignment: Option<bool>,

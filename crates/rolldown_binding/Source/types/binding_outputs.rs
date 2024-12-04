@@ -1,6 +1,6 @@
 use super::{
   binding_output_asset::{BindingOutputAsset, JsOutputAsset},
-  binding_output_chunk::{BindingOutputChunk, JsOutputChunk},
+  binding_output_chunk::{update_output_chunk, BindingOutputChunk, JsOutputChunk},
 };
 use napi::Env;
 use napi_derive::napi;
@@ -27,11 +27,14 @@ impl BindingOutputs {
   }
 
   #[napi(getter)]
-  pub fn errors(&mut self, env: Env) -> napi::Result<Vec<napi::JsUnknown>> {
-    if let Some(BindingOutputsDiagnostics { diagnostics, cwd }) = std::mem::take(&mut self.error) {
+  pub fn errors(
+    &mut self,
+    env: Env,
+  ) -> napi::Result<Vec<napi::Either<napi::JsError, napi::JsObject>>> {
+    if let Some(BindingOutputsDiagnostics { diagnostics, cwd }) = &self.error {
       return diagnostics
-        .into_iter()
-        .map(|diagnostic| into_js_diagnostic(diagnostic, cwd.clone(), env))
+        .iter()
+        .map(|diagnostic| to_js_diagnostic(diagnostic, cwd.clone(), env))
         .collect();
     }
 
@@ -78,7 +81,12 @@ pub fn update_outputs(
 ) -> anyhow::Result<()> {
   for chunk in changed.chunks {
     if let Some(index) = outputs.iter().position(|o| o.filename() == chunk.filename) {
-      outputs[index] = rolldown_common::Output::Chunk(Box::new(chunk.try_into()?));
+      match &mut outputs[index] {
+        rolldown_common::Output::Chunk(old_chunk) => {
+          update_output_chunk(old_chunk, chunk)?;
+        }
+        rolldown_common::Output::Asset(_) => {}
+      };
     }
   }
   for asset in changed.assets {
@@ -99,21 +107,21 @@ pub struct BindingOutputsDiagnostics {
   cwd: std::path::PathBuf,
 }
 
-pub fn into_js_diagnostic(
-  diagnostic: BuildDiagnostic,
+pub fn to_js_diagnostic(
+  diagnostic: &BuildDiagnostic,
   cwd: std::path::PathBuf,
   env: Env,
-) -> napi::Result<napi::JsUnknown> {
+) -> napi::Result<napi::Either<napi::JsError, napi::JsObject>> {
   match diagnostic.downcast_napi_error() {
-    Ok(napi_error) => Ok(napi::JsError::from(napi_error).into_unknown(env)),
+    Ok(napi_error) => Ok(napi::Either::A(napi::JsError::from(napi_error.clone()))),
     Err(error) => {
       let mut object = env.create_object()?;
       object.set("kind", error.kind().to_string())?;
       object.set(
         "message",
-        error.into_diagnostic_with(&DiagnosticOptions { cwd: cwd.clone() }).to_color_string(),
+        error.to_diagnostic_with(&DiagnosticOptions { cwd: cwd.clone() }).to_color_string(),
       )?;
-      Ok(object.into_unknown())
+      Ok(napi::Either::B(object))
     }
   }
 }

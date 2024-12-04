@@ -1,7 +1,6 @@
 // cSpell:disable
 const ignoreTests = [
-  // Need to investigate
-  'rollup@function@bundle-facade-order: respects the order of entry points when there are additional facades for chunks',
+  'rollup@function@bundle-facade-order: respects the order of entry points when there are additional facades for chunks', // https://github.com/rolldown/rolldown/issues/1842#issuecomment-2296345255
 
   // The test case import test.js from rollup package, it's dependencies can't be resolved.
   "rollup@function@relative-outside-external: correctly resolves relative external imports from outside directories",
@@ -10,10 +9,6 @@ const ignoreTests = [
   'rollup@function@symlink: follows symlinks',
   "rollup@form@sourcemaps-inline: correct sourcemaps are written (inline)@generates es",
 
-  // Here has unexpected error `Error: nul byte found in provided data at position: 0` from rust due to #967.
-  // It crashed at call `banner` function at rust. 
-  "rollup@sourcemaps@excludes-plugin-helpers: excludes plugin helpers from sources@generates es",
-
   // The `RenderChunk#modules` should ignores non-bundled modules
   "rollup@function@inline-dynamic-imports-bundle: ignores non-bundled modules when inlining dynamic imports",
  
@@ -21,11 +16,11 @@ const ignoreTests = [
   "rollup@function@module-side-effect-reexport: includes side effects of re-exporters unless they have moduleSideEffects: false",// https://github.com/rolldown/rolldown/issues/2864
   "rollup@form@hoisted-vars-in-dead-branches: renders hoisted variables in dead branches", // https://github.com/oxc-project/oxc/issues/7209
   "rollup@function@hoisted-variable-if-else: handles hoisted variables in chained if statements",// https://github.com/oxc-project/oxc/issues/7209
-  "rollup@form@mutations-in-imports: track mutations of imports",
- 
+  "rollup@function@argument-deoptimization@global-calls: tracks argument mutations of calls to globals", // need as esm if module is unknow-format and add `use strcit` to the output, https://github.com/rolldown/rolldown/issues/2394
+
   // /*@__PURE__*/ related
-  "rollup@form@pure-comment-scenarios-complex: correctly handles various advanced pure comment scenarios",
-  "rollup@form@nested-pure-comments: correctly associates pure comments before sequence expressions etc.", 
+  "rollup@form@pure-comment-scenarios-complex: correctly handles various advanced pure comment scenarios",// https://github.com/oxc-project/oxc/issues/7501 https://github.com/oxc-project/oxc/issues/7209#issuecomment-2503133537 The `assigned to unreferenced var will be dropped` is a minify featrue
+  "rollup@form@nested-pure-comments: correctly associates pure comments before sequence expressions etc.", // The Sequence expression/Binary expression/Calls with parentheses is not implement
 
   // deconfilct
   "rollup@function@class-name-conflict-2: does not shadow variables when preserving class names",
@@ -34,12 +29,14 @@ const ignoreTests = [
   "rollup@function@class-name-conflict: preserves class names even if the class is renamed",
   "rollup@form@assignment-to-exports-class-declaration: does not rewrite class expression IDs@generates es",
 
-  // Module meta related
-  // Shouldn't modify meta objects passed in resolveId hook
-  "rollup@function@custom-module-options: supports adding custom options to modules",
+  // watch mode api is not compitable with rollup, the `rollup.watch` is not a promise at rollup
+  "rollup@hooks@allows to enforce plugin hook order in watch mode",
+  "rollup@hooks@allows to enforce sequential plugin hook order in watch mode",
 
-  // The sourcemap related
-  "rollup@sourcemaps@single-length-segments: handles single-length sourcemap segments@generates es", // the source filed has error 
+  "rollup@hooks@keeps emitted ids stable between runs",// emit empty asset
+  "rollup@hooks@passes errors to the buildEnd hook", // should call buildEnd hook if error
+  "rollup@hooks@supports renderError hook", // should call renderError hook if error
+  "rollup@hooks@assigns chunk IDs before creating outputBundle chunks", // The `renderChunk` is called at parallel, collect chunk info to array is unstable.  https://github.com/rolldown/rolldown/issues/2364
 ]
 
 module.exports = {

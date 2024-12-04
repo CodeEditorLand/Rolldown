@@ -3,6 +3,7 @@ use dashmap::DashMap;
 use itertools::Itertools;
 use rolldown_common::{ImportKind, ModuleDefFormat, PackageJson, Platform, ResolveOptions};
 use rolldown_fs::{FileSystem, OsFileSystem};
+use rolldown_utils::dashmap::FxDashMap;
 use std::{
   path::{Path, PathBuf},
   sync::Arc,
@@ -27,7 +28,7 @@ pub struct Resolver<T: FileSystem + Default = OsFileSystem> {
   css_resolver: ResolverGeneric<T>,
   // Resolver for `new URL(..., import.meta.url)`
   new_url_resolver: ResolverGeneric<T>,
-  package_json_cache: DashMap<PathBuf, Arc<PackageJson>>,
+  package_json_cache: FxDashMap<PathBuf, Arc<PackageJson>>,
 }
 
 impl<F: FileSystem + Default> Resolver<F> {
@@ -260,14 +261,20 @@ impl<F: FileSystem + Default> Resolver<F> {
   }
 }
 
+/// https://github.com/evanw/esbuild/blob/d34e79e2a998c21bb71d57b92b0017ca11756912/internal/bundler/bundler.go#L1446-L1460
 fn infer_module_def_format(info: &Resolution) -> ModuleDefFormat {
   let fmt = ModuleDefFormat::from_path(info.path());
 
   if !matches!(fmt, ModuleDefFormat::Unknown) {
     return fmt;
   }
-
-  if let Some(package_json) = info.package_json() {
+  let is_js_like_extension = info
+    .path()
+    .extension()
+    .map_or(false, |ext| matches!(ext.to_str(), Some("js" | "jsx" | "ts" | "tsx")));
+  if let Some(package_json) =
+    is_js_like_extension.then(|| info.package_json()).and_then(|item| item)
+  {
     let type_value = package_json.r#type.as_ref().and_then(|v| v.as_str());
 
     if type_value == Some("module") {

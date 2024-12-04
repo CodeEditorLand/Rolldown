@@ -105,6 +105,7 @@ export interface InputOptions {
     strictExecutionOrder?: boolean
     disableLiveBindings?: boolean
     viteMode?: boolean
+    resolveNewUrlToAsset?: boolean
   }
   define?: Record<string, string>
   /**
@@ -135,6 +136,7 @@ export interface InputOptions {
   jsx?: JsxOptions
   watch?: WatchOptions | false
   dropLabels?: string[]
+  keepNames?: boolean
 }
 
 interface OverwriteInputOptionsForCli {

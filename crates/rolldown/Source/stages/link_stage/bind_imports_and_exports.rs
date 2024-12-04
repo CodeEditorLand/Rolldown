@@ -94,7 +94,7 @@ pub enum ImportStatus {
   External(SymbolRef),
 }
 
-impl<'link> LinkStage<'link> {
+impl LinkStage<'_> {
   /// Notices:
   /// - For external import like
   /// ```js
@@ -291,10 +291,13 @@ impl<'link> LinkStage<'link> {
                     // that `a` pointed to, convert the `a.b.c` into `void 0` if module `a` do not
                     // have any dynamic exports.
                     if !self.metas[canonical_ref_owner.idx].has_dynamic_exports {
-                      resolved.insert(member_expr_ref.span, None);
+                      resolved.insert(
+                        member_expr_ref.span,
+                        (None, member_expr_ref.props[cursor..].to_vec()),
+                      );
                       warnings.push(
                         BuildDiagnostic::import_is_undefined(
-                          ArcStr::from(module.id.as_str()),
+                          module.id.resource_id().clone(),
                           module.source.clone(),
                           member_expr_ref.span,
                           ArcStr::from(name.as_str()),
@@ -307,8 +310,10 @@ impl<'link> LinkStage<'link> {
                     break;
                   };
                   if !meta.sorted_and_non_ambiguous_resolved_exports.contains(&name.to_rstr()) {
-                    resolved.insert(member_expr_ref.span, None);
-
+                    resolved.insert(
+                      member_expr_ref.span,
+                      (None, member_expr_ref.props[cursor..].to_vec()),
+                    );
                     return;
                   };
 
@@ -332,7 +337,7 @@ impl<'link> LinkStage<'link> {
                 if cursor > 0 {
                   resolved.insert(
                     member_expr_ref.span,
-                    Some((canonical_ref, member_expr_ref.props[cursor..].to_vec())),
+                    (Some(canonical_ref), member_expr_ref.props[cursor..].to_vec()),
                   );
                 }
               }
@@ -365,7 +370,7 @@ struct BindImportsAndExportsContext<'a> {
   pub warnings: Vec<BuildDiagnostic>,
 }
 
-impl<'a> BindImportsAndExportsContext<'a> {
+impl BindImportsAndExportsContext<'_> {
   fn match_imports_with_exports(&mut self, module_id: ModuleIdx) {
     let Module::Normal(module) = &self.normal_modules[module_id] else {
       return;

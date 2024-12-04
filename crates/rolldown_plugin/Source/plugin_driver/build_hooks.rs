@@ -209,7 +209,10 @@ impl PluginDriver {
       {
         if let Some(mut map) = r.map {
           // If sourcemap  hasn't `sources`, using original id to fill it.
-          if map.get_source(0).map_or(true, str::is_empty) {
+          let source = map.get_source(0);
+          if source.map_or(true, str::is_empty)
+            || (map.get_sources().count() == 1 && source.map_or(true, |source| source != args.id))
+          {
             map.set_sources(vec![args.id]);
           }
           // If sourcemap hasn't `sourcesContent`, using original code to fill it.
@@ -262,7 +265,7 @@ impl PluginDriver {
     Ok(())
   }
 
-  pub async fn build_end(&self, args: Option<&HookBuildEndArgs>) -> HookNoopReturn {
+  pub async fn build_end(&self, args: Option<&HookBuildEndArgs<'_>>) -> HookNoopReturn {
     for (_, plugin, ctx) in self.iter_plugin_with_context_by_order(&self.order_by_build_end_meta) {
       plugin.call_build_end(ctx, args).await?;
     }

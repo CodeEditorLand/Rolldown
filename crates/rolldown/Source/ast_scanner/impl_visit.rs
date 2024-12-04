@@ -4,10 +4,12 @@ use oxc::{
     visit::walk,
     AstKind, Visit,
   },
+  semantic::{ReferenceId, SymbolId},
   span::{GetSpan, Span},
 };
 use rolldown_common::{
-  dynamic_import_usage::DynamicImportExportsUsage, EcmaModuleAstUsage, ImportKind, ImportRecordMeta,
+  dynamic_import_usage::DynamicImportExportsUsage, generate_replace_this_expr_map,
+  EcmaModuleAstUsage, ImportKind, ImportRecordMeta, StmtInfoMeta, ThisExprReplaceKind,
 };
 use rolldown_ecmascript::ToSourceString;
 use rolldown_error::BuildDiagnostic;
@@ -44,7 +46,7 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
         self.source,
         self.comments,
         // In `NormalModule` the options is always `Some`, for `RuntimeModule` always enable annotations
-        self.options.is_some_and(|opt| !opt.treeshake.annotations()),
+        !self.options.treeshake.annotations(),
       )
       .detect_side_effect_of_stmt(stmt);
 
@@ -67,6 +69,23 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
         *usage = DynamicImportExportsUsage::Complete;
       }
     }
+
+    // https://github.com/evanw/esbuild/blob/d34e79e2a998c21bb71d57b92b0017ca11756912/internal/js_parser/js_parser.go#L12551-L12604
+    // Since AstScan is immutable, we defer transformation in module finalizer
+    if !self.top_level_this_expr_set.is_empty() {
+      if self.esm_export_keyword.is_none() {
+        self.ast_usage.insert(EcmaModuleAstUsage::ExportsRef);
+        self.result.this_expr_replace_map = generate_replace_this_expr_map(
+          &self.top_level_this_expr_set,
+          ThisExprReplaceKind::Exports,
+        );
+      } else {
+        self.result.this_expr_replace_map = generate_replace_this_expr_map(
+          &self.top_level_this_expr_set,
+          ThisExprReplaceKind::Undefined,
+        );
+      }
+    }
   }
 
   fn visit_binding_identifier(&mut self, ident: &ast::BindingIdentifier) {
@@ -78,34 +97,32 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
   }
 
   fn visit_for_of_statement(&mut self, it: &ast::ForOfStatement<'ast>) {
-    if it.r#await && self.is_top_level() {
-      if let Some(format) = self.options.as_ref().map(|option| &option.format) {
-        if !format.keep_esm_import_export_syntax() {
-          self.result.errors.push(BuildDiagnostic::unsupported_feature(
-            self.file_path.as_str().into(),
-            self.source.clone(),
-            it.span(),
-            format!(
-              "Top-level await is currently not supported with the '{format}' output format",
-            ),
-          ));
-        }
-      }
+    if it.r#await && self.is_top_level() && !self.options.format.keep_esm_import_export_syntax() {
+      self.result.errors.push(BuildDiagnostic::unsupported_feature(
+        self.id.resource_id().clone(),
+        self.source.clone(),
+        it.span(),
+        format!(
+          "Top-level await is currently not supported with the '{format}' output format",
+          format = self.options.format
+        ),
+      ));
     }
 
     walk::walk_for_of_statement(self, it);
   }
 
   fn visit_await_expression(&mut self, it: &ast::AwaitExpression<'ast>) {
-    if let Some(format) = self.options.as_ref().map(|option| &option.format) {
-      if !format.keep_esm_import_export_syntax() && self.is_top_level() {
-        self.result.errors.push(BuildDiagnostic::unsupported_feature(
-          self.file_path.as_str().into(),
-          self.source.clone(),
-          it.span(),
-          format!("Top-level await is currently not supported with the '{format}' output format",),
-        ));
-      }
+    if !self.options.format.keep_esm_import_export_syntax() && self.is_top_level() {
+      self.result.errors.push(BuildDiagnostic::unsupported_feature(
+        self.id.resource_id().clone(),
+        self.source.clone(),
+        it.span(),
+        format!(
+          "Top-level await is currently not supported with the '{format}' output format",
+          format = self.options.format
+        ),
+      ));
     }
 
     walk::walk_await_expression(self, it);
@@ -146,14 +163,6 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
     walk::walk_import_expression(self, expr);
   }
 
-  fn visit_declaration(&mut self, it: &ast::Declaration<'ast>) {
-    if let ast::Declaration::ClassDeclaration(class) = it {
-      self.scan_class_declaration(class);
-    }
-
-    walk::walk_declaration(self, it);
-  }
-
   fn visit_assignment_expression(&mut self, node: &ast::AssignmentExpression<'ast>) {
     match &node.left {
       // Detect `module.exports` and `exports.ANY`
@@ -190,29 +199,63 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
   }
 
   fn visit_new_expression(&mut self, it: &ast::NewExpression<'ast>) {
-    self.handle_new_url_with_string_literal_and_import_meta_url(it);
-
+    if self.options.experimental.is_resolve_new_url_to_asset_enabled() {
+      self.handle_new_url_with_string_literal_and_import_meta_url(it);
+    }
     walk::walk_new_expression(self, it);
+  }
+
+  fn visit_this_expression(&mut self, it: &ast::ThisExpression) {
+    if !self.is_this_nested() {
+      self.top_level_this_expr_set.insert(it.span);
+    }
+    walk::walk_this_expression(self, it);
+  }
+
+  fn visit_class(&mut self, it: &ast::Class<'ast>) {
+    let previous_reference_id = self.cur_class_decl_and_symbol_referenced_ids.take();
+    self.cur_class_decl_and_symbol_referenced_ids = self.get_class_id_and_references_id(it);
+    walk::walk_class(self, it);
+    self.cur_class_decl_and_symbol_referenced_ids = previous_reference_id;
+  }
+
+  fn visit_class_element(&mut self, it: &ast::ClassElement<'ast>) {
+    let pre_is_nested_this_inside_class = self.is_nested_this_inside_class;
+    self.is_nested_this_inside_class = true;
+    walk::walk_class_element(self, it);
+    self.is_nested_this_inside_class = pre_is_nested_this_inside_class;
+  }
+
+  fn visit_property_key(&mut self, it: &ast::PropertyKey<'ast>) {
+    let pre_is_nested_this_inside_class = self.is_nested_this_inside_class;
+    self.is_nested_this_inside_class = false;
+    walk::walk_property_key(self, it);
+    self.is_nested_this_inside_class = pre_is_nested_this_inside_class;
+  }
+
+  fn visit_declaration(&mut self, it: &ast::Declaration<'ast>) {
+    match it {
+      ast::Declaration::FunctionDeclaration(_) => {
+        self.current_stmt_info.meta.insert(StmtInfoMeta::FnDecl);
+      }
+      ast::Declaration::ClassDeclaration(_) => {
+        self.current_stmt_info.meta.insert(StmtInfoMeta::ClassDecl);
+      }
+      _ => {}
+    }
+    walk::walk_declaration(self, it);
   }
 }
 
 impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
   /// visit `Class` of declaration
-  pub fn scan_class_declaration(&mut self, class: &ast::Class<'ast>) {
-    let Some(id) = class.id.as_ref() else {
-      return;
-    };
-
+  pub fn get_class_id_and_references_id(
+    &mut self,
+    class: &ast::Class<'ast>,
+  ) -> Option<(SymbolId, &'me Vec<ReferenceId>)> {
+    let id = class.id.as_ref()?;
     let symbol_id = *id.symbol_id.get().unpack_ref();
-
-    let previous_reference_id = self.cur_class_decl_and_symbol_referenced_ids.take();
-
-    self.cur_class_decl_and_symbol_referenced_ids =
-      Some((symbol_id, &self.scopes.resolved_references[symbol_id]));
-
-    walk::walk_class(self, class);
-
-    self.cur_class_decl_and_symbol_referenced_ids = previous_reference_id;
+    Some((symbol_id, &self.scopes.resolved_references[symbol_id]))
   }
 
   fn process_identifier_ref_by_scope(&mut self, ident_ref: &IdentifierReference) {
@@ -274,12 +317,8 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
             self.result.has_eval = true;
 
             self.result.warnings.push(
-              BuildDiagnostic::eval(
-                self.file_path.to_string(),
-                self.source.clone(),
-                ident_ref.span,
-              )
-              .with_severity_warning(),
+              BuildDiagnostic::eval(self.id.to_string(), self.source.clone(), ident_ref.span)
+                .with_severity_warning(),
             );
           }
           "require" => {

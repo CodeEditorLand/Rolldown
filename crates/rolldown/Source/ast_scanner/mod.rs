@@ -7,7 +7,7 @@ pub mod side_effect_detector;
 use arcstr::ArcStr;
 use oxc::ast::ast::MemberExpression;
 use oxc::ast::{ast, AstKind};
-use oxc::semantic::{Reference, ReferenceId, ScopeId, SymbolTable};
+use oxc::semantic::{Reference, ReferenceId, ScopeFlags, ScopeId, SymbolTable};
 use oxc::span::SPAN;
 use oxc::{
   ast::{
@@ -25,7 +25,8 @@ use rolldown_common::dynamic_import_usage::{DynamicImportExportsUsage, DynamicIm
 use rolldown_common::{
   AstScopes, EcmaModuleAstUsage, ExportsKind, ImportKind, ImportRecordIdx, ImportRecordMeta,
   LocalExport, MemberExprRef, ModuleDefFormat, ModuleId, ModuleIdx, NamedImport, RawImportRecord,
-  Specifier, StmtInfo, StmtInfos, SymbolRef, SymbolRefDbForModule, SymbolRefFlags, ROLLDOWN_IGNORE,
+  Specifier, StmtInfo, StmtInfos, SymbolRef, SymbolRefDbForModule, SymbolRefFlags,
+  ThisExprReplaceKind,
 };
 use rolldown_ecmascript_utils::{BindingIdentifierExt, BindingPatternExt};
 use rolldown_error::{BuildDiagnostic, BuildResult, CjsExportSpan};
@@ -67,13 +68,14 @@ pub struct ScanResult {
   pub dynamic_import_rec_exports_usage: FxHashMap<ImportRecordIdx, DynamicImportExportsUsage>,
   /// `new URL('...', import.meta.url)`
   pub new_url_references: FxHashMap<Span, ImportRecordIdx>,
+  pub this_expr_replace_map: FxHashMap<Span, ThisExprReplaceKind>,
 }
 
 pub struct AstScanner<'me, 'ast> {
   idx: ModuleIdx,
   source: &'me ArcStr,
   module_type: ModuleDefFormat,
-  file_path: &'me ModuleId,
+  id: &'me ModuleId,
   scopes: &'me AstScopes,
   comments: &'me oxc::allocator::Vec<'me, Comment>,
   current_stmt_info: StmtInfo,
@@ -94,9 +96,13 @@ pub struct AstScanner<'me, 'ast> {
   cur_class_decl_and_symbol_referenced_ids: Option<(SymbolId, &'me Vec<ReferenceId>)>,
   visit_path: Vec<AstKind<'ast>>,
   scope_stack: Vec<Option<ScopeId>>,
-  options: Option<&'me SharedOptions>,
+  options: &'me SharedOptions,
   dynamic_import_usage_info: DynamicImportUsageInfo,
   ignore_comment: &'static str,
+  /// "top level" `this` AstNode range in source code
+  top_level_this_expr_set: FxHashSet<Span>,
+  /// A flag to resolve `this` appear with propertyKey in class
+  is_nested_this_inside_class: bool,
 }
 
 impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
@@ -110,7 +116,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     source: &'me ArcStr,
     file_path: &'me ModuleId,
     comments: &'me oxc::allocator::Vec<'me, Comment>,
-    options: Option<&'me SharedOptions>,
+    options: &'me SharedOptions,
   ) -> Self {
     let mut symbol_ref_db = SymbolRefDbForModule::new(symbol_table, idx, scope.root_scope_id());
     // This is used for converting "export default foo;" => "var default_symbol = foo;"
@@ -118,6 +124,9 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
 
     let default_export_ref = symbol_ref_db
       .create_facade_root_symbol_ref(concat_string!(legitimized_repr_name, "_default").into());
+    // This is used for converting "export default foo;" => "var [default_export_ref] = foo;"
+    // And we consider [default_export_ref] never get reassigned.
+    default_export_ref.flags_mut(&mut symbol_ref_db).insert(SymbolRefFlags::IS_NOT_REASSIGNED);
 
     let name = concat_string!(legitimized_repr_name, "_exports");
 
@@ -147,6 +156,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       has_star_exports: false,
       dynamic_import_rec_exports_usage: FxHashMap::default(),
       new_url_references: FxHashMap::default(),
+      this_expr_replace_map: FxHashMap::default(),
     };
 
     Self {
@@ -161,15 +171,17 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       cjs_module_ident: None,
       cjs_exports_ident: None,
       source,
-      file_path,
+      id: file_path,
       comments,
       ast_usage: EcmaModuleAstUsage::empty(),
       cur_class_decl_and_symbol_referenced_ids: None,
       visit_path: vec![],
-      ignore_comment: options.map_or(ROLLDOWN_IGNORE, |opt| opt.experimental.get_ignore_comment()),
+      ignore_comment: options.experimental.get_ignore_comment(),
       options,
       scope_stack: vec![],
       dynamic_import_usage_info: DynamicImportUsageInfo::default(),
+      top_level_this_expr_set: FxHashSet::default(),
+      is_nested_this_inside_class: false,
     }
   }
 
@@ -193,7 +205,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       if let Some(start) = self.cjs_module_ident {
         self.result.warnings.push(
           BuildDiagnostic::commonjs_variable_in_esm(
-            self.file_path.to_string(),
+            self.id.to_string(),
             self.source.clone(),
             // SAFETY: we checked at the beginning
             self.esm_export_keyword.expect("should have start offset"),
@@ -205,7 +217,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       if let Some(start) = self.cjs_exports_ident {
         self.result.warnings.push(
           BuildDiagnostic::commonjs_variable_in_esm(
-            self.file_path.to_string(),
+            self.id.to_string(),
             self.source.clone(),
             // SAFETY: we checked at the beginning
             self.esm_export_keyword.expect("should have start offset"),
@@ -481,7 +493,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       self.add_star_re_export(exported.name().as_str(), id, decl.span);
     } else {
       // export * from '...'
-      self.result.import_records[id].meta.insert(ImportRecordMeta::IS_EXPORT_START);
+      self.result.import_records[id].meta.insert(ImportRecordMeta::IS_EXPORT_STAR);
       self.result.has_star_exports = true;
     }
 
@@ -519,7 +531,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
           self.add_local_export(spec.exported.name().as_str(), local_symbol_id, spec.span);
         } else {
           self.result.errors.push(BuildDiagnostic::export_undefined_variable(
-            self.file_path.to_string(),
+            self.id.to_string(),
             self.source.clone(),
             spec.local.span(),
             ArcStr::from(spec.local.name().as_str()),
@@ -657,7 +669,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
 
         match &decl.declaration {
           ast::ExportDefaultDeclarationKind::ClassDeclaration(class) => {
-            self.scan_class_declaration(class);
+            self.visit_class(class);
             // walk::walk_declaration(self, &ast::Declaration::ClassDeclaration(func));
           }
           _ => {}
@@ -696,7 +708,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       let symbol_id = reference.symbol_id()?;
       if self.result.symbol_ref_db.get_flags(symbol_id).is_const_variable() {
         self.result.errors.push(BuildDiagnostic::forbid_const_assign(
-          self.file_path.to_string(),
+          self.id.to_string(),
           self.source.clone(),
           self.result.symbol_ref_db.get_name(symbol_id).into(),
           self.result.symbol_ref_db.get_span(symbol_id),
@@ -725,6 +737,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     }
   }
 
+  /// StaticMemberExpression or ComputeMemberExpression with static key
   pub fn try_extract_parent_static_member_expr_chain(
     &self,
     max_len: usize,
@@ -739,7 +752,14 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
           span = ancestor_ast.span();
           props.push(expr.property.name.as_str().into());
         }
-
+        AstKind::MemberExpression(MemberExpression::ComputedMemberExpression(expr)) => {
+          if let Some(name) = expr.static_property_name() {
+            span = ancestor_ast.span();
+            props.push(name.into());
+          } else {
+            break;
+          }
+        }
         _ => break,
       }
     }
@@ -751,6 +771,17 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     let symbol_id = self.resolve_symbol_from_reference(ident);
 
     symbol_id.is_none()
+  }
+
+  /// If it is not a top level `this` reference visit position
+  pub fn is_this_nested(&self) -> bool {
+    self.is_nested_this_inside_class
+      || self.scope_stack.iter().any(|scope| {
+        scope.map_or(false, |scope| {
+          let flags = self.scopes.get_flags(scope);
+          flags.contains(ScopeFlags::Function) && !flags.contains(ScopeFlags::Arrow)
+        })
+      })
   }
 }
 

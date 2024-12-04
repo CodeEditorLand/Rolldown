@@ -21,8 +21,8 @@ pub struct BuildDiagnostic {
 }
 
 fn _assert_build_error_send_sync() {
-  fn _assert_send_sync<T: Send + Sync>() {}
-  _assert_send_sync::<BuildDiagnostic>();
+  fn assert_send_sync<T: Send + Sync>() {}
+  assert_send_sync::<BuildDiagnostic>();
 }
 
 impl Display for BuildDiagnostic {
@@ -53,11 +53,11 @@ impl BuildDiagnostic {
     self
   }
 
-  pub fn into_diagnostic(self) -> Diagnostic {
-    self.into_diagnostic_with(&DiagnosticOptions::default())
+  pub fn to_diagnostic(&self) -> Diagnostic {
+    self.to_diagnostic_with(&DiagnosticOptions::default())
   }
 
-  pub fn into_diagnostic_with(self, opts: &DiagnosticOptions) -> Diagnostic {
+  pub fn to_diagnostic_with(&self, opts: &DiagnosticOptions) -> Diagnostic {
     let mut diagnostic =
       Diagnostic::new(self.kind().to_string(), self.inner.message(opts), self.severity);
 
@@ -67,8 +67,8 @@ impl BuildDiagnostic {
   }
 
   #[cfg(feature = "napi")]
-  pub fn downcast_napi_error(self) -> Result<napi::Error, Self> {
-    match self.napi_error {
+  pub fn downcast_napi_error(&self) -> Result<&napi::Error, &Self> {
+    match &self.napi_error {
       Some(napi_error) => Ok(napi_error),
       None => Err(self),
     }

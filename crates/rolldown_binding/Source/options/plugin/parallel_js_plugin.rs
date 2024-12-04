@@ -49,7 +49,7 @@ impl ParallelJsPlugin {
   }
 
   #[cfg(not(target_family = "wasm"))]
-  async fn run_single<'a, R, F: FnOnce(&'a JsPlugin) -> BoxFuture<R>>(&'a self, f: F) -> R {
+  async fn run_single<'a, R, F: FnOnce(&'a JsPlugin) -> BoxFuture<'a, R>>(&'a self, f: F) -> R {
     let permit = self.worker_manager.acquire().await;
 
     let plugin = &self.plugins[permit.worker_index() as usize];
@@ -58,7 +58,12 @@ impl ParallelJsPlugin {
   }
 
   #[cfg(not(target_family = "wasm"))]
-  async fn run_all<'a, R, E: std::fmt::Debug, F: FnMut(&'a JsPlugin) -> BoxFuture<Result<R, E>>>(
+  async fn run_all<
+    'a,
+    R,
+    E: std::fmt::Debug,
+    F: FnMut(&'a JsPlugin) -> BoxFuture<'a, Result<R, E>>,
+  >(
     &'a self,
     f: F,
   ) -> Result<Vec<R>, E> {
@@ -135,7 +140,7 @@ impl Plugin for ParallelJsPlugin {
   async fn build_end(
     &self,
     ctx: &rolldown_plugin::PluginContext,
-    args: Option<&rolldown_plugin::HookBuildEndArgs>,
+    args: Option<&rolldown_plugin::HookBuildEndArgs<'_>>,
   ) -> rolldown_plugin::HookNoopReturn {
     if self.first_plugin().build_end.is_some() {
       self.run_all(|plugin| plugin.call_build_end(ctx, args)).await?;

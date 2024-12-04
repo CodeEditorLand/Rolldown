@@ -1,7 +1,6 @@
 use std::ops::Range;
 use std::{
   cmp::Reverse,
-  collections::HashMap,
   sync::{Arc, LazyLock},
 };
 
@@ -15,7 +14,7 @@ use crate::utils::expand_typeof_replacements;
 
 #[derive(Debug, Default)]
 pub struct ReplaceOptions {
-  pub values: HashMap</* Target */ String, /* Replacement */ String>,
+  pub values: FxHashMap</* Target */ String, /* Replacement */ String>,
   /// Default to `("\\b", "\\b(?!\\.)")`. To prevent `typeof window.document` from being replaced by config item `typeof window` => `"object"`.
   pub delimiters: Option<(String, String)>,
   pub prevent_assignment: bool,
@@ -43,7 +42,7 @@ static NON_ASSIGNMENT_MATCHER: LazyLock<Regex> =
   LazyLock::new(|| Regex::new("\\b(?:const|let|var)\\s+$").expect("Should be valid regex"));
 
 impl ReplacePlugin {
-  pub fn new(values: HashMap<String, String>) -> Self {
+  pub fn new(values: FxHashMap<String, String>) -> Self {
     Self::with_options(ReplaceOptions { values, ..Default::default() })
   }
 
@@ -182,7 +181,7 @@ impl Plugin for ReplacePlugin {
         code: Some(magic_string.to_string()),
         map: if self.sourcemap {
           Some(magic_string.source_map(SourceMapOptions {
-            hires: true,
+            hires: string_wizard::Hires::True,
             include_content: false,
             source: Arc::from(args.id),
           }))
@@ -208,7 +207,7 @@ impl Plugin for ReplacePlugin {
         code: magic_string.to_string(),
         map: if self.sourcemap {
           Some(magic_string.source_map(SourceMapOptions {
-            hires: true,
+            hires: string_wizard::Hires::True,
             include_content: false,
             source: Arc::from(args.chunk.filename.as_str()),
           }))

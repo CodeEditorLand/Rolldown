@@ -29,6 +29,15 @@
 - crates/rolldown/tests/esbuild/ts/ts_minify_enum_cross_file_inline_strings_into_templates
 - crates/rolldown/tests/esbuild/ts/ts_minify_enum_property_names
 - crates/rolldown/tests/esbuild/ts/ts_print_non_finite_number_inside_with
+## lowering class
+- crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field
+- crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field_minified
+- crates/rolldown/tests/esbuild/default/argument_default_value_scope_no_bundle
+- crates/rolldown/tests/esbuild/ts/ts_computed_class_field_use_define_false
+- crates/rolldown/tests/esbuild/ts/ts_computed_class_field_use_define_true
+- crates/rolldown/tests/esbuild/ts/ts_computed_class_field_use_define_true_lower
+- crates/rolldown/tests/esbuild/ts/ts_declare_class_fields
+- crates/rolldown/tests/esbuild/ts/ts_minify_derived_class
 ## not support copy loader
 - crates/rolldown/tests/esbuild/default/metafile_various_cases
 - crates/rolldown/tests/esbuild/default/metafile_very_long_external_paths
@@ -38,22 +47,6 @@
 - crates/rolldown/tests/esbuild/loader/loader_copy_with_format
 - crates/rolldown/tests/esbuild/loader/loader_copy_with_injected_file_bundle
 - crates/rolldown/tests/esbuild/loader/loader_copy_with_transform
-## lowering class
-- crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field
-- crates/rolldown/tests/esbuild/dce/tree_shaking_lowered_class_static_field_minified
-- crates/rolldown/tests/esbuild/ts/ts_computed_class_field_use_define_false
-- crates/rolldown/tests/esbuild/ts/ts_computed_class_field_use_define_true
-- crates/rolldown/tests/esbuild/ts/ts_computed_class_field_use_define_true_lower
-- crates/rolldown/tests/esbuild/ts/ts_declare_class_fields
-- crates/rolldown/tests/esbuild/ts/ts_minify_derived_class
-## `jsx.factory`
-- crates/rolldown/tests/esbuild/default/import_re_export_es6_issue149
-- crates/rolldown/tests/esbuild/default/jsx_import_meta_property
-- crates/rolldown/tests/esbuild/default/jsx_import_meta_value
-- crates/rolldown/tests/esbuild/default/jsx_this_property_common_js
-- crates/rolldown/tests/esbuild/default/jsx_this_property_esm
-- crates/rolldown/tests/esbuild/default/jsx_this_value_common_js
-- crates/rolldown/tests/esbuild/default/jsx_this_value_esm
 ## not support glob
 - crates/rolldown/tests/esbuild/glob/glob_basic_no_splitting
 - crates/rolldown/tests/esbuild/glob/glob_basic_splitting
@@ -82,6 +75,7 @@
 - crates/rolldown/tests/esbuild/default/comment_preservation_import_assertions
 - crates/rolldown/tests/esbuild/default/metafile_import_with_type_json
 - crates/rolldown/tests/esbuild/default/output_for_assert_type_json
+- crates/rolldown/tests/esbuild/loader/loader_bundle_with_import_attributes
 - crates/rolldown/tests/esbuild/loader/with_type_json_override_loader
 ## Wrong output
 - crates/rolldown/tests/esbuild/importstar/import_namespace_undefined_property_empty_file
@@ -92,25 +86,15 @@
 - crates/rolldown/tests/esbuild/default/nested_require_without_call
 - crates/rolldown/tests/esbuild/default/require_without_call
 - crates/rolldown/tests/esbuild/default/require_without_call_inside_try
-## rolldown has redundant `require('external')`
-- crates/rolldown/tests/esbuild/importstar/re_export_star_common_js_no_bundle
-- crates/rolldown/tests/esbuild/importstar/re_export_star_entry_point_and_inner_file
-- crates/rolldown/tests/esbuild/importstar/re_export_star_external_common_js
-## cross module constant folding
-- crates/rolldown/tests/esbuild/dce/cross_module_constant_folding_number
-- crates/rolldown/tests/esbuild/dce/cross_module_constant_folding_string
 ## double module initialization
 - crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_main_implicit_main
 - crates/rolldown/tests/esbuild/dce/package_json_side_effects_array_keep_module_implicit_main
-## cjs module lexer can't recognize esbuild interop pattern
-- crates/rolldown/tests/esbuild/default/export_forms_iife
-- crates/rolldown/tests/esbuild/default/export_wildcard_fs_node_common_js
+## `jsx.factory`
+- crates/rolldown/tests/esbuild/default/jsx_import_meta_property
+- crates/rolldown/tests/esbuild/default/jsx_this_property_common_js
 ## different iife impl
 - crates/rolldown/tests/esbuild/importstar/re_export_star_as_external_iife
 - crates/rolldown/tests/esbuild/importstar/re_export_star_as_iife_no_bundle
-## rolldown has redundant `import "external"`
-- crates/rolldown/tests/esbuild/importstar/re_export_star_es6_no_bundle
-- crates/rolldown/tests/esbuild/importstar/re_export_star_external_es6
 ## Wrong impl
 - crates/rolldown/tests/esbuild/importstar/re_export_star_external_iife
 - crates/rolldown/tests/esbuild/importstar/re_export_star_iife_no_bundle
@@ -154,10 +138,6 @@
 - crates/rolldown/tests/esbuild/dce/tree_shaking_react_elements
 ## unary operator side effects
 - crates/rolldown/tests/esbuild/dce/tree_shaking_unary_operators
-## class field lowering
-- crates/rolldown/tests/esbuild/default/argument_default_value_scope_no_bundle
-## related to minifier
-- crates/rolldown/tests/esbuild/default/arguments_special_case_no_bundle
 ## not support `jsx.preserve`
 - crates/rolldown/tests/esbuild/default/comment_preservation_preserve_jsx
 ## esbuild will wrap `Promise.resolve().then() for original specifier`
@@ -176,14 +156,8 @@
 - crates/rolldown/tests/esbuild/default/define_import_meta_es5
 ## redundant `__toCommonJS`
 - crates/rolldown/tests/esbuild/default/export_forms_common_js
-## Not sure if we needs to use `Object.define` pattern in iife
-- crates/rolldown/tests/esbuild/default/export_forms_iife
 ## should not generate duplicate export binding
 - crates/rolldown/tests/esbuild/default/export_forms_with_minify_identifiers_and_no_bundle
-## should not generate two redundant `require`
-- crates/rolldown/tests/esbuild/default/export_wildcard_fs_node_common_js
-## two `import` statement are redundant
-- crates/rolldown/tests/esbuild/default/export_wildcard_fs_node_es6
 ## redundant `import` statements
 - crates/rolldown/tests/esbuild/default/external_es6_converted_to_common_js
 ## should not generate `__toCommonJS`
@@ -202,12 +176,18 @@
 - crates/rolldown/tests/esbuild/default/import_namespace_this_value
 ## not align
 - crates/rolldown/tests/esbuild/default/indirect_require_message
-## generate wrong syntax when Exported is `StringLiteral`
-- crates/rolldown/tests/esbuild/default/inject
 ## different inject implementation
 - crates/rolldown/tests/esbuild/default/inject_import_meta
 ## generate wrong syntax when Exported is `StringLiteral`, and rest part of esbuild gen is weird since there is no need to rename
 - crates/rolldown/tests/esbuild/default/inject_no_bundle
+## esbuild will auto polyfill `import.meta`
+- crates/rolldown/tests/esbuild/default/jsx_import_meta_value
+## replace this with `void 0` in none function scope
+- crates/rolldown/tests/esbuild/default/jsx_this_property_esm
+## should mark module as cjs if `this` in none function scope
+- crates/rolldown/tests/esbuild/default/jsx_this_value_common_js
+## should replace `this` with `void 0` when it's in none function scope
+- crates/rolldown/tests/esbuild/default/jsx_this_value_esm
 ## not support preserve `jsx`
 - crates/rolldown/tests/esbuild/default/minified_jsx_preserve_with_object_spread
 ## should read `tsconfig.json`
@@ -232,12 +212,6 @@
 - crates/rolldown/tests/esbuild/default/string_export_names_iife
 ## lowering not align
 - crates/rolldown/tests/esbuild/default/this_inside_function
-## this outside function behavior not align
-- crates/rolldown/tests/esbuild/default/this_outside_function
-## this undefined
-- crates/rolldown/tests/esbuild/default/this_undefined_warning_esm
-## redundant `require`
-- crates/rolldown/tests/esbuild/default/to_esm_wrapper_omission
 ## there should not exist empty chunk
 - crates/rolldown/tests/esbuild/default/top_level_await_allowed_import_with_splitting
 ## import('./entry.js') should be rewrite to `require_entry`
@@ -252,10 +226,6 @@
 - crates/rolldown/tests/esbuild/loader/jsx_automatic_no_name_collision
 ## rolldown don't have `jsx.Preserve` and `jsx.Parse` option
 - crates/rolldown/tests/esbuild/loader/jsx_preserve_capital_letter
-## lowering jsx
-- crates/rolldown/tests/esbuild/loader/jsx_syntax_in_js_with_jsx_loader
-## import record with attributes
-- crates/rolldown/tests/esbuild/loader/loader_bundle_with_import_attributes
 ## mime type should be `data:text/plain`
 - crates/rolldown/tests/esbuild/loader/loader_data_url_base64_invalid_utf8
 ## Different hash asset name
@@ -270,8 +240,6 @@
 - crates/rolldown/tests/esbuild/loader/loader_file_relative_path_asset_names_css
 ## abs output base
 - crates/rolldown/tests/esbuild/loader/loader_file_relative_path_js
-## json partial namespace memberExpr used tree shaking
-- crates/rolldown/tests/esbuild/loader/loader_json_invalid_identifier_es6
 ## should treated it as cjs module
 - crates/rolldown/tests/esbuild/loader/loader_json_no_bundle
 ## should not transform `export * as ns from 'mod'` above es2019

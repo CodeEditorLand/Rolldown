@@ -48,8 +48,7 @@ pub fn stringify_bundle_output(output: BundleOutput, cwd: &Path) -> String {
 
     let diagnostics = warnings
       .into_iter()
-      .map(|e| (e.kind(), e.into_diagnostic_with(&DiagnosticOptions { cwd: cwd.to_path_buf() })));
-
+      .map(|e| (e.kind(), e.to_diagnostic_with(&DiagnosticOptions { cwd: cwd.to_path_buf() })));
     let rendered = diagnostics
       .flat_map(|(code, diagnostic)| {
         [

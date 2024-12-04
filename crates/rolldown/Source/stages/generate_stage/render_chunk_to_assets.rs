@@ -1,7 +1,6 @@
 use std::path::Path;
 
 use futures::future::try_join_all;
-use indexmap::IndexSet;
 use oxc_index::{index_vec, IndexVec};
 use rolldown_common::{
   Asset, InstantiationKind, ModuleRenderArgs, ModuleRenderOutput, Output, OutputAsset, OutputChunk,
@@ -10,6 +9,7 @@ use rolldown_common::{
 use rolldown_error::{BuildDiagnostic, BuildResult};
 use rolldown_utils::{
   concat_string,
+  indexmap::FxIndexSet,
   rayon::{IntoParallelRefIterator, ParallelIterator},
 };
 use sugar_path::SugarPath;
@@ -133,8 +133,8 @@ impl<'a> GenerateStage<'a> {
                 output_assets.push(Output::Asset(Box::new(OutputAsset {
                   filename: map_filename.as_str().into(),
                   source: source.into(),
-                  original_file_name: None,
-                  name: None,
+                  original_file_names: vec![],
+                  names: vec![],
                 })));
 
                 if matches!(sourcemap, SourceMapType::File) {
@@ -185,8 +185,8 @@ impl<'a> GenerateStage<'a> {
         output.push(Output::Asset(Box::new(OutputAsset {
           filename: filename.clone().into(),
           source: code,
-          original_file_name: None,
-          name: None,
+          original_file_names: vec![],
+          names: vec![],
         })));
       }
     }
@@ -225,8 +225,7 @@ impl<'a> GenerateStage<'a> {
     warnings: &mut Vec<BuildDiagnostic>,
   ) -> anyhow::Result<(IndexInstantiatedChunks, IndexChunkToAssets)> {
     let mut index_chunk_to_assets: IndexChunkToAssets =
-      index_vec![IndexSet::default(); chunk_graph.chunk_table.len()];
-
+      index_vec![FxIndexSet::default(); chunk_graph.chunk_table.len()];
     let mut index_preliminary_assets: IndexInstantiatedChunks =
       IndexVec::with_capacity(chunk_graph.chunk_table.len());
 

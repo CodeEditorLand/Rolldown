@@ -2,8 +2,9 @@ use oxc::{
   allocator::{self, Allocator, Box, IntoIn},
   ast::{
     ast::{
-      self, Argument, BindingIdentifier, Declaration, Expression, FunctionType, ImportOrExportKind,
-      NumberBase, ObjectPropertyKind, PropertyKind, Statement, VariableDeclarationKind,
+      self, Argument, BindingIdentifier, ClassElement, Declaration, Expression, FunctionType,
+      ImportOrExportKind, NumberBase, ObjectPropertyKind, PropertyKind, Statement,
+      VariableDeclarationKind,
     },
     AstBuilder, NONE,
   },
@@ -72,6 +73,24 @@ impl<'ast> AstSnippet<'ast> {
         self.id_name(names[names.len() - 1].as_str(), span),
         false,
       )),
+    }
+  }
+
+  /// The props of `foo_exports.value.a` is `["value", "a"]`, here convert it to `(void 0).a`
+  pub fn member_expr_with_void_zero_object(
+    &self,
+    names: &[CompactStr],
+    span: Span,
+  ) -> ast::Expression<'ast> {
+    if names.len() == 1 {
+      self.void_zero()
+    } else {
+      ast::Expression::StaticMemberExpression(self.builder.alloc_static_member_expression(
+        span,
+        self.member_expr_with_void_zero_object(&names[0..names.len() - 1], span),
+        self.id_name(names[names.len() - 1].as_str(), span),
+        false,
+      ))
     }
   }
 
@@ -886,5 +905,48 @@ impl<'ast> AstSnippet<'ast> {
       ImportOrExportKind::Value,
       NONE,
     ))
+  }
+
+  pub fn keep_name_call_expr_stmt(
+    &self,
+    original_name: PassedStr,
+    new_name: PassedStr,
+  ) -> Statement<'ast> {
+    self.builder.statement_expression(
+      SPAN,
+      self.builder.expression_call(
+        SPAN,
+        self.builder.expression_identifier_reference(SPAN, "__name"),
+        NONE,
+        {
+          let mut items = self.builder.vec_with_capacity(2);
+          items.push(self.builder.expression_identifier_reference(SPAN, new_name).into());
+          items.push(self.builder.expression_string_literal(SPAN, original_name).into());
+          items
+        },
+        false,
+      ),
+    )
+  }
+
+  pub fn static_block_keep_name_helper(&self, name: PassedStr) -> ClassElement<'ast> {
+    self.builder.class_element_static_block(
+      SPAN,
+      self.builder.vec1(self.builder.statement_expression(
+        SPAN,
+        self.builder.expression_call(
+          SPAN,
+          self.builder.expression_identifier_reference(SPAN, "__name"),
+          NONE,
+          {
+            let mut items = self.builder.vec_with_capacity(2);
+            items.push(self.builder.expression_this(SPAN).into());
+            items.push(self.builder.expression_string_literal(SPAN, name).into());
+            items
+          },
+          false,
+        ),
+      )),
+    )
   }
 }

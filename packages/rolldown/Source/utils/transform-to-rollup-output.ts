@@ -18,8 +18,8 @@ import {
   transformAssetSource,
 } from './asset-source'
 import { bindingifySourcemap } from '../types/sourcemap'
-import { transformToRenderedModule } from './transform-rendered-module'
 import { normalizeErrors } from './error'
+import { transformChunkModules } from './transform-rendered-chunk'
 
 function transformToRollupOutputChunk(
   bindingChunk: BindingOutputChunk,
@@ -33,12 +33,7 @@ function transformToRollupOutputChunk(
     fileName: bindingChunk.fileName,
     name: bindingChunk.name,
     get modules() {
-      return Object.fromEntries(
-        Object.entries(bindingChunk.modules).map(([key, value]) => [
-          key,
-          transformToRenderedModule(value),
-        ]),
-      )
+      return transformChunkModules(bindingChunk.modules)
     },
     get imports() {
       return bindingChunk.imports
@@ -83,10 +78,12 @@ function transformToRollupOutputAsset(
     type: 'asset',
     fileName: bindingAsset.fileName,
     originalFileName: bindingAsset.originalFileName || null,
+    originalFileNames: bindingAsset.originalFileNames,
     get source(): AssetSource {
       return transformAssetSource(bindingAsset.source)
     },
     name: bindingAsset.name ?? undefined,
+    names: bindingAsset.names,
   } as RolldownOutputAsset
   const cache: Record<string | symbol, any> = {}
   return new Proxy(asset, {
@@ -167,20 +164,19 @@ export function collectChangedBundle(
     if (item.type === 'asset') {
       assets.push({
         filename: item.fileName,
-        originalFileName: item.originalFileName || undefined,
+        originalFileNames: item.originalFileNames,
         source: bindingAssetSource(item.source),
-        name: item.name,
+        names: item.names,
       })
     } else {
+      // not all properties modifications are reflected to rust side
       chunks.push({
         code: item.code,
         filename: item.fileName,
         name: item.name,
         isEntry: item.isEntry,
         exports: item.exports,
-        modules: Object.fromEntries(
-          Object.entries(item.modules).map(([key, _]) => [key, {} as any]),
-        ),
+        modules: {},
         imports: item.imports,
         dynamicImports: item.dynamicImports,
         facadeModuleId: item.facadeModuleId || undefined,

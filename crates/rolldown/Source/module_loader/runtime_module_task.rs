@@ -12,7 +12,7 @@ use rolldown_common::{
 };
 use rolldown_ecmascript::{EcmaAst, EcmaCompiler};
 use rolldown_error::{BuildDiagnostic, BuildResult};
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
   ast_scanner::{AstScanner, ScanResult},
@@ -89,6 +89,7 @@ impl RuntimeModuleTask {
       has_star_exports,
       dynamic_import_rec_exports_usage: _,
       new_url_references,
+      this_expr_replace_map: _,
     } = scan_result;
 
     let module = NormalModule {
@@ -136,6 +137,7 @@ impl RuntimeModuleTask {
         },
         mutations: vec![],
         new_url_references,
+        this_expr_replace_map: FxHashMap::default(),
       },
       css_view: None,
       asset_view: None,
@@ -194,7 +196,7 @@ impl RuntimeModuleTask {
       source,
       &facade_path,
       ast.comments(),
-      None,
+      &self.options,
     );
 
     let namespace_object_ref = scanner.namespace_object_ref;

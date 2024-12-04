@@ -56,7 +56,7 @@ pub struct LinkingMetadata {
   /// The dependencies of the module. It means if you want include this module, you need to include these dependencies too.
   pub dependencies: FxIndexSet<ModuleIdx>,
   // `None` the member expression resolve to a ambiguous export.
-  pub resolved_member_expr_refs: FxHashMap<Span, Option<(SymbolRef, Vec<CompactStr>)>>,
+  pub resolved_member_expr_refs: FxHashMap<Span, (Option<SymbolRef>, Vec<CompactStr>)>,
   pub star_exports_from_external_modules: Vec<ImportRecordIdx>,
 }
 
@@ -77,7 +77,7 @@ impl LinkingMetadata {
     module_idx: ModuleIdx,
     entry_point_kind: EntryPointKind,
     dynamic_import_exports_usage_map: &'a FxHashMap<ModuleIdx, DynamicImportExportsUsage>,
-  ) -> impl Iterator<Item = (&Rstr, &ResolvedExport)> + '_ {
+  ) -> impl Iterator<Item = (&'b Rstr, &'b ResolvedExport)> + 'b {
     let partial_used_exports = match entry_point_kind {
       rolldown_common::EntryPointKind::UserDefined => None,
       rolldown_common::EntryPointKind::DynamicImport => {

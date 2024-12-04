@@ -1,32 +1,31 @@
 use std::borrow::Cow;
-use std::hash::BuildHasherDefault;
+use std::cmp::Reverse;
 
 use super::GenerateStage;
 use crate::chunk_graph::ChunkGraph;
-use indexmap::IndexSet;
 use itertools::{multizip, Itertools};
 use oxc_index::{index_vec, IndexVec};
 use rolldown_common::{
-  ChunkIdx, ChunkKind, CrossChunkImportItem, ExportsKind, ImportKind, Module, ModuleIdx,
-  NamedImport, OutputFormat, SymbolRef, WrapKind,
+  ChunkIdx, ChunkKind, CrossChunkImportItem, ExportsKind, ImportKind, ImportRecordMeta, Module,
+  ModuleIdx, NamedImport, OutputFormat, SymbolRef, WrapKind,
 };
 use rolldown_rstr::{Rstr, ToRstr};
+use rolldown_utils::indexmap::FxIndexSet;
 use rolldown_utils::rayon::IntoParallelIterator;
 use rolldown_utils::rayon::{ParallelBridge, ParallelIterator};
 use rolldown_utils::rustc_hash::FxHashMapExt;
-use rustc_hash::{FxHashMap, FxHashSet, FxHasher};
+use rustc_hash::{FxHashMap, FxHashSet};
 
 type IndexChunkDependedSymbols = IndexVec<ChunkIdx, FxHashSet<SymbolRef>>;
 type IndexChunkImportsFromExternalModules =
   IndexVec<ChunkIdx, FxHashMap<ModuleIdx, Vec<NamedImport>>>;
 type IndexChunkExportedSymbols = IndexVec<ChunkIdx, FxHashSet<SymbolRef>>;
 type IndexCrossChunkImports = IndexVec<ChunkIdx, FxHashSet<ChunkIdx>>;
-type IndexCrossChunkDynamicImports =
-  IndexVec<ChunkIdx, IndexSet<ChunkIdx, BuildHasherDefault<FxHasher>>>;
+type IndexCrossChunkDynamicImports = IndexVec<ChunkIdx, FxIndexSet<ChunkIdx>>;
 type IndexImportsFromOtherChunks =
   IndexVec<ChunkIdx, FxHashMap<ChunkIdx, Vec<CrossChunkImportItem>>>;
 
-impl<'a> GenerateStage<'a> {
+impl GenerateStage<'_> {
   #[allow(clippy::too_many_lines)]
   #[tracing::instrument(level = "debug", skip_all)]
   pub fn compute_cross_chunk_links(&mut self, chunk_graph: &mut ChunkGraph) {
@@ -44,7 +43,7 @@ impl<'a> GenerateStage<'a> {
       index_vec![FxHashSet::default(); chunk_graph.chunk_table.len()];
 
     let mut index_cross_chunk_dynamic_imports: IndexCrossChunkDynamicImports =
-      index_vec![IndexSet::default(); chunk_graph.chunk_table.len()];
+      index_vec![FxIndexSet::default(); chunk_graph.chunk_table.len()];
 
     self.collect_depended_symbols(
       chunk_graph,
@@ -194,7 +193,10 @@ impl<'a> GenerateStage<'a> {
                 }
               }
             })
-            .filter(|rec| matches!(rec.kind, ImportKind::Import))
+            .filter(|rec| {
+              matches!(rec.kind, ImportKind::Import)
+                && !rec.meta.contains(ImportRecordMeta::IS_EXPORT_STAR)
+            })
             .filter_map(|rec| {
               self.link_output.module_table.modules[rec.resolved_module].as_external()
             })
@@ -296,7 +298,7 @@ impl<'a> GenerateStage<'a> {
           let symbol_data = symbols.get(declared);
           debug_assert!(
             symbol_data.chunk_id.unwrap_or(chunk_id) == chunk_id,
-            "Symbol: {:?}, {:?} in {:?} should only belong to one chunk. Existed {:?}, new {chunk_id:?}", 
+            "Symbol: {:?}, {:?} in {:?} should only belong to one chunk. Existed {:?}, new {chunk_id:?}",
             declared.name(symbols),
             declared,
             self.link_output.module_table.modules[declared.owner].id(),
@@ -385,7 +387,15 @@ impl<'a> GenerateStage<'a> {
       FxHashMap::with_capacity(index_chunk_exported_symbols.iter().map(FxHashSet::len).sum());
 
     for (chunk_id, chunk) in chunk_graph.chunk_table.iter_mut_enumerated() {
-      for chunk_export in index_chunk_exported_symbols[chunk_id].iter().copied() {
+      for chunk_export in index_chunk_exported_symbols[chunk_id]
+        .iter()
+        .sorted_by_cached_key(|symbol_ref| {
+          // same deconflict order in deconflict_chunk_symbols.rs
+          // https://github.com/rolldown/rolldown/blob/504ea76c00563eb7db7a49c2b6e04b2fbe61bdc1/crates/rolldown/src/utils/chunk/deconflict_chunk_symbols.rs?plain=1#L86-L102
+          Reverse::<u32>(self.link_output.module_table.modules[symbol_ref.owner].exec_order())
+        })
+        .copied()
+      {
         let original_name: rolldown_rstr::Rstr =
           chunk_export.name(&self.link_output.symbol_db).to_rstr();
 

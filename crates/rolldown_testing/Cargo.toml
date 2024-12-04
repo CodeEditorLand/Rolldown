@@ -27,14 +27,10 @@ rolldown_common = { workspace = true }
 rolldown_error = { workspace = true }
 rolldown_sourcemap = { workspace = true }
 rolldown_testing_config = { workspace = true }
-serde_json = { workspace = true }
-sugar_path = { workspace = true }
-tokio = { workspace = true, features = [
-	"rt",
-	"macros",
-	"sync",
-	"rt-multi-thread",
-] }
+rustc-hash              = { workspace = true }
+serde_json              = { workspace = true }
+sugar_path              = { workspace = true }
+tokio                   = { workspace = true, features = ["rt", "macros", "sync", "rt-multi-thread"] }
 
 [build-dependencies]
 rolldown_testing_config = { workspace = true }

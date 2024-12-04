@@ -2,12 +2,13 @@
 
 ## Plugin related
 
+### The `rollup.rollup` api is not compatible with rollup, the build is start at `bundle.generate` or `bundle.write`, so the input plugin hooks is not called
+ - rollup@hooks@supports buildStart and buildEnd hooks
+ - rollup@hooks@supports warnings in buildStart and buildEnd hooks
+
 ### The `NormalziedOptions` at hooks is not compatible with rollup
  - rollup@function@options-hook: allows to read and modify options in the options hook
  - rollup@function@output-options-hook: allows to read and modify options in the options hook
-
-### The `transform` hook return `meta` is not supported
- - rollup@function@transform-without-code: allows using the transform hook for annotations only without returning a code property and breaking sourcemaps
 
 ### The `load` hook return `ast` is not supported
  - rollup@function@uses-supplied-ast: uses supplied AST
@@ -33,10 +34,6 @@
 ### The `resolveFileUrl` hook not supported
  - rollup@form@configure-file-url: allows to configure file urls@generates es
 
-### The `PluginContext.getCombinedSourcemap` is not supported
- - rollup@sourcemaps@combined-sourcemap-with-loader: get combined sourcemap in transforming with loader@generates es
- - rollup@sourcemaps@combined-sourcemap: get combined sourcemap in transforming@generates es
-
 ### The `PluginContext.parse` is deprecated
  - rollup@function@plugin-parse-ast-remove-sourcemapping: remove source mapping comment even if code is parsed by PluginContext.parse method
  - rollup@function@parse-return-outside-function: supports parsing return statements outside functions via options
@@ -50,8 +47,10 @@
  - rollup@function@plugin-cache@anonymous-has: throws for anonymous plugins checking the cache
  - rollup@function@plugin-cache@anonymous-set: throws for anonymous plugins adding to the cache
  - rollup@function@plugin-cache@duplicate-names: throws if two plugins with the same name and no cache key access the cache
+ - rollup@hooks@Disables the default transform cache when using cache in transform only
+ - rollup@hooks@opts-out transform hook cache for custom cache
 
-### `PluginContext.load` is not fully supported
+### The `PluginContext.load` is not fully supported
  - rollup@form@supports-core-js: supports core-js (`@rollup/plugin-commonjs` is not supported)
  - rollup@form@supports-es5-shim: supports es5-shim (`@rollup/plugin-commonjs` is not supported)
  - rollup@form@supports-es6-shim: supports es6-shim (`@rollup/plugin-commonjs` is not supported)
@@ -84,7 +83,8 @@
  - rollup@function@emit-file@chunk-filename-not-available-buildEnd: Throws when accessing the filename before it has been generated in buildEnd
  - rollup@function@emit-file@chunk-filename-not-available-renderStart: Throws when accessing the filename before it has been generated in renderStart
  - rollup@function@emit-file@chunk-filename-not-available: Throws when accessing the filename before it has been generated
- - rollup@function@emit-file@file-references-in-bundle: lists referenced files in the bundle"
+ - rollup@function@emit-file@file-references-in-bundle: lists referenced files in the bundle
+ - rollup@hooks@caches chunk emission in transform hook
 
 ### The `PluginContext.emitFile` emit prebuilt chunk is not supported 
  - rollup@function@emit-file@prebuilt-chunk: get right prebuilt chunks
@@ -156,10 +156,6 @@
  - rollup@function@compact: compact output with compact: true
  - rollup@form@compact-multiple-imports: correctly handles empty external imports in compact mode@generates es
  - rollup@form@compact: supports compact output with compact: true@generates es
-
-### The `output.globals` function is not supported
- - rollup@form@globals-function: Externals aliases with deshadowing@generates es
- - rollup@form@external-imports-custom-names-function: allows globals to be specified as a function@generates es
 
 ### The `output.validate` is not supported
  - rollup@function@validate-output: handles validate failure
@@ -303,12 +299,17 @@
 
 ### The chunk information is not compatible with rollup
  - rollup@form@addon-functions: provides module information when adding addons@generates es
+ - rollup@hooks@supports generateBundle hook including reporting rendered exports and source length(`modules.dep.renderedExports/removedExports`)
+
+### The rolldown `output.dir` default to be `dist`, the rollup not specific `dir` or `file` by default
+ - rollup@hooks@Throws when not specifying "file" or "dir"
 
 ## Features
 
 ### The `import.meta.ROLLUP_FILE_URL_<referenceId>` is not supported
  - rollup@form@emit-asset-file: supports emitting assets from plugin hooks@generates es
  - rollup@form@emit-uint8array-no-buffer: supports emitting assets as Uint8Arrays when Buffer is not available@generates es
+ - rollup@hooks@caches asset emission in transform hook
 
 ### The rollup treat non-js-extensions module as js module, but the rolldown wiill guess the module type by externsion
  - rollup@function@non-js-extensions: non .js extensions are preserved
@@ -433,8 +434,10 @@
  - rollup@function@module-side-effects@external-false: supports setting module side effects to false for external modules
  - rollup@function@logging@handle-logs-in-plugins: allows plugins to read and filter logs
  - rollup@function@logging@promote-log-to-error: allows turning logs into errors
+ - rollup@hooks@Throws when using the "file"" option for multiple chunks
 
 ### The error/warning not implement
+ - rollup@hooks@Throws when using the "sourcemapFile" option for multiple chunks
  - rollup@function@transform-without-sourcemap-render-chunk: preserves sourcemap chains when transforming
  - rollup@function@non-function-hook-async: throws when providing a value for an async function hook
  - rollup@function@non-function-hook-sync: throws when providing a value for a sync function hook

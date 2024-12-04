@@ -1,11 +1,12 @@
 import { normalizeHook } from '../utils/normalize-hook'
 import type {
+  BindingGeneralHookFilter,
   BindingHookResolveIdOutput,
   BindingPluginOptions,
+  BindingTransformHookFilter,
 } from '../binding'
 
 import type {
-  hookFilterExtension,
   PluginHooks,
   PrivateResolveIdExtraOptions,
   SourceDescription,
@@ -35,6 +36,7 @@ import {
 } from './bindingify-hook-filter'
 import type { BindingifyPluginArgs } from './bindingify-plugin'
 import { NormalizedInputOptionsImpl } from '../options/normalized-input-options'
+import { normalizeErrors } from '../utils/error'
 
 export function bindingifyBuildStart(
   args: BindingifyPluginArgs,
@@ -80,7 +82,7 @@ export function bindingifyBuildEnd(
           args.onLog,
           args.logLevel,
         ),
-        err ? new Error(err) : undefined,
+        err ? normalizeErrors(err.errors) : undefined,
       )
     },
     meta: bindingifyPluginHookMeta(meta),
@@ -91,7 +93,7 @@ export function bindingifyResolveId(
   args: BindingifyPluginArgs,
 ): PluginHookWithBindingExt<
   BindingPluginOptions['resolveId'],
-  hookFilterExtension<'transform'>
+  BindingGeneralHookFilter | undefined
 > {
   const hook = args.plugin.resolveId as unknown as PluginHooks['resolveId']
   if (!hook) {
@@ -142,25 +144,18 @@ export function bindingifyResolveId(
         }
       }
 
-      const result: BindingHookResolveIdOutput = {
-        id: ret.id,
-        external: ret.external,
-      }
-
-      if (ret.moduleSideEffects !== null) {
-        // @ts-ignore TODO The typing should import from binding
-        result.sideEffects = bindingifySideEffects(ret.moduleSideEffects)
-      }
-
       args.pluginContextData.updateModuleOption(ret.id, {
         meta: ret.meta || {},
         moduleSideEffects: ret.moduleSideEffects || null,
       })
 
-      return result
+      return {
+        id: ret.id,
+        external: ret.external,
+        sideEffects: bindingifySideEffects(ret.moduleSideEffects),
+      }
     },
     meta: bindingifyPluginHookMeta(meta),
-    // @ts-ignore
     filter: bindingifyResolveIdFilter(options.filter),
   }
 }
@@ -224,7 +219,10 @@ export function bindingifyResolveDynamicImport(
 
 export function bindingifyTransform(
   args: BindingifyPluginArgs,
-): PluginHookWithBindingExt<BindingPluginOptions['transform']> {
+): PluginHookWithBindingExt<
+  BindingPluginOptions['transform'],
+  BindingTransformHookFilter | undefined
+> {
   const hook = args.plugin.transform
   if (!hook) {
     return {}
@@ -272,14 +270,16 @@ export function bindingifyTransform(
       }
     },
     meta: bindingifyPluginHookMeta(meta),
-    // @ts-ignore
     filter: bindingifyTransformFilter(options.filter),
   }
 }
 
 export function bindingifyLoad(
   args: BindingifyPluginArgs,
-): PluginHookWithBindingExt<BindingPluginOptions['load']> {
+): PluginHookWithBindingExt<
+  BindingPluginOptions['load'],
+  BindingGeneralHookFilter | undefined
+> {
   const hook = args.plugin.load
   if (!hook) {
     return {}
@@ -308,28 +308,21 @@ export function bindingifyLoad(
         return { code: ret }
       }
 
-      let map = preProcessSourceMap(ret, id)
-
-      const result = {
-        code: ret.code,
-        map: map !== undefined ? bindingifySourcemap(map) : undefined,
-        moduleType: ret.moduleType,
-      }
-
-      if (ret.moduleSideEffects !== null) {
-        // @ts-ignore TODO The typing should import from binding
-        result.sideEffects = bindingifySideEffects(ret.moduleSideEffects)
-      }
-
       args.pluginContextData.updateModuleOption(id, {
         meta: ret.meta || {},
         moduleSideEffects: ret.moduleSideEffects || null,
       })
 
-      return result
+      let map = preProcessSourceMap(ret, id)
+
+      return {
+        code: ret.code,
+        map: bindingifySourcemap(map),
+        moduleType: ret.moduleType,
+        sideEffects: bindingifySideEffects(ret.moduleSideEffects),
+      }
     },
     meta: bindingifyPluginHookMeta(meta),
-    // @ts-ignore
     filter: bindingifyLoadFilter(options.filter),
   }
 }

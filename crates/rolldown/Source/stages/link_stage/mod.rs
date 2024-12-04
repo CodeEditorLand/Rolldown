@@ -5,7 +5,8 @@ use oxc_index::IndexVec;
 use rolldown_common::{
   dynamic_import_usage::DynamicImportExportsUsage, EntryPoint, ExportsKind, ImportKind,
   ImportRecordIdx, ImportRecordMeta, Module, ModuleIdx, ModuleTable, OutputFormat,
-  ResolvedImportRecord, RuntimeModuleBrief, StmtInfo, SymbolRef, SymbolRefDb, WrapKind,
+  ResolvedImportRecord, RuntimeModuleBrief, StmtInfo, StmtInfoMeta, SymbolRef, SymbolRefDb,
+  WrapKind,
 };
 use rolldown_error::BuildDiagnostic;
 use rolldown_utils::{
@@ -96,7 +97,7 @@ impl<'a> LinkStage<'a> {
       symbols: scan_stage_output.symbol_ref_db,
       runtime: scan_stage_output.runtime,
       warnings: scan_stage_output.warnings,
-      errors: scan_stage_output.errors,
+      errors: vec![],
       ast_table: scan_stage_output.index_ecma_ast,
       dynamic_import_exports_usage_map: scan_stage_output.dynamic_import_exports_usage_map,
       options,
@@ -241,7 +242,7 @@ impl<'a> LinkStage<'a> {
     let symbols = Mutex::new(&mut self.symbols);
 
     let record_meta_update_pending_pairs_list = AppendOnlyVec::new();
-
+    let keep_names = self.options.keep_names;
     self.module_table.modules.par_iter().filter_map(Module::as_normal).for_each(|importer| {
       let mut record_meta_pairs: Vec<(ImportRecordIdx, ImportRecordMeta)> = vec![];
       let importer_idx = importer.idx;
@@ -274,7 +275,7 @@ impl<'a> LinkStage<'a> {
               // Make sure symbols from external modules are included and de_conflicted
               match rec.kind {
                 ImportKind::Import => {
-                  let is_reexport_all = rec.meta.contains(ImportRecordMeta::IS_EXPORT_START);
+                  let is_reexport_all = rec.meta.contains(ImportRecordMeta::IS_EXPORT_STAR);
                   if is_reexport_all {
                     // export * from 'external' would be just removed. So it references nothing.
                     rec.namespace_ref.set_name(
@@ -304,7 +305,7 @@ impl<'a> LinkStage<'a> {
               let importee_linking_info = &self.metas[importee.idx];
               match rec.kind {
                 ImportKind::Import => {
-                  let is_reexport_all = rec.meta.contains(ImportRecordMeta::IS_EXPORT_START);
+                  let is_reexport_all = rec.meta.contains(ImportRecordMeta::IS_EXPORT_STAR);
                   match importee_linking_info.wrap_kind {
                     WrapKind::None => {
                       // for case:
@@ -460,6 +461,9 @@ impl<'a> LinkStage<'a> {
             }
           }
         });
+        if keep_names && stmt_info.meta.intersects(StmtInfoMeta::FnDecl | StmtInfoMeta::ClassDecl) {
+          stmt_info.referenced_symbols.push(self.runtime.resolve_symbol("__name").into());
+        }
       });
       for (stmt_idx, symbol_ref) in declared_symbol_for_stmt_pairs {
         stmt_infos.declare_symbol_for_stmt(stmt_idx, symbol_ref);
@@ -500,6 +504,7 @@ impl<'a> LinkStage<'a> {
             is_included: false,
             import_records: Vec::new(),
             debug_label: None,
+            meta: StmtInfoMeta::default(),
           };
           ecma_module.stmt_infos.add_stmt_info(stmt_info);
         });
@@ -544,6 +549,7 @@ impl<'a> LinkStage<'a> {
             is_included: false,
             import_records: Vec::new(),
             debug_label: None,
+            meta: StmtInfoMeta::default(),
           };
           ecma_module.stmt_infos.replace_namespace_stmt_info(namespace_stmt_info);
         }

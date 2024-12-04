@@ -10,6 +10,7 @@ use rolldown_common::{
   ModuleId, ModuleInfo, ModuleLoaderMsg, SharedFileEmitter, SharedNormalizedBundlerOptions,
 };
 use rolldown_resolver::Resolver;
+use rolldown_utils::dashmap::{FxDashMap, FxDashSet};
 use tokio::sync::Mutex;
 
 use crate::{
@@ -33,9 +34,9 @@ pub struct PluginDriver {
   order_indicates: HookOrderIndicates,
   index_plugin_filters: IndexPluginFilter,
   file_emitter: SharedFileEmitter,
-  pub watch_files: Arc<DashSet<ArcStr>>,
-  pub modules: Arc<DashMap<ArcStr, Arc<ModuleInfo>>>,
-  pub context_load_modules: Arc<DashMap<ArcStr, LoadCallback>>,
+  pub watch_files: Arc<FxDashSet<ArcStr>>,
+  pub modules: Arc<FxDashMap<ArcStr, Arc<ModuleInfo>>>,
+  pub context_load_modules: Arc<FxDashMap<ArcStr, LoadCallback>>,
   pub(crate) tx: Arc<Mutex<Option<tokio::sync::mpsc::Sender<ModuleLoaderMsg>>>>,
 }
 
@@ -108,7 +109,7 @@ impl PluginDriver {
   }
 
   pub fn set_module_info(&self, module_id: &ModuleId, module_info: Arc<ModuleInfo>) {
-    self.modules.insert(module_id.as_str().into(), module_info);
+    self.modules.insert(module_id.resource_id().into(), module_info);
   }
 
   pub async fn set_context_load_modules_tx(
@@ -120,7 +121,7 @@ impl PluginDriver {
   }
 
   pub async fn mark_context_load_modules_loaded(&self, module_id: &ModuleId) -> anyhow::Result<()> {
-    if let Some((_, callback)) = self.context_load_modules.remove(module_id.as_str()) {
+    if let Some((_, callback)) = self.context_load_modules.remove(module_id.resource_id()) {
       callback().await?;
     }
 
@@ -130,7 +131,7 @@ impl PluginDriver {
   pub fn iter_plugin_with_context_by_order<'me>(
     &'me self,
     ordered_plugins: &'me [PluginIdx],
-  ) -> impl Iterator<Item = (PluginIdx, &SharedPluginable, &PluginContext)> + 'me {
+  ) -> impl Iterator<Item = (PluginIdx, &'me SharedPluginable, &'me PluginContext)> + 'me {
     ordered_plugins.iter().copied().map(move |idx| {
       let plugin = &self.plugins[idx];
       let context = &self.contexts[idx];

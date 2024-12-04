@@ -320,6 +320,12 @@
             "type": "string"
           }
         },
+        "keepNames": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "minify": {
           "type": [
             "boolean",
@@ -541,6 +547,12 @@
       "type": "object",
       "properties": {
         "disableLiveBindings": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "resolveNewUrlToAsset": {
           "type": [
             "boolean",
             "null"

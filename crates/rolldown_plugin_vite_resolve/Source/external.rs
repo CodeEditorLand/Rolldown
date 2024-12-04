@@ -1,6 +1,7 @@
 use std::{path::Path, sync::Arc};
 
 use dashmap::DashMap;
+use rolldown_utils::dashmap::FxDashMap;
 
 use crate::{
   resolver::Resolver,
@@ -21,8 +22,7 @@ impl ResolveOptionsExternal {
       ResolveOptionsExternal::Vec(vec) => vec,
       _ => return false,
     };
-
-    return vec.iter().any(|v| v == id);
+    vec.iter().any(|v| v == id)
   }
 }
 
@@ -60,7 +60,7 @@ pub struct ExternalDecider {
   options: ExternalDeciderOptions,
   runtime: String,
   resolver: Arc<Resolver>,
-  processed_ids: DashMap<String, bool>,
+  processed_ids: FxDashMap<String, bool>,
 }
 
 impl ExternalDecider {
