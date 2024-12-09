@@ -15,11 +15,11 @@
 	},
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
 	"devDependencies": {
+		"@codeeditorland/testing": "0.0.1",
 		"@jridgewell/sourcemap-codec": "^1.5.0",
 		"@napi-rs/cli": "^3.0.0-alpha.60",
 		"@napi-rs/wasm-runtime": "^0.2.5",
 		"@playform/build": "0.2.0",
-		"@rolldown/testing": "workspace:*",
 		"@types/fs-extra": "^11.0.4",
 		"@types/lodash-es": "^4.17.12",
 		"colorette": "^2.0.20",
@@ -31,7 +31,7 @@
 		"locate-character": "^3.0.0",
 		"npm-run-all2": "^7.0.1",
 		"remeda": "^2.17.4",
-		"rolldown": "workspace:*",
+		"rolldown": "0.0.1",
 		"signal-exit": "4.1.0",
 		"source-map": "^0.7.4",
 		"tsx": "^4.19.2",
@@ -102,18 +102,18 @@
 		}
 	},
 	"optionalDependencies": {
-		"@rolldown/binding-darwin-arm64": "workspace:*",
-		"@rolldown/binding-darwin-x64": "workspace:*",
-		"@rolldown/binding-freebsd-x64": "workspace:*",
-		"@rolldown/binding-linux-arm-gnueabihf": "workspace:*",
-		"@rolldown/binding-linux-arm64-gnu": "workspace:*",
-		"@rolldown/binding-linux-arm64-musl": "workspace:*",
-		"@rolldown/binding-linux-x64-gnu": "workspace:*",
-		"@rolldown/binding-linux-x64-musl": "workspace:*",
-		"@rolldown/binding-wasm32-wasi": "workspace:*",
-		"@rolldown/binding-win32-arm64-msvc": "workspace:*",
-		"@rolldown/binding-win32-ia32-msvc": "workspace:*",
-		"@rolldown/binding-win32-x64-msvc": "workspace:*"
+		"@rolldown/binding-darwin-arm64": "0.0.1",
+		"@rolldown/binding-darwin-x64": "0.0.1",
+		"@rolldown/binding-freebsd-x64": "0.0.1",
+		"@rolldown/binding-linux-arm-gnueabihf": "0.0.1",
+		"@rolldown/binding-linux-arm64-gnu": "0.0.1",
+		"@rolldown/binding-linux-arm64-musl": "0.0.1",
+		"@rolldown/binding-linux-x64-gnu": "0.0.1",
+		"@rolldown/binding-linux-x64-musl": "0.0.1",
+		"@rolldown/binding-wasm32-wasi": "0.0.1",
+		"@rolldown/binding-win32-arm64-msvc": "0.0.1",
+		"@rolldown/binding-win32-ia32-msvc": "0.0.1",
+		"@rolldown/binding-win32-x64-msvc": "0.0.1"
 	},
 	"peerDependenciesMeta": {
 		"@babel/runtime": {

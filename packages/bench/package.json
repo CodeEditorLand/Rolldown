@@ -12,7 +12,7 @@
 		"chalk": "5.3.0",
 		"esbuild": "0.24.0",
 		"lodash": "4.17.21",
-		"rolldown": "workspace:*",
+		"rolldown": "0.0.1",
 		"tinybench": "3.0.7"
 	},
 	"devDependencies": {

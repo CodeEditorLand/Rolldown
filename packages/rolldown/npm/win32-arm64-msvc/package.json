@@ -10,6 +10,7 @@
 	"cpu": [
 		"arm64"
 	],
+	"dependencies": {},
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
 	"devDependencies": {
 		"@playform/build": "0.2.0"
@@ -25,7 +26,7 @@
 	],
 	"license": "SEE LICENSE IN LICENSE",
 	"main": "rolldown-binding.win32-arm64-msvc.node",
-	"name": "@rolldown/binding-win32-arm64-msvc",
+	"name": "@codeeditorland/binding-win32-arm64-msvc",
 	"os": [
 		"win32"
 	],

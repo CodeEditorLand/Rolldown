@@ -8,8 +8,8 @@
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
 	},
 	"dependencies": {
+		"@codeeditorland/testing": "0.0.1",
 		"@pnpm/find-workspace-packages": "6.0.9",
-		"@rolldown/testing": "workspace:*",
 		"@types/debug": "4.1.12",
 		"@types/fs-extra": "11.0.4",
 		"@types/semver": "7.5.8",

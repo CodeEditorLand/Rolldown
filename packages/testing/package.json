@@ -7,6 +7,7 @@
 	"bugs": {
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
 	},
+	"dependencies": {},
 	"devDependencies": {
 		"@playform/build": "0.2.0"
 	},
@@ -22,7 +23,7 @@
 		"playform"
 	],
 	"license": "SEE LICENSE IN LICENSE",
-	"name": "@rolldown/testing",
+	"name": "@codeeditorland/testing",
 	"private": false,
 	"publishConfig": {
 		"access": "public"

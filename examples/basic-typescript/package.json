@@ -7,9 +7,10 @@
 	"bugs": {
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
 	},
+	"dependencies": {},
 	"devDependencies": {
 		"@playform/build": "0.2.0",
-		"rolldown": "workspace:*"
+		"rolldown": "0.0.1"
 	},
 	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [

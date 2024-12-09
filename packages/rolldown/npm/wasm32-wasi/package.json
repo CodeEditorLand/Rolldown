@@ -33,7 +33,7 @@
 	],
 	"license": "SEE LICENSE IN LICENSE",
 	"main": "rolldown-binding.wasi.cjs",
-	"name": "@rolldown/binding-wasm32-wasi",
+	"name": "@codeeditorland/binding-wasm32-wasi",
 	"private": false,
 	"publishConfig": {
 		"access": "public"

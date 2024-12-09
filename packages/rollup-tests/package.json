@@ -11,7 +11,7 @@
 		"fixturify": "3.0.0",
 		"fs-extra": "11.2.0",
 		"oxc-transform": "0.39.0",
-		"rolldown": "workspace:*",
+		"rolldown": "0.0.1",
 		"source-map-support": "0.5.21"
 	},
 	"devDependencies": {
@@ -28,7 +28,7 @@
 		"playform"
 	],
 	"license": "SEE LICENSE IN LICENSE",
-	"name": "rollup-tests",
+	"name": "@codeeditorland/tests",
 	"private": false,
 	"publishConfig": {
 		"access": "public"
