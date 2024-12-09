@@ -1,11 +1,31 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
+	"name": "scripts",
+	"version": "0.0.1",
+	"private": false,
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"bugs": {
 		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
+	},
+	"type": "module",
+	"scripts": {
+		"esbuild-snap-diff": "node --import @oxc-node/core/register ./snap-diff/index.ts",
+		"prepublishOnly": "Build 'Source/**/*.ts'",
+		"type-check": "tsc -b"
 	},
 	"dependencies": {
 		"@codeeditorland/testing": "0.0.1",
@@ -28,7 +48,7 @@
 		"zx": "8.2.4"
 	},
 	"devDependencies": {
-		"@oxc-node/core": "0.0.15",
+		"@codeeditorland-node/core": "0.0.15",
 		"@playform/build": "0.2.0",
 		"@types/diff": "6.0.0",
 		"@types/lodash-es": "4.17.12",
@@ -38,27 +58,7 @@
 		"estree-toolkit": "1.7.8",
 		"web-tree-sitter": "0.24.4"
 	},
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
-	"name": "scripts",
-	"private": false,
 	"publishConfig": {
 		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"scripts": {
-		"esbuild-snap-diff": "node --import @oxc-node/core/register ./snap-diff/index.ts",
-		"prepublishOnly": "Build 'Source/**/*.ts'",
-		"type-check": "tsc -b"
-	},
-	"type": "module",
-	"version": "0.0.1"
+	}
 }

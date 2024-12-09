@@ -1,19 +1,84 @@
 {
+	"name": "rolldown",
+	"version": "0.0.1",
+	"private": false,
+	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
 	"author": {
-		"email": "Source/Open@Editor.Land",
 		"name": "🖋️ Source — 👐🏻 Open —",
+		"email": "Source/Open@Editor.Land",
 		"url": "HTTPS://Editor.Land"
 	},
+	"type": "module",
+	"imports": {
+		"#parallel-plugin-worker": "./dist/esm/parallel-plugin-worker.mjs"
+	},
+	"exports": {
+		".": {
+			"import": "./dist/esm/index.mjs",
+			"require": "./dist/cjs/index.cjs",
+			"types": "./dist/types/index.d.ts"
+		},
+		"./experimental": {
+			"import": "./dist/esm/experimental-index.mjs",
+			"require": "./dist/cjs/experimental-index.cjs",
+			"types": "./dist/types/experimental-index.d.ts"
+		},
+		"./package.json": "./package.json",
+		"./parallel-plugin": {
+			"import": "./dist/esm/parallel-plugin.mjs",
+			"require": "./dist/cjs/parallel-plugin.cjs",
+			"types": "./dist/types/parallel-plugin.d.ts"
+		}
+	},
+	"main": "./dist/cjs/index.cjs",
+	"types": "./dist/types/index.d.ts",
 	"bin": {
 		"rolldown": "./bin/cli.js"
 	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	"files": [
+		"bin",
+		"cli",
+		"dist",
+		"!dist/*.node"
+	],
+	"scripts": {
+		"# Scrips for binding #": "_",
+		"# Scrips for checking #": "_",
+		"# Scrips for node #": "_",
+		"artifacts": "napi artifacts --cwd ./src --package-json-path ../package.json -o=../artifacts --npm-dir ../npm",
+		"bak_build-node": "unbuild",
+		"build-binding": "napi build -o=./src --manifest-path ../../crates/rolldown_binding/Cargo.toml --platform -p rolldown_binding --js binding.js --dts binding.d.ts --no-const-enum",
+		"build-binding:release": "pnpm build-binding --release",
+		"build-binding:wasi": "pnpm build-binding --target wasm32-wasip1-threads",
+		"build-binding:wasi:release": "pnpm build-binding --profile release-wasi --target wasm32-wasip1-threads",
+		"build-native:debug": "run-s build-binding build-types build-node build-types-check",
+		"build-native:release": "run-s build-binding:release build-types build-node build-types-check",
+		"build-node": "tsx ./build.ts",
+		"build-types": "tsc -p ./tsconfig.dts.json",
+		"build-types-check": "tsc -p ./tsconfig.check.json",
+		"build-wasi:debug": "run-s build-binding build-binding:wasi build-node",
+		"build-wasi:release": "run-s build-binding build-binding:wasi:release build-node",
+		"prepublishOnly": "Build 'Source/**/*.ts'",
+		"test:update": "vitest run -u",
+		"type-check": "tsc"
 	},
 	"dependencies": {
 		"zod": "^3.23.8"
 	},
-	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
 	"devDependencies": {
 		"@codeeditorland/testing": "0.0.1",
 		"@jridgewell/sourcemap-codec": "^1.5.0",
@@ -40,42 +105,28 @@
 		"why-is-node-running": "^3.2.1",
 		"zod-to-json-schema": "^3.23.5"
 	},
-	"exports": {
-		".": {
-			"import": "./dist/esm/index.mjs",
-			"require": "./dist/cjs/index.cjs",
-			"types": "./dist/types/index.d.ts"
-		},
-		"./experimental": {
-			"import": "./dist/esm/experimental-index.mjs",
-			"require": "./dist/cjs/experimental-index.cjs",
-			"types": "./dist/types/experimental-index.d.ts"
-		},
-		"./package.json": "./package.json",
-		"./parallel-plugin": {
-			"import": "./dist/esm/parallel-plugin.mjs",
-			"require": "./dist/cjs/parallel-plugin.cjs",
-			"types": "./dist/types/parallel-plugin.d.ts"
+	"peerDependenciesMeta": {
+		"@babel/runtime": {
+			"optional": true
 		}
 	},
-	"files": [
-		"bin",
-		"cli",
-		"dist",
-		"!dist/*.node"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"imports": {
-		"#parallel-plugin-worker": "./dist/esm/parallel-plugin-worker.mjs"
+	"optionalDependencies": {
+		"@rolldown/binding-darwin-arm64": "0.0.1",
+		"@rolldown/binding-darwin-x64": "0.0.1",
+		"@rolldown/binding-freebsd-x64": "0.0.1",
+		"@rolldown/binding-linux-arm-gnueabihf": "0.0.1",
+		"@rolldown/binding-linux-arm64-gnu": "0.0.1",
+		"@rolldown/binding-linux-arm64-musl": "0.0.1",
+		"@rolldown/binding-linux-x64-gnu": "0.0.1",
+		"@rolldown/binding-linux-x64-musl": "0.0.1",
+		"@rolldown/binding-wasm32-wasi": "0.0.1",
+		"@rolldown/binding-win32-arm64-msvc": "0.0.1",
+		"@rolldown/binding-win32-ia32-msvc": "0.0.1",
+		"@rolldown/binding-win32-x64-msvc": "0.0.1"
 	},
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"license": "SEE LICENSE IN LICENSE",
-	"main": "./dist/cjs/index.cjs",
-	"name": "rolldown",
+	"publishConfig": {
+		"access": "public"
+	},
 	"napi": {
 		"binaryName": "rolldown-binding",
 		"dtsHeader": "type MaybePromise<T> = T | Promise<T>\ntype Nullable<T> = T | null | undefined\ntype VoidNullable<T = void> = T | null | undefined | void\nexport type BindingStringOrRegex = string | RegExp\n\n",
@@ -100,56 +151,5 @@
 			},
 			"initialMemory": 16384
 		}
-	},
-	"optionalDependencies": {
-		"@rolldown/binding-darwin-arm64": "0.0.1",
-		"@rolldown/binding-darwin-x64": "0.0.1",
-		"@rolldown/binding-freebsd-x64": "0.0.1",
-		"@rolldown/binding-linux-arm-gnueabihf": "0.0.1",
-		"@rolldown/binding-linux-arm64-gnu": "0.0.1",
-		"@rolldown/binding-linux-arm64-musl": "0.0.1",
-		"@rolldown/binding-linux-x64-gnu": "0.0.1",
-		"@rolldown/binding-linux-x64-musl": "0.0.1",
-		"@rolldown/binding-wasm32-wasi": "0.0.1",
-		"@rolldown/binding-win32-arm64-msvc": "0.0.1",
-		"@rolldown/binding-win32-ia32-msvc": "0.0.1",
-		"@rolldown/binding-win32-x64-msvc": "0.0.1"
-	},
-	"peerDependenciesMeta": {
-		"@babel/runtime": {
-			"optional": true
-		}
-	},
-	"private": false,
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"scripts": {
-		"# Scrips for binding #": "_",
-		"# Scrips for checking #": "_",
-		"# Scrips for node #": "_",
-		"artifacts": "napi artifacts --cwd ./src --package-json-path ../package.json -o=../artifacts --npm-dir ../npm",
-		"bak_build-node": "unbuild",
-		"build-binding": "napi build -o=./src --manifest-path ../../crates/rolldown_binding/Cargo.toml --platform -p rolldown_binding --js binding.js --dts binding.d.ts --no-const-enum",
-		"build-binding:release": "pnpm build-binding --release",
-		"build-binding:wasi": "pnpm build-binding --target wasm32-wasip1-threads",
-		"build-binding:wasi:release": "pnpm build-binding --profile release-wasi --target wasm32-wasip1-threads",
-		"build-native:debug": "run-s build-binding build-types build-node build-types-check",
-		"build-native:release": "run-s build-binding:release build-types build-node build-types-check",
-		"build-node": "tsx ./build.ts",
-		"build-types": "tsc -p ./tsconfig.dts.json",
-		"build-types-check": "tsc -p ./tsconfig.check.json",
-		"build-wasi:debug": "run-s build-binding build-binding:wasi build-node",
-		"build-wasi:release": "run-s build-binding build-binding:wasi:release build-node",
-		"prepublishOnly": "Build 'Source/**/*.ts'",
-		"test:update": "vitest run -u",
-		"type-check": "tsc"
-	},
-	"type": "module",
-	"types": "./dist/types/index.d.ts",
-	"version": "0.0.1"
+	}
 }

@@ -1,46 +1,46 @@
 {
-	"author": {
-		"email": "Source/Open@Editor.Land",
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"url": "HTTPS://Editor.Land"
-	},
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"cpu": [
-		"arm"
-	],
-	"dependencies": {},
+	"name": "@codeeditorland/binding-linux-arm-gnueabihf",
+	"version": "0.0.1",
+	"private": false,
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-	"devDependencies": {
-		"@playform/build": "0.2.0"
-	},
-	"files": [
-		"rolldown-binding.linux-arm-gnueabihf.node"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
 	"keywords": [
 		"codeeditorland",
 		"land",
 		"playform"
 	],
-	"license": "SEE LICENSE IN LICENSE",
-	"main": "rolldown-binding.linux-arm-gnueabihf.node",
-	"name": "@codeeditorland/binding-linux-arm-gnueabihf",
-	"os": [
-		"linux"
-	],
-	"private": false,
-	"publishConfig": {
-		"access": "public"
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
 	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "🖋️ Source — 👐🏻 Open —",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
+	},
+	"type": "module",
+	"main": "rolldown-binding.linux-arm-gnueabihf.node",
+	"files": [
+		"rolldown-binding.linux-arm-gnueabihf.node"
+	],
 	"scripts": {
 		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
-	"type": "module",
-	"version": "0.0.1"
+	"dependencies": {},
+	"devDependencies": {
+		"@playform/build": "0.2.0"
+	},
+	"os": [
+		"linux"
+	],
+	"cpu": [
+		"arm"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
 }

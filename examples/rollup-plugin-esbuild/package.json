@@ -27,7 +27,7 @@
 		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
 	"dependencies": {
-		"@codeeditorland/plugin-esbuild": "6.1.1"
+		"@codeeditorland/plugin-esbuild": "0.0.1"
 	},
 	"devDependencies": {
 		"@playform/build": "0.2.0",
