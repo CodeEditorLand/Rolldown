@@ -160,16 +160,11 @@ impl<'a> LinkStage<'a> {
             if matches!(importee.exports_kind, ExportsKind::None)
               && !importee.meta.has_lazy_export()
             {
-              // See https://github.com/evanw/esbuild/issues/447
-              if rec.meta.intersects(
-                ImportRecordMeta::CONTAINS_IMPORT_DEFAULT | ImportRecordMeta::CONTAINS_IMPORT_STAR,
-              ) {
-                self.metas[importee.idx].wrap_kind = WrapKind::Cjs;
-                // SAFETY: If `importee` and `importer` are different, so this is safe. If they are the same, then behaviors are still expected.
-                unsafe {
-                  let importee_mut = addr_of!(*importee).cast_mut();
-                  (*importee_mut).exports_kind = ExportsKind::CommonJs;
-                }
+              // `import` a module that has `ExportsKind::None`, which will be turned into `ExportsKind::Esm`
+              // SAFETY: If `importee` and `importer` are different, so this is safe. If they are the same, then behaviors are still expected.
+              unsafe {
+                let importee_mut = addr_of!(*importee).cast_mut();
+                (*importee_mut).exports_kind = ExportsKind::Esm;
               }
             }
           }
@@ -263,7 +258,9 @@ impl<'a> LinkStage<'a> {
             if matches!(rec.kind, ImportKind::Require)
               || !self.options.format.keep_esm_import_export_syntax()
             {
-              if self.options.format.should_call_runtime_require() {
+              if self.options.format.should_call_runtime_require()
+                && self.options.polyfill_require_for_esm_format_with_node_platform()
+              {
                 stmt_info.referenced_symbols.push(self.runtime.resolve_symbol("__require").into());
 
                 record_meta_pairs.push((*rec_id, ImportRecordMeta::CALL_RUNTIME_REQUIRE));

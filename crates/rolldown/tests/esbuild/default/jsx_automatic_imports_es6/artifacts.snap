@@ -1,0 +1,29 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# warnings
+
+## UNRESOLVED_IMPORT
+
+```text
+[UNRESOLVED_IMPORT] Warning: Could not resolve 'react/jsx-runtime' in entry.jsx
+
+```
+# Assets
+
+## entry.js
+
+```js
+import { Fragment, jsx } from "react/jsx-runtime";
+
+//#region custom-react.js
+function jsx$1() {}
+function Fragment$1() {}
+
+//#endregion
+//#region entry.jsx
+console.log(jsx("div", { jsx: jsx$1 }), jsx(Fragment, { children: jsx(Fragment$1, {}) }));
+
+//#endregion
+```

@@ -1,0 +1,20 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# Assets
+
+## main_jsx.js
+
+```js
+import { jsx, jsxs } from "react/jsx-runtime";
+
+//#region main.jsx
+const Hello = () => jsx("div", { children: "Hello" });
+function World() {
+	return jsxs("div", { children: [jsx(Hello, {}), "World"] });
+}
+
+//#endregion
+export { World as default };
+```
