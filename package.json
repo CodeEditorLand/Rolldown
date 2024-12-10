@@ -1,28 +1,6 @@
 {
 	"name": "monorepo",
-	"version": "0.0.1",
-	"private": false,
 	"description": "Rollup in Rust",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "🖋️ Source — 👐🏻 Open —",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
 	"scripts": {
 		"build": "echo \"Use just build\"",
 		"build:release": "echo \"Use just build native release\"",
@@ -65,8 +43,5 @@
 		"npm-run-all": "^4.1.5",
 		"oxlint": "0.14.1",
 		"rolldown": "0.0.1"
-	},
-	"publishConfig": {
-		"access": "public"
 	}
 }
