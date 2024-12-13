@@ -36,7 +36,7 @@
 		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
 	"dependencies": {
-		"@napi-rs/wasm-runtime": "^0.2.5"
+		"@napi-rs/wasm-runtime": "0.2.5"
 	},
 	"devDependencies": {
 		"@playform/build": "0.2.0"

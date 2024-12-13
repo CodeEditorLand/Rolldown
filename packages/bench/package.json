@@ -31,12 +31,12 @@
 	"dependencies": {},
 	"devDependencies": {
 		"@playform/build": "0.2.0",
-		"@types/lodash": "^4.17.5",
-		"chalk": "^5.3.0",
-		"esbuild": "^0.24.0",
-		"lodash": "^4.17.21",
+		"@types/lodash": "4.17.5",
+		"chalk": "5.3.0",
+		"esbuild": "0.24.0",
+		"lodash": "4.17.21",
 		"rolldown": "workspace:*",
-		"tinybench": "^3.0.0"
+		"tinybench": "3.0.0"
 	},
 	"publishConfig": {
 		"access": "public"
