@@ -1,0 +1,68 @@
+# https://github.com/stackblitz-labs/pkg.pr.new
+name: Publish to pkg.pr.new
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build bindings and node packages
+    uses: ./.github/workflows/reusable-release-build.yml
+    with:
+      version: 'commit'
+
+  publish:
+    if: github.repository == 'rolldown/rolldown'
+    name: Pkg Preview
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Git Reset Hard
+        run: git reset --hard # fix pnpm install add new line for package.json
+
+      - name: Download Binding Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: packages/rolldown/artifacts
+
+      - name: Move Binding Artifacts
+        run: pnpm --filter rolldown artifacts
+
+      - name: List Rolldown Bindings
+        run: ls -R ./packages/rolldown/npm
+        shell: bash
+
+      - name: Download Node Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: packages/rolldown/dist
+          name: node-artifact
+
+      - name: Download `rolldown-version.txt`
+        uses: actions/download-artifact@v4
+        with:
+          name: rolldown-version
+
+      - name: Read `rolldown-version.txt`
+        id: rolldown-version
+        uses: igorskyflyer/action-readfile@v1.0.0
+        with:
+          path: rolldown-version.txt
+
+      - name: Canary/Nightly Versioning
+        run: node ./scripts/misc/bump-version.js ${{ steps.rolldown-version.outputs.content }}
+
+      - name: Copy Licenses
+        run: |
+          find ./packages/ -type d -maxdepth 1 -exec cp LICENSE {} \;
+          find ./packages/ -type d -maxdepth 1 -exec cp THIRD-PARTY-LICENSE {} \;
+
+      - name: Release
+        run: pnpx pkg-pr-new publish --compact --pnpm './packages/rolldown/npm/*' './packages/rolldown'

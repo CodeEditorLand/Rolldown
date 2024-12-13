@@ -186,7 +186,7 @@ impl<'ast> DynamicImportVarsVisit<'ast> {
         items.push(Argument::from(self.ast_builder.expression_numeric_literal(
           SPAN,
           segments as f64,
-          segments.to_string(),
+          None,
           NumberBase::Decimal,
         )));
 
@@ -210,6 +210,7 @@ impl<'ast> DynamicImportVarsVisit<'ast> {
         ),
       )),
       self.ast_builder.string_literal(SPAN, DYNAMIC_IMPORT_HELPER, None),
+      None,
       NONE,
       ImportOrExportKind::Value,
     ))

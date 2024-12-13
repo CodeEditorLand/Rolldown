@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as zodExt from '../utils/zod-ext'
-import { bold, underline } from '../cli/colors'
+import { colors } from '../cli/colors'
 import type { PreRenderedChunk } from '../binding'
 import type {
   SourcemapIgnoreListOption,
@@ -25,7 +25,7 @@ const ModuleFormatSchema = z
   .or(z.literal('iife'))
   .or(z.literal('umd'))
   .describe(
-    `Output format of the generated bundle (supports ${underline('esm')}, cjs, and iife)`,
+    `Output format of the generated bundle (supports ${colors.underline('esm')}, cjs, and iife)`,
   ) satisfies z.ZodType<ModuleFormat>
 
 const addonFunctionSchema = z
@@ -57,7 +57,7 @@ const outputOptionsSchema = z.strictObject({
     .or(z.literal('default'))
     .or(z.literal('none'))
     .describe(
-      `Specify a export mode (${underline('auto')}, named, default, none)`,
+      `Specify a export mode (${colors.underline('auto')}, named, default, none)`,
     )
     .optional(),
   hashCharacters: z
@@ -72,7 +72,7 @@ const outputOptionsSchema = z.strictObject({
     .or(z.literal('inline'))
     .or(z.literal('hidden'))
     .describe(
-      `Generate sourcemap (\`-s inline\` for inline, or ${bold('pass the `-s` on the last argument if you want to generate `.map` file')})`,
+      `Generate sourcemap (\`-s inline\` for inline, or ${colors.bold('pass the `-s` on the last argument if you want to generate `.map` file')})`,
     )
     .optional(),
   sourcemapIgnoreList: z
@@ -161,49 +161,53 @@ const getAddonDescription = (
   placement: 'bottom' | 'top',
   wrapper: 'inside' | 'outside',
 ) => {
-  return `Code to insert the ${bold(placement)} of the bundled file (${bold(wrapper)} the wrapper function)`
+  return `Code to insert the ${colors.bold(placement)} of the bundled file (${colors.bold(wrapper)} the wrapper function)`
 }
 
-export const outputCliOptionsSchema = outputOptionsSchema
-  .extend({
-    // Reject all functions in CLI
-    banner: z
-      .string()
-      .describe(getAddonDescription('top', 'outside'))
-      .optional(),
-    footer: z
-      .string()
-      .describe(getAddonDescription('bottom', 'outside'))
-      .optional(),
-    intro: z.string().describe(getAddonDescription('top', 'inside')).optional(),
-    outro: z
-      .string()
-      .describe(getAddonDescription('bottom', 'inside'))
-      .optional(),
-    // It is hard to handle the union type in json schema, so use this first.
-    esModule: z
-      .boolean()
-      .describe(
-        'Always generate `__esModule` marks in non-ESM formats, defaults to `if-default-prop` (use `--no-esModule` to always disable)',
-      )
-      .optional(),
-    globals: z
-      .record(z.string())
-      .describe(
-        'Global variable of UMD / IIFE dependencies (syntax: `key=value`)',
-      )
-      .optional(),
-    advancedChunks: z
-      .strictObject({
-        minSize: z.number().describe('Minimum size of the chunk').optional(),
-        minShareCount: z
-          .number()
-          .describe('Minimum share count of the chunk')
-          .optional(),
-      })
-      .optional(),
-  })
-  .omit({
-    sourcemapPathTransform: true,
-    sourcemapIgnoreList: true,
-  }) satisfies z.ZodType<OutputCliOptions>
+export const outputCliOptionsSchema: z.ZodType<OutputCliOptions> =
+  outputOptionsSchema
+    .extend({
+      // Reject all functions in CLI
+      banner: z
+        .string()
+        .describe(getAddonDescription('top', 'outside'))
+        .optional(),
+      footer: z
+        .string()
+        .describe(getAddonDescription('bottom', 'outside'))
+        .optional(),
+      intro: z
+        .string()
+        .describe(getAddonDescription('top', 'inside'))
+        .optional(),
+      outro: z
+        .string()
+        .describe(getAddonDescription('bottom', 'inside'))
+        .optional(),
+      // It is hard to handle the union type in json schema, so use this first.
+      esModule: z
+        .boolean()
+        .describe(
+          'Always generate `__esModule` marks in non-ESM formats, defaults to `if-default-prop` (use `--no-esModule` to always disable)',
+        )
+        .optional(),
+      globals: z
+        .record(z.string())
+        .describe(
+          'Global variable of UMD / IIFE dependencies (syntax: `key=value`)',
+        )
+        .optional(),
+      advancedChunks: z
+        .strictObject({
+          minSize: z.number().describe('Minimum size of the chunk').optional(),
+          minShareCount: z
+            .number()
+            .describe('Minimum share count of the chunk')
+            .optional(),
+        })
+        .optional(),
+    })
+    .omit({
+      sourcemapPathTransform: true,
+      sourcemapIgnoreList: true,
+    }) satisfies z.ZodType<OutputCliOptions>

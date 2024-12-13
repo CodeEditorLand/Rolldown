@@ -7,7 +7,7 @@ use rolldown_plugin_alias::{Alias, AliasPlugin};
 use rolldown_plugin_build_import_analysis::BuildImportAnalysisPlugin;
 use rolldown_plugin_dynamic_import_vars::DynamicImportVarsPlugin;
 use rolldown_plugin_import_glob::{ImportGlobPlugin, ImportGlobPluginConfig};
-use rolldown_plugin_json::JsonPlugin;
+use rolldown_plugin_json::{JsonPlugin, JsonPluginStringify};
 use rolldown_plugin_load_fallback::LoadFallbackPlugin;
 use rolldown_plugin_manifest::{ManifestPlugin, ManifestPluginConfig};
 use rolldown_plugin_module_preload_polyfill::ModulePreloadPolyfillPlugin;
@@ -19,8 +19,8 @@ use rolldown_plugin_vite_resolve::{
 };
 use rolldown_plugin_wasm_fallback::WasmFallbackPlugin;
 use rolldown_plugin_wasm_helper::WasmHelperPlugin;
-use rustc_hash::FxHashMap;
-use serde::Deserialize;
+use rustc_hash::FxBuildHasher;
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use super::types::binding_builtin_plugin_name::BindingBuiltinPluginName;
@@ -30,11 +30,9 @@ use crate::types::js_callback::{JsCallback, JsCallbackExt};
 
 #[allow(clippy::pub_underscore_fields)]
 #[napi(object)]
-#[derive(Deserialize)]
 pub struct BindingBuiltinPlugin {
   #[napi(js_name = "__name")]
   pub __name: BindingBuiltinPluginName,
-  #[serde(skip_deserializing)]
   pub options: Option<JsUnknown>,
 }
 
@@ -48,8 +46,7 @@ impl std::fmt::Debug for BindingBuiltinPlugin {
 }
 
 #[napi_derive::napi(object)]
-#[derive(Debug, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 pub struct BindingGlobImportPluginConfig {
   pub root: Option<String>,
   pub restore_query_extension: Option<bool>,
@@ -65,8 +62,7 @@ impl From<BindingGlobImportPluginConfig> for ImportGlobPluginConfig {
 }
 
 #[napi_derive::napi(object)]
-#[derive(Debug, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 pub struct BindingManifestPluginConfig {
   pub root: String,
   pub out_path: String,
@@ -81,24 +77,43 @@ impl From<BindingManifestPluginConfig> for ManifestPluginConfig {
 }
 
 #[napi_derive::napi(object)]
-#[derive(Debug, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 pub struct BindingModulePreloadPolyfillPluginConfig {
   pub skip: Option<bool>,
 }
 
 #[napi_derive::napi(object)]
-#[derive(Debug, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 pub struct BindingJsonPluginConfig {
-  pub stringify: Option<bool>,
+  pub stringify: Option<BindingJsonPluginStringify>,
   pub is_build: Option<bool>,
   pub named_exports: Option<bool>,
 }
 
+#[derive(Debug)]
+#[napi(transparent)]
+pub struct BindingJsonPluginStringify(napi::Either<bool, String>);
+
+impl TryFrom<BindingJsonPluginStringify> for JsonPluginStringify {
+  type Error = napi::Error;
+
+  fn try_from(value: BindingJsonPluginStringify) -> Result<Self, Self::Error> {
+    Ok(match value {
+      BindingJsonPluginStringify(napi::Either::A(true)) => JsonPluginStringify::True,
+      BindingJsonPluginStringify(napi::Either::A(false)) => JsonPluginStringify::False,
+      BindingJsonPluginStringify(napi::Either::B(s)) if s == "auto" => JsonPluginStringify::Auto,
+      BindingJsonPluginStringify(napi::Either::B(s)) => {
+        return Err(napi::Error::new(
+          napi::Status::InvalidArg,
+          format!("Invalid stringify option: {s}"),
+        ))
+      }
+    })
+  }
+}
+
 #[napi_derive::napi(object, object_to_js = false)]
-#[derive(Debug, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 pub struct BindingTransformPluginConfig {
   pub include: Option<Vec<BindingStringOrRegex>>,
   pub exclude: Option<Vec<BindingStringOrRegex>>,
@@ -109,23 +124,20 @@ pub struct BindingTransformPluginConfig {
 }
 
 #[napi_derive::napi(object, object_to_js = false)]
-#[derive(Debug, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 pub struct BindingAliasPluginConfig {
   pub entries: Vec<BindingAliasPluginAlias>,
 }
 
 #[napi_derive::napi(object, object_to_js = false)]
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug)]
 pub struct BindingAliasPluginAlias {
   pub find: BindingStringOrRegex,
   pub replacement: String,
 }
 
 #[napi_derive::napi(object)]
-#[derive(Debug, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct BindingBuildImportAnalysisPluginConfig {
   pub preload_code: String,
@@ -136,27 +148,22 @@ pub struct BindingBuildImportAnalysisPluginConfig {
 }
 
 #[napi_derive::napi(object, object_to_js = false)]
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug)]
 pub struct BindingViteResolvePluginConfig {
   pub resolve_options: BindingViteResolvePluginResolveOptions,
   pub environment_consumer: String,
   pub environment_name: String,
-  #[serde(with = "EitherTrueVecStringDeserializeEnabler")]
   #[napi(ts_type = "true | string[]")]
   pub external: napi::Either<BindingTrueValue, Vec<String>>,
-  #[serde(with = "EitherTrueVecStringRegexDeserializeEnabler")]
   #[napi(ts_type = "true | Array<string | RegExp>")]
   pub no_external: napi::Either<BindingTrueValue, Vec<BindingStringOrRegex>>,
   pub dedupe: Vec<String>,
   #[debug("{}", if finalize_bare_specifier.is_some() { "Some(<finalize_bare_specifier>)" } else { "None" })]
-  #[serde(skip_deserializing)]
   #[napi(
     ts_type = "(resolvedId: string, rawId: string, importer: string | null | undefined) => VoidNullable<string>"
   )]
   pub finalize_bare_specifier: Option<JsCallback<(String, String, Option<String>), Option<String>>>,
   #[debug("{}", if finalize_bare_specifier.is_some() { "Some(<finalize_other_specifiers>)" } else { "None" })]
-  #[serde(skip_deserializing)]
   #[napi(ts_type = "(resolvedId: string, rawId: string) => VoidNullable<string>")]
   pub finalize_other_specifiers: Option<JsCallback<(String, String), Option<String>>>,
 
@@ -228,8 +235,7 @@ impl TryFrom<BindingViteResolvePluginConfig> for ViteResolveOptions {
 }
 
 #[napi_derive::napi(object)]
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct BindingViteResolvePluginResolveOptions {
   pub is_build: bool,
@@ -269,20 +275,6 @@ impl From<BindingViteResolvePluginResolveOptions> for ViteResolveResolveOptions 
       preserve_symlinks: value.preserve_symlinks,
     }
   }
-}
-
-#[derive(Deserialize)]
-#[serde(remote = "napi::bindgen_prelude::Either<BindingTrueValue, Vec<String>>")]
-enum EitherTrueVecStringDeserializeEnabler {
-  A(BindingTrueValue),
-  B(Vec<String>),
-}
-
-#[derive(Deserialize)]
-#[serde(remote = "napi::bindgen_prelude::Either<BindingTrueValue, Vec<BindingStringOrRegex>>")]
-enum EitherTrueVecStringRegexDeserializeEnabler {
-  A(BindingTrueValue),
-  B(Vec<BindingStringOrRegex>),
 }
 
 impl TryFrom<BindingBuildImportAnalysisPluginConfig> for BuildImportAnalysisPlugin {
@@ -391,7 +383,7 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         };
 
         Arc::new(JsonPlugin {
-          stringify: config.stringify.unwrap_or_default(),
+          stringify: config.stringify.map(TryInto::try_into).transpose()?.unwrap_or_default(),
           is_build: config.is_build.unwrap_or_default(),
           named_exports: config.named_exports.unwrap_or_default(),
         })
@@ -442,13 +434,10 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
 }
 
 #[napi_derive::napi(object)]
-#[derive(Debug, Deserialize, Default)]
-#[serde(rename_all = "camelCase")]
+#[derive(Debug, Default)]
 pub struct BindingReplacePluginConfig {
   // It's ok we use `HashMap` here, because we don't care about the order of the keys.
-  // TODO(sapphi-red): remove `ts_type` and use HashMap<K, V, S> instead once https://github.com/napi-rs/napi-rs/pull/2384 is released
-  #[napi(ts_type = "Record<string, string>")]
-  pub values: FxHashMap<String, String>,
+  pub values: HashMap<String, String, FxBuildHasher>,
   #[napi(ts_type = "[string, string]")]
   pub delimiters: Option<Vec<String>>,
   pub prevent_assignment: Option<bool>,

@@ -2,13 +2,14 @@
  * @description This file is used for normalize the options.
  * In CLI, the input options and output options are mixed together. We need to tell them apart.
  */
-import { logger } from '../utils'
+import { logger } from '../logger'
 import { setNestedProperty } from './utils'
 import { CliOptions, cliOptionsSchema } from './schema'
 import { inputCliOptionsSchema } from '../../options/input-options-schema'
 import { outputCliOptionsSchema } from '../../options/output-options-schema'
 import type { InputOptions } from '../../options/input-options'
 import type { OutputOptions } from '../../options/output-options'
+import type Z from 'zod'
 
 export interface NormalizedCliOptions {
   input: InputOptions
@@ -44,9 +45,11 @@ export function normalizeCliOptions(
     result.config = options.config ? options.config : 'rolldown.config.js'
   }
   const reservedKeys = ['help', 'version', 'config', 'watch']
-  const keysOfInput = inputCliOptionsSchema.keyof()._def.values as string[]
+  const keysOfInput = (inputCliOptionsSchema as Z.AnyZodObject).keyof()._def
+    .values as string[]
   // Because input is the positional args, we shouldn't include it in the input schema.
-  const keysOfOutput = outputCliOptionsSchema.keyof()._def.values as string[]
+  const keysOfOutput = (outputCliOptionsSchema as Z.AnyZodObject).keyof()._def
+    .values as string[]
   for (let [key, value] of Object.entries(options)) {
     const keys = key.split('.')
     const [primary] = keys

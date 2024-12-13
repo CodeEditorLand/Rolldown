@@ -2,7 +2,7 @@ use arcstr::ArcStr;
 use itertools::Itertools;
 use rolldown_common::{ExportsKind, Specifier, WrapKind};
 use rolldown_sourcemap::SourceJoiner;
-use rolldown_utils::concat_string;
+use rolldown_utils::{concat_string, ecmascript::is_validate_identifier_name};
 
 use crate::{
   ecmascript::ecma_generator::RenderedModuleSources, types::generator::GenerateContext,
@@ -196,6 +196,11 @@ fn render_esm_chunk_imports(ctx: &GenerateContext<'_>) -> String {
 
                 return None;
               }
+              let imported = if is_validate_identifier_name(imported) {
+                imported.clone()
+              } else {
+                format!("'{imported}'").into()
+              };
               Some(concat_string!(imported, " as ", alias))
             }
           }

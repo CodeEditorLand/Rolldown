@@ -366,7 +366,7 @@ if (!nativeBinding) {
 
 module.exports.BindingBundleEndEventData = nativeBinding.BindingBundleEndEventData
 module.exports.BindingCallableBuiltinPlugin = nativeBinding.BindingCallableBuiltinPlugin
-module.exports.BindingHookError = nativeBinding.BindingHookError
+module.exports.BindingError = nativeBinding.BindingError
 module.exports.BindingLog = nativeBinding.BindingLog
 module.exports.BindingModuleInfo = nativeBinding.BindingModuleInfo
 module.exports.BindingNormalizedOptions = nativeBinding.BindingNormalizedOptions
@@ -385,6 +385,8 @@ module.exports.BindingBuiltinPluginName = nativeBinding.BindingBuiltinPluginName
 module.exports.BindingHookSideEffects = nativeBinding.BindingHookSideEffects
 module.exports.BindingLogLevel = nativeBinding.BindingLogLevel
 module.exports.BindingPluginOrder = nativeBinding.BindingPluginOrder
+module.exports.HelperMode = nativeBinding.HelperMode
 module.exports.isolatedDeclaration = nativeBinding.isolatedDeclaration
 module.exports.registerPlugins = nativeBinding.registerPlugins
+module.exports.Severity = nativeBinding.Severity
 module.exports.transform = nativeBinding.transform

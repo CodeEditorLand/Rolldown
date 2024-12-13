@@ -1,12 +1,13 @@
+use std::collections::HashMap;
+
 use arcstr::ArcStr;
-use rustc_hash::FxHashMap;
-use serde::Deserialize;
+use rolldown_common::{ModuleId, RenderedModule};
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use super::binding_rendered_module::BindingRenderedModule;
 
 #[napi_derive::napi(object)]
-#[derive(Deserialize, Default, Debug)]
-#[serde(rename_all = "camelCase")]
+#[derive(Default, Debug)]
 pub struct RenderedChunk {
   // PreRenderedChunk
   pub name: String,
@@ -17,9 +18,7 @@ pub struct RenderedChunk {
   pub exports: Vec<String>,
   // RenderedChunk
   pub file_name: String,
-  #[serde(skip)]
-  #[napi(ts_type = "Record<string, BindingRenderedModule>")]
-  pub modules: BindingChunkModules,
+  pub modules: HashMap<String, BindingRenderedModule, FxBuildHasher>,
   pub imports: Vec<String>,
   pub dynamic_imports: Vec<String>,
 }
@@ -34,15 +33,16 @@ impl From<rolldown_common::RollupRenderedChunk> for RenderedChunk {
       module_ids: value.module_ids.into_iter().map(|x| x.to_string()).collect(),
       exports: value.exports,
       file_name: value.filename.to_string(),
-      modules: value
-        .modules
-        .into_iter()
-        .map(|(key, value)| (key.to_string(), value.into()))
-        .collect(),
+      modules: into_binding_chunk_modules(value.modules),
       imports: value.imports.iter().map(ArcStr::to_string).collect(),
       dynamic_imports: value.dynamic_imports.iter().map(ArcStr::to_string).collect(),
     }
   }
 }
 
-pub type BindingChunkModules = FxHashMap<String, BindingRenderedModule>;
+#[allow(clippy::implicit_hasher)]
+pub fn into_binding_chunk_modules(
+  modules: FxHashMap<ModuleId, RenderedModule>,
+) -> HashMap<String, BindingRenderedModule, FxBuildHasher> {
+  modules.into_iter().map(|(key, value)| (key.to_string(), value.into())).collect()
+}

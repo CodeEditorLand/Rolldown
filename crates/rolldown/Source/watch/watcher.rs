@@ -3,7 +3,9 @@ use dashmap::DashSet;
 use notify::{
   event::ModifyKind, Config, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher,
 };
-use rolldown_common::{BundleEvent, WatcherChangeData, WatcherChangeKind, WatcherEvent};
+use rolldown_common::{
+  BundleEvent, NotifyOption, WatcherChangeData, WatcherChangeKind, WatcherEvent,
+};
 use rolldown_error::{BuildResult, ResultExt};
 use rolldown_utils::dashmap::FxDashSet;
 use std::{
@@ -43,7 +45,10 @@ pub struct WatcherImpl {
 
 impl WatcherImpl {
   #[allow(clippy::needless_pass_by_value)]
-  pub fn new(bundlers: Vec<Arc<Mutex<Bundler>>>) -> Result<Self> {
+  pub fn new(
+    bundlers: Vec<Arc<Mutex<Bundler>>>,
+    notify_option: Option<NotifyOption>,
+  ) -> Result<Self> {
     let (tx, rx) = channel();
 
     let tx = Arc::new(tx);
@@ -51,15 +56,13 @@ impl WatcherImpl {
     let cloned_tx = Arc::clone(&tx);
 
     let watch_option = {
-      // TODO using one notify configure for all bundlers
-      // let config = Config::default();
-      // let bundler_guard = bundler.try_lock().expect("Failed to lock the bundler. ");
-      // if let Some(notify) = &bundler_guard.options.watch.notify {
-      //   if let Some(poll_interval) = notify.poll_interval {
-      //     config.with_poll_interval(poll_interval);
-      //   }
-      //   config.with_compare_contents(notify.compare_contents);
-      // }
+      let config = Config::default();
+      if let Some(notify) = &notify_option {
+        if let Some(poll_interval) = notify.poll_interval {
+          config.with_poll_interval(poll_interval);
+        }
+        config.with_compare_contents(notify.compare_contents);
+      }
       Config::default()
     };
 
@@ -89,6 +92,7 @@ impl WatcherImpl {
     })
   }
 
+  #[tracing::instrument(level = "debug", skip_all)]
   pub fn invalidate(&self) {
     if self.running.load(Ordering::Relaxed) {
       self.rerun.store(true, Ordering::Relaxed);
@@ -116,6 +120,7 @@ impl WatcherImpl {
     }
   }
 
+  #[tracing::instrument(level = "debug", skip_all)]
   pub async fn run(&self) -> BuildResult<()> {
     self.emitter.emit(WatcherEvent::ReStart)?;
 
@@ -138,6 +143,7 @@ impl WatcherImpl {
         }
         let path = Path::new(file.as_str());
         if path.exists() {
+          tracing::debug!(name= "notify watch ", path = ?path);
           inner.watch(path, RecursiveMode::Recursive).map_err_to_unhandleable()?;
           self.watch_files.insert(file.clone());
         }
@@ -154,6 +160,7 @@ impl WatcherImpl {
     Ok(())
   }
 
+  #[tracing::instrument(level = "debug", skip_all)]
   pub async fn close(&self) -> anyhow::Result<()> {
     // close channel
     self.tx.send(WatcherChannelMsg::Close)?;
@@ -181,6 +188,7 @@ impl WatcherImpl {
   }
 }
 
+#[tracing::instrument(level = "debug", skip(watcher))]
 pub async fn on_change(watcher: &Arc<WatcherImpl>, path: &str, kind: WatcherChangeKind) {
   let _ = watcher
     .emitter
@@ -191,6 +199,7 @@ pub async fn on_change(watcher: &Arc<WatcherImpl>, path: &str, kind: WatcherChan
   }
 }
 
+#[tracing::instrument(level = "debug", skip_all)]
 pub fn wait_for_change(watcher: Arc<WatcherImpl>) {
   let future = async move {
     let mut run = true;
@@ -201,6 +210,7 @@ pub fn wait_for_change(watcher: Arc<WatcherImpl>) {
         Ok(msg) => match msg {
           WatcherChannelMsg::NotifyEvent(event) => match event {
             Ok(event) => {
+              tracing::debug!(name= "notify event ", event = ?event);
               for path in event.paths {
                 let id = path.to_string_lossy();
 

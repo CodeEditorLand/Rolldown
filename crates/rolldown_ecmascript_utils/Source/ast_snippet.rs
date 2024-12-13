@@ -382,8 +382,8 @@ impl<'ast> AstSnippet<'ast> {
           PropertyKind::Init,
           ast::PropertyKey::from(self.builder.expression_string_literal(SPAN, stable_id, None)),
           self.builder.expression_function(
-            FunctionType::FunctionExpression,
             SPAN,
+            FunctionType::FunctionExpression,
             None,
             false,
             false,
@@ -450,8 +450,8 @@ impl<'ast> AstSnippet<'ast> {
           PropertyKind::Init,
           ast::PropertyKey::from(self.builder.expression_string_literal(SPAN, stable_id, None)),
           self.builder.expression_function(
-            FunctionType::FunctionExpression,
             SPAN,
+            FunctionType::FunctionExpression,
             None,
             false,
             false,
@@ -510,7 +510,7 @@ impl<'ast> AstSnippet<'ast> {
     ast::Expression::NumericLiteral(self.builder.alloc_numeric_literal(
       SPAN,
       value,
-      raw,
+      Some(Atom::from(raw)),
       oxc::syntax::number::NumberBase::Decimal,
     ))
   }
@@ -578,6 +578,7 @@ impl<'ast> AstSnippet<'ast> {
       SPAN,
       Some(specifiers),
       self.builder.string_literal(SPAN, source, None),
+      None,
       NONE,
       ImportOrExportKind::Value,
     ))
@@ -707,8 +708,8 @@ impl<'ast> AstSnippet<'ast> {
     statements: allocator::Vec<'ast, Statement<'ast>>,
   ) -> ast::Expression<'ast> {
     let arguments = self.builder.vec1(Argument::FunctionExpression(self.builder.alloc_function(
-      ast::FunctionType::FunctionExpression,
       SPAN,
+      ast::FunctionType::FunctionExpression,
       None::<BindingIdentifier>,
       false,
       false,
@@ -795,7 +796,7 @@ impl<'ast> AstSnippet<'ast> {
       Some(Interop::Node) => self.alloc_call_expr_with_2arg_expr_expr(
         to_esm_fn_name,
         call_expr,
-        self.builder.expression_numeric_literal(SPAN, 1.0, "1", NumberBase::Decimal),
+        self.builder.expression_numeric_literal(SPAN, 1.0, None, NumberBase::Decimal),
       ),
     }
   }
@@ -814,7 +815,7 @@ impl<'ast> AstSnippet<'ast> {
         Argument::from(self.builder.expression_numeric_literal(
           SPAN,
           1.0,
-          "1",
+          None,
           NumberBase::Decimal,
         )),
       ])

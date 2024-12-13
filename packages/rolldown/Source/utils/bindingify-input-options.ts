@@ -5,7 +5,7 @@ import { bindingifyBuiltInPlugin } from '../builtin-plugin/utils'
 import { BuiltinPlugin } from '../builtin-plugin/constructors'
 import { arraify, unsupported } from './misc'
 import { normalizedStringOrRegex } from './normalize-string-or-regex'
-import type { RolldownPlugin } from 'rolldown'
+import type { RolldownPlugin } from '../plugin'
 import type { InputOptions } from '../options/input-options'
 import type { OutputOptions } from '../options/output-options'
 import type {
@@ -239,13 +239,6 @@ function bindingifyWatch(
       include: normalizedStringOrRegex(watch.include),
       exclude: normalizedStringOrRegex(watch.exclude),
     } as BindingWatchOption
-    if (watch.notify) {
-      value.notify = {
-        pollInterval: watch.notify.pollInterval,
-        compareContents: watch.notify.compareContents,
-      }
-    }
-
     if (watch.chokidar) {
       unsupported(
         'The watch chokidar option is deprecated, please use notify options instead of it.',

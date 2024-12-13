@@ -16,7 +16,6 @@ use rolldown_fs::{FileSystem, OsFileSystem};
 use rolldown_plugin::{
   HookBuildEndArgs, HookRenderErrorArgs, SharedPluginDriver, __inner::SharedPluginable,
 };
-use rolldown_std_utils::OptionExt;
 use std::sync::Arc;
 use tracing_chrome::FlushGuard;
 
@@ -94,8 +93,6 @@ impl Bundler {
   }
 
   pub async fn scan(&mut self) -> BuildResult<ScanStageOutput> {
-    self.plugin_driver.build_start(&self.options).await?;
-
     let scan_stage_output = match ScanStage::new(
       Arc::clone(&self.options),
       Arc::clone(&self.plugin_driver),
@@ -107,21 +104,13 @@ impl Bundler {
     {
       Ok(v) => v,
       Err(errs) => {
-        let errors = Arc::new(errs.into_vec());
         self
           .plugin_driver
-          .build_end(Some(&HookBuildEndArgs {
-            errors: Arc::clone(&errors),
-            cwd: &self.options.cwd,
-          }))
+          .build_end(Some(&HookBuildEndArgs { errors: &errs, cwd: &self.options.cwd }))
           .await?;
 
         self.plugin_driver.close_bundle().await?;
-        return Err(
-          Arc::<std::vec::Vec<BuildDiagnostic>>::into_inner(errors)
-            .expect("Arc into_inner should success after call buildEnd hook")
-            .into(),
-        );
+        return Err(errs);
       }
     };
 
@@ -149,8 +138,6 @@ impl Bundler {
 
     let mut link_stage_output = self.try_build().await?;
 
-    self.plugin_driver.render_start(&self.options).await?;
-
     let bundle_output =
       GenerateStage::new(&mut link_stage_output, &self.options, &self.plugin_driver)
         .generate()
@@ -159,7 +146,7 @@ impl Bundler {
     if let Err(errs) = &bundle_output {
       self
         .plugin_driver
-        .render_error(&HookRenderErrorArgs { error: errs.first().unpack_ref().to_string() })
+        .render_error(&HookRenderErrorArgs { errors: errs, cwd: &self.options.cwd })
         .await?;
     }
 

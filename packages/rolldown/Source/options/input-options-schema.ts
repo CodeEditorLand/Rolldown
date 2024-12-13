@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as zodExt from '../utils/zod-ext'
-import { underline, gray, yellow, dim } from '../cli/colors'
+import { colors } from '../cli/colors'
 import {
   LogLevelOptionSchema,
   LogLevelSchema,
@@ -103,7 +103,7 @@ const checksOptionsSchema = z.strictObject({
     .optional(),
 }) satisfies z.ZodType<ChecksOptions>
 
-export const inputOptionsSchema = z.strictObject({
+export const inputOptionsSchema: z.ZodType<InputOptions> = z.strictObject({
   input: inputOptionSchema.optional(),
   plugins: zodExt.phantom<RolldownPluginOption>().optional(),
   external: externalSchema.optional(),
@@ -128,7 +128,7 @@ export const inputOptionsSchema = z.strictObject({
     .or(z.literal('browser'))
     .or(z.literal('neutral'))
     .describe(
-      `Platform for which the code should be generated (node, ${underline('browser')}, neutral)`,
+      `Platform for which the code should be generated (node, ${colors.underline('browser')}, neutral)`,
     )
     .optional(),
   shimMissingExports: z
@@ -137,7 +137,7 @@ export const inputOptionsSchema = z.strictObject({
     .optional(),
   treeshake: TreeshakingOptionsSchema.optional(),
   logLevel: LogLevelOptionSchema.describe(
-    `Log level (${dim('silent')}, ${underline(gray('info'))}, debug, ${yellow('warn')})`,
+    `Log level (${colors.dim('silent')}, ${colors.underline(colors.gray('info'))}, debug, ${colors.yellow('warn')})`,
   ).optional(),
   onLog: z
     .function()
@@ -183,7 +183,9 @@ export const inputOptionsSchema = z.strictObject({
   checks: checksOptionsSchema.optional(),
 }) satisfies z.ZodType<InputOptions>
 
-export const inputCliOptionsSchema = inputOptionsSchema
+export const inputCliOptionsSchema: z.ZodType<InputCliOptions> = (
+  inputOptionsSchema as z.AnyZodObject
+)
   .extend({
     external: z
       .array(z.string())
