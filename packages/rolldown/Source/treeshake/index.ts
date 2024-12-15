@@ -1,1 +1,1 @@
-export * from './module-side-effects'
+export * from "./module-side-effects";

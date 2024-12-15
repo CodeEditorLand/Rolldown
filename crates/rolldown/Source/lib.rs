@@ -21,13 +21,13 @@ use rolldown_resolver::Resolver;
 pub(crate) type SharedResolver = Arc<Resolver<OsFileSystem>>;
 pub(crate) type SharedOptions = SharedNormalizedBundlerOptions;
 
-pub use crate::{
-  bundler::Bundler, bundler_builder::BundlerBuilder, types::bundle_output::BundleOutput,
-  watcher::Watcher,
-};
-
 pub use rolldown_common::bundler_options::*;
-
+pub use rolldown_plugin as plugin;
 pub use rolldown_resolver::ResolveOptions;
 
-pub use rolldown_plugin as plugin;
+pub use crate::{
+	bundler::Bundler,
+	bundler_builder::BundlerBuilder,
+	types::bundle_output::BundleOutput,
+	watcher::Watcher,
+};

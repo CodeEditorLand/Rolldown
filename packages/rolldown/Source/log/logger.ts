@@ -1,166 +1,173 @@
+import path from "node:path";
+
+import { VERSION } from "..";
+import type { InputOptions } from "../options/input-options";
+import type { Plugin } from "../plugin";
+import { getSortedPlugins } from "../plugin/plugin-driver";
 import type {
-  LoggingFunction,
-  LogHandler,
-  RollupError,
-  RollupLog,
-  WarningHandlerWithDefault,
-} from '../rollup'
-import type { Plugin } from '../plugin'
+	LoggingFunction,
+	LogHandler,
+	RollupError,
+	RollupLog,
+	WarningHandlerWithDefault,
+} from "../rollup";
 import {
-  LOG_LEVEL_DEBUG,
-  LOG_LEVEL_INFO,
-  LOG_LEVEL_WARN,
-  LOG_LEVEL_ERROR,
-  logLevelPriority,
-  type LogLevelOption,
-  type LogLevel,
-} from './logging'
-import { error } from './logs'
-import { normalizeLog } from './logHandler'
-import type { InputOptions } from '../options/input-options'
-import path from 'node:path'
-import { VERSION } from '..'
-import { getSortedPlugins } from '../plugin/plugin-driver'
+	LOG_LEVEL_DEBUG,
+	LOG_LEVEL_ERROR,
+	LOG_LEVEL_INFO,
+	LOG_LEVEL_WARN,
+	logLevelPriority,
+	type LogLevel,
+	type LogLevelOption,
+} from "./logging";
+import { normalizeLog } from "./logHandler";
+import { error } from "./logs";
 
 export function getLogger(
-  plugins: Plugin[],
-  onLog: LogHandler,
-  logLevel: LogLevelOption,
+	plugins: Plugin[],
+	onLog: LogHandler,
+	logLevel: LogLevelOption,
 ): LogHandler {
-  const minimalPriority = logLevelPriority[logLevel]
-  const logger = (
-    level: LogLevel,
-    log: RollupLog,
-    skipped: ReadonlySet<Plugin> = new Set(),
-  ) => {
-    const logPriority = logLevelPriority[level]
-    if (logPriority < minimalPriority) {
-      return
-    }
+	const minimalPriority = logLevelPriority[logLevel];
+	const logger = (
+		level: LogLevel,
+		log: RollupLog,
+		skipped: ReadonlySet<Plugin> = new Set(),
+	) => {
+		const logPriority = logLevelPriority[level];
+		if (logPriority < minimalPriority) {
+			return;
+		}
 
-    for (const plugin of getSortedPlugins('onLog', plugins)) {
-      if (skipped.has(plugin)) continue
+		for (const plugin of getSortedPlugins("onLog", plugins)) {
+			if (skipped.has(plugin)) continue;
 
-      const { onLog: pluginOnLog } = plugin
+			const { onLog: pluginOnLog } = plugin;
 
-      if (pluginOnLog) {
-        const getLogHandler = (level: LogLevel): LoggingFunction => {
-          if (logLevelPriority[level] < minimalPriority) {
-            return () => {}
-          }
-          return (log) =>
-            logger(level, normalizeLog(log), new Set(skipped).add(plugin))
-        }
+			if (pluginOnLog) {
+				const getLogHandler = (level: LogLevel): LoggingFunction => {
+					if (logLevelPriority[level] < minimalPriority) {
+						return () => {};
+					}
+					return (log) =>
+						logger(
+							level,
+							normalizeLog(log),
+							new Set(skipped).add(plugin),
+						);
+				};
 
-        const handler =
-          'handler' in pluginOnLog! ? pluginOnLog.handler : pluginOnLog!
-        if (
-          handler.call(
-            {
-              debug: getLogHandler(LOG_LEVEL_DEBUG),
-              error: (log: RollupError | string): never =>
-                error(normalizeLog(log)),
-              info: getLogHandler(LOG_LEVEL_INFO),
-              meta: {
-                rollupVersion: '4.23.0',
-                rolldownVersion: VERSION,
-                watchMode: false,
-              },
-              warn: getLogHandler(LOG_LEVEL_WARN),
-            },
-            level,
-            log,
-          ) === false
-        ) {
-          return
-        }
-      }
-    }
+				const handler =
+					"handler" in pluginOnLog!
+						? pluginOnLog.handler
+						: pluginOnLog!;
+				if (
+					handler.call(
+						{
+							debug: getLogHandler(LOG_LEVEL_DEBUG),
+							error: (log: RollupError | string): never =>
+								error(normalizeLog(log)),
+							info: getLogHandler(LOG_LEVEL_INFO),
+							meta: {
+								rollupVersion: "4.23.0",
+								rolldownVersion: VERSION,
+								watchMode: false,
+							},
+							warn: getLogHandler(LOG_LEVEL_WARN),
+						},
+						level,
+						log,
+					) === false
+				) {
+					return;
+				}
+			}
+		}
 
-    onLog(level, log)
-  }
+		onLog(level, log);
+	};
 
-  return logger
+	return logger;
 }
 
 export const getOnLog = (
-  config: InputOptions,
-  logLevel: LogLevelOption,
-  printLog: LogHandler = defaultPrintLog,
+	config: InputOptions,
+	logLevel: LogLevelOption,
+	printLog: LogHandler = defaultPrintLog,
 ): LogHandler => {
-  const { onwarn, onLog } = config
-  const defaultOnLog = getDefaultOnLog(printLog, onwarn)
-  if (onLog) {
-    const minimalPriority = logLevelPriority[logLevel]
-    return (level, log) =>
-      onLog(level, addLogToString(log), (level, handledLog) => {
-        if (level === LOG_LEVEL_ERROR) {
-          return error(normalizeLog(handledLog))
-        }
+	const { onwarn, onLog } = config;
+	const defaultOnLog = getDefaultOnLog(printLog, onwarn);
+	if (onLog) {
+		const minimalPriority = logLevelPriority[logLevel];
+		return (level, log) =>
+			onLog(level, addLogToString(log), (level, handledLog) => {
+				if (level === LOG_LEVEL_ERROR) {
+					return error(normalizeLog(handledLog));
+				}
 
-        if (logLevelPriority[level] >= minimalPriority) {
-          defaultOnLog(level, normalizeLog(handledLog))
-        }
-      })
-  }
-  return defaultOnLog
-}
+				if (logLevelPriority[level] >= minimalPriority) {
+					defaultOnLog(level, normalizeLog(handledLog));
+				}
+			});
+	}
+	return defaultOnLog;
+};
 
 const getDefaultOnLog = (
-  printLog: LogHandler,
-  onwarn?: WarningHandlerWithDefault,
+	printLog: LogHandler,
+	onwarn?: WarningHandlerWithDefault,
 ): LogHandler =>
-  onwarn
-    ? (level, log) => {
-        if (level === LOG_LEVEL_WARN) {
-          onwarn(addLogToString(log), (warning) =>
-            printLog(LOG_LEVEL_WARN, normalizeLog(warning)),
-          )
-        } else {
-          printLog(level, log)
-        }
-      }
-    : printLog
+	onwarn
+		? (level, log) => {
+				if (level === LOG_LEVEL_WARN) {
+					onwarn(addLogToString(log), (warning) =>
+						printLog(LOG_LEVEL_WARN, normalizeLog(warning)),
+					);
+				} else {
+					printLog(level, log);
+				}
+			}
+		: printLog;
 
 const addLogToString = (log: RollupLog): RollupLog => {
-  Object.defineProperty(log, 'toString', {
-    value: () => getExtendedLogMessage(log),
-    writable: true,
-  })
-  return log
-}
+	Object.defineProperty(log, "toString", {
+		value: () => getExtendedLogMessage(log),
+		writable: true,
+	});
+	return log;
+};
 
 const defaultPrintLog: LogHandler = (level, log) => {
-  const message = getExtendedLogMessage(log)
-  switch (level) {
-    case LOG_LEVEL_WARN: {
-      return console.warn(message)
-    }
+	const message = getExtendedLogMessage(log);
+	switch (level) {
+		case LOG_LEVEL_WARN: {
+			return console.warn(message);
+		}
 
-    case LOG_LEVEL_DEBUG: {
-      return console.debug(message)
-    }
+		case LOG_LEVEL_DEBUG: {
+			return console.debug(message);
+		}
 
-    default: {
-      return console.info(message)
-    }
-  }
-}
+		default: {
+			return console.info(message);
+		}
+	}
+};
 
 const getExtendedLogMessage = (log: RollupLog): string => {
-  let prefix = ''
+	let prefix = "";
 
-  if (log.plugin) {
-    prefix += `(${log.plugin} plugin) `
-  }
-  if (log.loc) {
-    prefix += `${relativeId(log.loc.file!)} (${log.loc.line}:${log.loc.column}) `
-  }
+	if (log.plugin) {
+		prefix += `(${log.plugin} plugin) `;
+	}
+	if (log.loc) {
+		prefix += `${relativeId(log.loc.file!)} (${log.loc.line}:${log.loc.column}) `;
+	}
 
-  return prefix + log.message
-}
+	return prefix + log.message;
+};
 
 function relativeId(id: string): string {
-  if (!path.isAbsolute(id)) return id
-  return path.relative(path.resolve(), id)
+	if (!path.isAbsolute(id)) return id;
+	return path.relative(path.resolve(), id);
 }

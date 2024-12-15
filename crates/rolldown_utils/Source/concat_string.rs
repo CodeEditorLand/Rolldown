@@ -9,9 +9,10 @@
 
 //! Macros for concatenating string slices into owned strings.
 //!
-//! This crate provides the `concat_string!` macro for efficiently concatenating string slices into
-//! owned strings. `concat_string!` accepts any number of arguments that implement `AsRef<str>` and
-//! creates a `String` with the appropriate capacity, without the need for format strings and their
+//! This crate provides the `concat_string!` macro for efficiently concatenating
+//! string slices into owned strings. `concat_string!` accepts any number of
+//! arguments that implement `AsRef<str>` and creates a `String` with the
+//! appropriate capacity, without the need for format strings and their
 //! associated runtime overhead.
 //!
 //! # Example
@@ -21,20 +22,21 @@
 //! extern crate concat_string;
 //!
 //! fn main() {
-//!     println!("{}", concat_string!("Hello", String::from(" "), "world"));
+//! 	println!("{}", concat_string!("Hello", String::from(" "), "world"));
 //! }
 //! ```
 
 #[macro_export]
 /// Concatenates a series of string slices into an owned string.
 ///
-/// This macro accepts zero or more arguments, where each argument implements `AsRef<str>`, and
-/// efficiently combines their string representations into a `String` in order of declaration.
+/// This macro accepts zero or more arguments, where each argument implements
+/// `AsRef<str>`, and efficiently combines their string representations into a
+/// `String` in order of declaration.
 ///
-/// This is mainly useful for cases where the cost of parsing a format string outweighs the cost
-/// of converting its arguments. Because `concat_string` avoids format strings entirely, it can
-/// achieve a higher level of performance than using `format!` or other formatting utilities that
-/// return a `String`.
+/// This is mainly useful for cases where the cost of parsing a format string
+/// outweighs the cost of converting its arguments. Because `concat_string`
+/// avoids format strings entirely, it can achieve a higher level of performance
+/// than using `format!` or other formatting utilities that return a `String`.
 ///
 /// # Example
 ///
@@ -58,24 +60,24 @@ macro_rules! concat_string {
 
 #[cfg(test)]
 mod tests {
-  #[test]
-  fn concat_string_0_args() {
-    let s = concat_string!();
+	#[test]
+	fn concat_string_0_args() {
+		let s = concat_string!();
 
-    assert_eq!(s, String::new());
-  }
+		assert_eq!(s, String::new());
+	}
 
-  #[test]
-  fn concat_string_1_arg() {
-    let s = concat_string!("foo");
+	#[test]
+	fn concat_string_1_arg() {
+		let s = concat_string!("foo");
 
-    assert_eq!(s, String::from("foo"));
-  }
+		assert_eq!(s, String::from("foo"));
+	}
 
-  #[test]
-  fn concat_string_str_string() {
-    let s = concat_string!("foo", String::from("bar"));
+	#[test]
+	fn concat_string_str_string() {
+		let s = concat_string!("foo", String::from("bar"));
 
-    assert_eq!(s, String::from("foobar"));
-  }
+		assert_eq!(s, String::from("foobar"));
+	}
 }
