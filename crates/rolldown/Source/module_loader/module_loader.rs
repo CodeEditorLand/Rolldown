@@ -97,7 +97,7 @@ impl ModuleLoader {
       },
     };
 
-    let common_data = Arc::new(TaskContext {
+    let shared_context = Arc::new(TaskContext {
       options: Arc::clone(&options),
       tx: tx.clone(),
       resolver,
@@ -107,16 +107,13 @@ impl ModuleLoader {
     });
 
     let mut intermediate_normal_modules = IntermediateNormalModules::new();
-
-    let symbols = SymbolRefDb::default();
-
     let runtime_id = intermediate_normal_modules.alloc_ecma_module_idx();
 
     let task = RuntimeModuleTask::new(runtime_id, tx.clone(), Arc::clone(&options));
 
     #[cfg(target_family = "wasm")]
     {
-      task.run().unwrap();
+      task.run();
     }
     // task is sync, but execution time is too short at the moment
     // so we are using spawn instead of spawn_blocking here to avoid an additional blocking thread creation within tokio
@@ -127,16 +124,16 @@ impl ModuleLoader {
     }
 
     Ok(Self {
-      shared_context: common_data,
       tx,
       rx,
       options,
-      visited: FxHashMap::from_iter([(RUNTIME_MODULE_ID.into(), runtime_id)]),
       runtime_id,
       // runtime module is always there
       remaining: 1,
+      shared_context,
       intermediate_normal_modules,
-      symbol_ref_db: symbols,
+      symbol_ref_db: SymbolRefDb::default(),
+      visited: FxHashMap::from_iter([(RUNTIME_MODULE_ID.into(), runtime_id)]),
     })
   }
 
