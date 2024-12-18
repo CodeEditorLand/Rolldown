@@ -8,44 +8,43 @@ use serde::{Deserialize, Deserializer};
 
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(
-  feature = "deserialize_bundler_options",
-  derive(Deserialize, JsonSchema),
-  serde(rename_all = "camelCase", deny_unknown_fields)
+	feature = "deserialize_bundler_options",
+	derive(Deserialize, JsonSchema),
+	serde(rename_all = "camelCase", deny_unknown_fields)
 )]
 pub struct WatchOption {
-  pub skip_write: bool,
-  #[cfg_attr(
-    feature = "deserialize_bundler_options",
-    serde(default, deserialize_with = "deserialize_string_or_regex"),
-    schemars(with = "Option<Vec<String>>")
-  )]
-  pub include: Option<Vec<StringOrRegex>>,
-  #[cfg_attr(
-    feature = "deserialize_bundler_options",
-    serde(default, deserialize_with = "deserialize_string_or_regex"),
-    schemars(with = "Option<Vec<String>>")
-  )]
-  pub exclude: Option<Vec<StringOrRegex>>,
+	pub skip_write:bool,
+	#[cfg_attr(
+		feature = "deserialize_bundler_options",
+		serde(default, deserialize_with = "deserialize_string_or_regex"),
+		schemars(with = "Option<Vec<String>>")
+	)]
+	pub include:Option<Vec<StringOrRegex>>,
+	#[cfg_attr(
+		feature = "deserialize_bundler_options",
+		serde(default, deserialize_with = "deserialize_string_or_regex"),
+		schemars(with = "Option<Vec<String>>")
+	)]
+	pub exclude:Option<Vec<StringOrRegex>>,
 }
 
 #[cfg(feature = "deserialize_bundler_options")]
 fn deserialize_string_or_regex<'de, D>(
-  deserializer: D,
+	deserializer:D,
 ) -> Result<Option<Vec<StringOrRegex>>, D::Error>
 where
-  D: Deserializer<'de>,
-{
-  let deserialized = Option::<Vec<String>>::deserialize(deserializer)?;
-  Ok(deserialized.map(|v| v.into_iter().map(StringOrRegex::String).collect::<Vec<_>>()))
+	D: Deserializer<'de>, {
+	let deserialized = Option::<Vec<String>>::deserialize(deserializer)?;
+	Ok(deserialized.map(|v| v.into_iter().map(StringOrRegex::String).collect::<Vec<_>>()))
 }
 
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(
-  feature = "deserialize_bundler_options",
-  derive(Deserialize, JsonSchema),
-  serde(rename_all = "camelCase", deny_unknown_fields)
+	feature = "deserialize_bundler_options",
+	derive(Deserialize, JsonSchema),
+	serde(rename_all = "camelCase", deny_unknown_fields)
 )]
 pub struct NotifyOption {
-  pub poll_interval: Option<Duration>,
-  pub compare_contents: bool,
+	pub poll_interval:Option<Duration>,
+	pub compare_contents:bool,
 }

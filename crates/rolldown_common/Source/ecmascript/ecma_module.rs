@@ -6,9 +6,6 @@ use rolldown_rstr::Rstr;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
-	css::css_view::CssView,
-	side_effects::DeterminedSideEffects,
-	types::ast_scopes::AstScopes,
 	DebugStmtInfoForTreeShaking,
 	EcmaAstIdx,
 	ExportsKind,
@@ -27,6 +24,9 @@ use crate::{
 	StmtInfo,
 	StmtInfos,
 	SymbolRef,
+	css::css_view::CssView,
+	side_effects::DeterminedSideEffects,
+	types::ast_scopes::AstScopes,
 };
 
 #[derive(Debug)]

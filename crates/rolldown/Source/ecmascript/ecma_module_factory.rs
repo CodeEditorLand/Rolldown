@@ -4,7 +4,6 @@ use oxc::{
 	semantic::{ScopeTree, SymbolTable},
 };
 use rolldown_common::{
-	side_effects::{DeterminedSideEffects, HookSideEffects},
 	AstScopes,
 	EcmaModule,
 	ModuleDefFormat,
@@ -13,6 +12,7 @@ use rolldown_common::{
 	ModuleType,
 	SymbolRef,
 	TreeshakeOptions,
+	side_effects::{DeterminedSideEffects, HookSideEffects},
 };
 use rolldown_ecmascript::EcmaAst;
 use rolldown_error::{DiagnosableResult, UnhandleableResult};
@@ -33,7 +33,7 @@ use crate::{
 	},
 	utils::{
 		make_ast_symbol_and_scope::make_ast_scopes_and_symbols,
-		parse_to_ecma_ast::{parse_to_ecma_ast, ParseToEcmaAstResult},
+		parse_to_ecma_ast::{ParseToEcmaAstResult, parse_to_ecma_ast},
 	},
 };
 
@@ -189,7 +189,6 @@ impl ModuleFactory for EcmaModuleFactory {
 			},
 			// If user don't specify the side effects, we use fallback value
 			// from `option.treeshake.moduleSideEffects`;
-
 			None => {
 				match ctx.options.treeshake {
 					// Actually this convert is not necessary, just for passing

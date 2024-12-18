@@ -4,7 +4,9 @@ use arcstr::ArcStr;
 use oxc::span::Span;
 
 use crate::{
-  diagnostic::Diagnostic, event_kind::EventKind, types::diagnostic_options::DiagnosticOptions,
+	diagnostic::Diagnostic,
+	event_kind::EventKind,
+	types::diagnostic_options::DiagnosticOptions,
 };
 
 pub mod ambiguous_external_namespace;
@@ -37,59 +39,50 @@ pub mod unresolved_import_treated_as_external;
 pub mod unsupported_feature;
 
 pub trait BuildEvent: Debug + Sync + Send {
-  fn kind(&self) -> EventKind;
+	fn kind(&self) -> EventKind;
 
-  fn message(&self, opts: &DiagnosticOptions) -> String;
+	fn message(&self, opts:&DiagnosticOptions) -> String;
 
-  fn on_diagnostic(&self, _diagnostic: &mut Diagnostic, _opts: &DiagnosticOptions) {}
+	fn on_diagnostic(&self, _diagnostic:&mut Diagnostic, _opts:&DiagnosticOptions) {}
 }
 
-impl<T: BuildEvent + 'static> From<T> for Box<dyn BuildEvent>
+impl<T:BuildEvent + 'static> From<T> for Box<dyn BuildEvent>
 where
-  Self: Sized,
+	Self: Sized,
 {
-  fn from(e: T) -> Self {
-    Box::new(e)
-  }
+	fn from(e:T) -> Self { Box::new(e) }
 }
 
-// --- TODO(hyf0): These errors are only for compatibility with legacy code. They should be replaced with more specific errors.
+// --- TODO(hyf0): These errors are only for compatibility with legacy code.
+// They should be replaced with more specific errors.
 
 #[derive(Debug)]
 pub struct NapiError {}
 
 impl BuildEvent for NapiError {
-  fn kind(&self) -> EventKind {
-    EventKind::NapiError
-  }
+	fn kind(&self) -> EventKind { EventKind::NapiError }
 
-  fn message(&self, _opts: &DiagnosticOptions) -> String {
-    "Napi error".into()
-  }
+	fn message(&self, _opts:&DiagnosticOptions) -> String { "Napi error".into() }
 }
 
 impl BuildEvent for std::io::Error {
-  fn kind(&self) -> EventKind {
-    EventKind::IoError
-  }
+	fn kind(&self) -> EventKind { EventKind::IoError }
 
-  fn message(&self, _opts: &DiagnosticOptions) -> String {
-    format!("IO error: {self}")
-  }
+	fn message(&self, _opts:&DiagnosticOptions) -> String { format!("IO error: {self}") }
 }
 
 /// A Hybrid string type used for diagnostic, e.g.
-/// for `UnresolvedError`, a specifier could be either a slice from raw source, or
-/// created during ast transformation. When the specifier came from raw source, we could
-/// use the `Span` information to give user better DX, otherwise, we could just use the string to
-/// create a fallback message.
+/// for `UnresolvedError`, a specifier could be either a slice from raw source,
+/// or created during ast transformation. When the specifier came from raw
+/// source, we could use the `Span` information to give user better DX,
+/// otherwise, we could just use the string to create a fallback message.
 /// ## Panic
-/// they type is only used for store information, user should check the span could be referenced
-/// the raw source, or the user side may panic.
+/// they type is only used for store information, user should check the span
+/// could be referenced the raw source, or the user side may panic.
 #[derive(Debug)]
 pub enum DiagnosableArcstr {
-  String(ArcStr),
-  Span(Span),
+	String(ArcStr),
+	Span(Span),
 }
 
 // --- end

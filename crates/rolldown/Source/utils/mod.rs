@@ -4,7 +4,8 @@ use rolldown_ecmascript::EcmaAst;
 use rolldown_ecmascript_utils::{AstSnippet, TakeIn};
 
 use super::module_finalizers::scope_hoisting::{
-  ScopeHoistingFinalizer, ScopeHoistingFinalizerContext,
+	ScopeHoistingFinalizer,
+	ScopeHoistingFinalizerContext,
 };
 pub mod apply_inner_plugins;
 pub mod augment_chunk_hash;
@@ -27,23 +28,23 @@ pub mod uuid;
 
 #[tracing::instrument(level = "trace", skip_all)]
 pub fn finalize_normal_module(
-  module: &NormalModule,
-  ctx: ScopeHoistingFinalizerContext<'_>,
-  ast: &mut EcmaAst,
+	module:&NormalModule,
+	ctx:ScopeHoistingFinalizerContext<'_>,
+	ast:&mut EcmaAst,
 ) {
-  ast.program.with_mut(|fields| {
-    let (oxc_program, alloc) = (fields.program, fields.allocator);
+	ast.program.with_mut(|fields| {
+		let (oxc_program, alloc) = (fields.program, fields.allocator);
 
-    let mut finalizer = ScopeHoistingFinalizer {
-      alloc,
-      ctx,
-      scope: &module.scope,
-      snippet: AstSnippet::new(alloc),
-      comments: oxc_program.comments.take_in(alloc),
-    };
+		let mut finalizer = ScopeHoistingFinalizer {
+			alloc,
+			ctx,
+			scope:&module.scope,
+			snippet:AstSnippet::new(alloc),
+			comments:oxc_program.comments.take_in(alloc),
+		};
 
-    finalizer.visit_program(oxc_program);
+		finalizer.visit_program(oxc_program);
 
-    oxc_program.comments = finalizer.comments.take_in(alloc);
-  });
+		oxc_program.comments = finalizer.comments.take_in(alloc);
+	});
 }

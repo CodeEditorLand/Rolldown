@@ -9,8 +9,8 @@ pub mod runtime_task_result;
 pub mod task_result;
 
 pub enum ModuleLoaderMsg {
-  NormalModuleDone(NormalModuleTaskResult),
-  RuntimeNormalModuleDone(RuntimeModuleTaskResult),
-  FetchModule(ResolvedId),
-  BuildErrors(Vec<BuildDiagnostic>),
+	NormalModuleDone(NormalModuleTaskResult),
+	RuntimeNormalModuleDone(RuntimeModuleTaskResult),
+	FetchModule(ResolvedId),
+	BuildErrors(Vec<BuildDiagnostic>),
 }
