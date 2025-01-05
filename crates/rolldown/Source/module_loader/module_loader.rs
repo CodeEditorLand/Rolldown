@@ -11,15 +11,16 @@ use rolldown_common::dynamic_import_usage::DynamicImportExportsUsage;
 use rolldown_common::side_effects::{DeterminedSideEffects, HookSideEffects};
 use rolldown_common::{
   EcmaRelated, EntryPoint, EntryPointKind, ExternalModule, ImportKind, ImportRecordIdx,
-  ImporterRecord, Module, ModuleId, ModuleIdx, ModuleInfo, ModuleLoaderMsg, ModuleTable,
-  ModuleType, NormalModuleTaskResult, ResolvedId, RuntimeModuleBrief, RuntimeModuleTaskResult,
-  SymbolRefDb, SymbolRefDbForModule, RUNTIME_MODULE_ID,
+  ImporterRecord, Module, ModuleId, ModuleIdx, ModuleInfo, ModuleLoaderMsg, ModuleSideEffects,
+  ModuleTable, ModuleType, NormalModuleTaskResult, ResolvedId, RuntimeModuleBrief,
+  RuntimeModuleTaskResult, SymbolRefDb, SymbolRefDbForModule, TreeshakeOptions, RUNTIME_MODULE_ID,
 };
 use rolldown_error::{BuildDiagnostic, BuildResult};
 use rolldown_fs::OsFileSystem;
 use rolldown_plugin::SharedPluginDriver;
 use rolldown_utils::ecmascript::legitimize_identifier_name;
 use rolldown_utils::indexmap::FxIndexSet;
+use rolldown_utils::rayon::{IntoParallelIterator, ParallelIterator};
 use rolldown_utils::rustc_hash::FxHashSetExt;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::sync::Arc;
@@ -136,37 +137,32 @@ impl ModuleLoader {
     match self.visited.entry(resolved_id.id.clone()) {
       std::collections::hash_map::Entry::Occupied(visited) => *visited.get(),
       std::collections::hash_map::Entry::Vacant(not_visited) => {
+        let idx = self.intermediate_normal_modules.alloc_ecma_module_idx();
+
         if resolved_id.is_external {
-          let idx = self.intermediate_normal_modules.alloc_ecma_module_idx();
-          not_visited.insert(idx);
-          let external_module_side_effects = if let Some(hook_side_effects) =
-            resolved_id.side_effects
-          {
-            match hook_side_effects {
-              HookSideEffects::True => DeterminedSideEffects::UserDefined(true),
-              HookSideEffects::False => DeterminedSideEffects::UserDefined(false),
-              HookSideEffects::NoTreeshake => DeterminedSideEffects::NoTreeshake,
-            }
-          } else {
-            match self.options.treeshake {
-              rolldown_common::TreeshakeOptions::Boolean(false) => {
-                DeterminedSideEffects::NoTreeshake
+          let external_module_side_effects =
+            if let Some(hook_side_effects) = resolved_id.side_effects {
+              match hook_side_effects {
+                HookSideEffects::True => DeterminedSideEffects::UserDefined(true),
+                HookSideEffects::False => DeterminedSideEffects::UserDefined(false),
+                HookSideEffects::NoTreeshake => DeterminedSideEffects::NoTreeshake,
               }
-              rolldown_common::TreeshakeOptions::Boolean(true) => unreachable!(),
-              rolldown_common::TreeshakeOptions::Option(ref opt) => match opt.module_side_effects {
-                rolldown_common::ModuleSideEffects::Boolean(false) => {
-                  DeterminedSideEffects::UserDefined(false)
-                }
-                _ => {
-                  if resolved_id.is_external_without_side_effects {
-                    DeterminedSideEffects::UserDefined(false)
-                  } else {
-                    DeterminedSideEffects::NoTreeshake
+            } else {
+              match self.options.treeshake {
+                TreeshakeOptions::Boolean(false) => DeterminedSideEffects::NoTreeshake,
+                TreeshakeOptions::Boolean(true) => unreachable!(),
+                TreeshakeOptions::Option(ref opt) => match opt.module_side_effects {
+                  ModuleSideEffects::Boolean(false) => DeterminedSideEffects::UserDefined(false),
+                  _ => {
+                    if resolved_id.is_external_without_side_effects {
+                      DeterminedSideEffects::UserDefined(false)
+                    } else {
+                      DeterminedSideEffects::NoTreeshake
+                    }
                   }
-                }
-              },
-            }
-          };
+                },
+              }
+            };
 
           let id = ModuleId::new(&resolved_id.id);
           self.shared_context.plugin_driver.set_module_info(
@@ -191,17 +187,11 @@ impl ModuleLoader {
             idx,
             legitimize_identifier_name(resolved_id.id.as_str()).as_ref(),
           );
-          let ext = ExternalModule::new(
-            idx,
-            ArcStr::clone(&resolved_id.id),
-            external_module_side_effects,
-            symbol_ref,
-          );
+
+          let ext =
+            ExternalModule::new(idx, resolved_id.id, external_module_side_effects, symbol_ref);
           self.intermediate_normal_modules.modules[idx] = Some(ext.into());
-          idx
         } else {
-          let idx = self.intermediate_normal_modules.alloc_ecma_module_idx();
-          not_visited.insert(idx);
           self.remaining += 1;
 
           let task = ModuleTask::new(
@@ -212,9 +202,11 @@ impl ModuleLoader {
             is_user_defined_entry,
             assert_module_type,
           );
+
           tokio::spawn(task.run());
-          idx
         }
+
+        *not_visited.insert(idx)
       }
     }
   }
@@ -387,7 +379,7 @@ impl ModuleLoader {
     );
 
     self.shared_context.plugin_driver.set_context_load_modules_tx(None).await;
-
+    let mut none_empty_importer_module = vec![];
     let modules: IndexVec<ModuleIdx, Module> = self
       .intermediate_normal_modules
       .modules
@@ -397,10 +389,10 @@ impl ModuleLoader {
         let mut module = module.expect("Module tasks did't complete as expected");
 
         if let Some(module) = module.as_normal_mut() {
-          let id = ModuleIdx::from(id);
+          let idx = ModuleIdx::from(id);
           // Note: (Compat to rollup)
           // The `dynamic_importers/importers` should be added after `module_parsed` hook.
-          let importers = std::mem::take(&mut self.intermediate_normal_modules.importers[id]);
+          let importers = std::mem::take(&mut self.intermediate_normal_modules.importers[idx]);
           for importer in &importers {
             if importer.kind.is_static() {
               module.importers.insert(importer.importer_path.clone());
@@ -409,10 +401,7 @@ impl ModuleLoader {
             }
           }
           if !importers.is_empty() {
-            self
-              .shared_context
-              .plugin_driver
-              .set_module_info(&module.id, Arc::new(module.to_module_info(None)));
+            none_empty_importer_module.push(idx);
           }
         }
 
@@ -420,6 +409,16 @@ impl ModuleLoader {
       })
       .collect();
 
+    none_empty_importer_module.into_par_iter().for_each(|idx| {
+      let module = &modules[idx];
+      let Some(module) = module.as_normal() else {
+        return;
+      };
+      self
+        .shared_context
+        .plugin_driver
+        .set_module_info(&module.id, Arc::new(module.to_module_info(None)));
+    });
     // if `inline_dynamic_imports` is set to be true, here we should not put dynamic imports to entries
     if !self.options.inline_dynamic_imports {
       let mut dynamic_import_entry_ids = dynamic_import_entry_ids.into_iter().collect::<Vec<_>>();
