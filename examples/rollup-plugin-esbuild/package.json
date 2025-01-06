@@ -30,8 +30,8 @@
 		"@codeeditorland/plugin-esbuild": "0.0.1"
 	},
 	"devDependencies": {
-		"@playform/build": "0.2.0",
-		"rolldown": "0.0.1"
+		"@playform/build": "0.2.1",
+		"rolldown": "0.15.1"
 	},
 	"publishConfig": {
 		"access": "public"
