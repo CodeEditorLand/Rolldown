@@ -76,8 +76,8 @@
 		"type-check": "tsc"
 	},
 	"dependencies": {
-		"@valibot/to-json-schema": "1.0.0-beta.3",
-		"valibot": "1.0.0-beta.10",
+		"@valibot/to-json-schema": "1.0.0-beta.4",
+		"valibot": "1.0.0-beta.11",
 		"zod": "^3.24.1"
 	},
 	"devDependencies": {
@@ -101,9 +101,9 @@
 		"signal-exit": "4.1.0",
 		"source-map": "^0.7.4",
 		"tsx": "^4.19.2",
-		"type-fest": "^4.31.0",
+		"type-fest": "^4.32.0",
 		"unbuild": "^3.2.0",
-		"why-is-node-running": "^3.2.1",
+		"why-is-node-running": "^3.2.2",
 		"zod-to-json-schema": "^3.24.1"
 	},
 	"peerDependenciesMeta": {
