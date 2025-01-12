@@ -4,12 +4,14 @@
  */
 import { logger } from '../logger'
 import { setNestedProperty } from './utils'
-import { CliOptions, cliOptionsSchema } from './schema'
-import { inputCliOptionsSchema } from '../../options/input-options-schema'
-import { outputCliOptionsSchema } from '../../options/output-options-schema'
+import {
+  getInputCliKeys,
+  getOutputCliKeys,
+  validateCliOptions,
+} from '../../utils/validator'
+import type { CliOptions } from './alias'
 import type { InputOptions } from '../../options/input-options'
 import type { OutputOptions } from '../../options/output-options'
-import type Z from 'zod'
 
 export interface NormalizedCliOptions {
   input: InputOptions
@@ -24,16 +26,17 @@ export function normalizeCliOptions(
   cliOptions: CliOptions,
   positionals: string[],
 ): NormalizedCliOptions {
-  const parsed = cliOptionsSchema.safeParse(cliOptions)
-  const options = parsed.data ?? {}
-  if (!parsed.success) {
-    parsed.error.errors.forEach((error) => {
+  const [data, errors] = validateCliOptions<CliOptions>(cliOptions)
+  if (errors?.length) {
+    errors.forEach((error) => {
       logger.error(
-        `Invalid value for option ${error.path.join(', ')}. You can use \`rolldown -h\` to see the help.`,
+        `Invalid value for option ${error}. You can use \`rolldown -h\` to see the help.`,
       )
     })
     process.exit(1)
   }
+
+  const options = data ?? {}
   const result = {
     input: {} as InputOptions,
     output: {} as OutputOptions,
@@ -41,15 +44,15 @@ export function normalizeCliOptions(
     version: options.version ?? false,
     watch: options.watch ?? false,
   } as NormalizedCliOptions
+
   if (typeof options.config === 'string') {
     result.config = options.config
   }
+
+  const keysOfInput = getInputCliKeys()
+  const keysOfOutput = getOutputCliKeys()
   const reservedKeys = ['help', 'version', 'config', 'watch']
-  const keysOfInput = (inputCliOptionsSchema as Z.AnyZodObject).keyof()._def
-    .values as string[]
-  // Because input is the positional args, we shouldn't include it in the input schema.
-  const keysOfOutput = (outputCliOptionsSchema as Z.AnyZodObject).keyof()._def
-    .values as string[]
+
   for (let [key, value] of Object.entries(options)) {
     const keys = key.split('.')
     const [primary] = keys
@@ -62,8 +65,10 @@ export function normalizeCliOptions(
       process.exit(1)
     }
   }
+
   if (!result.config && positionals.length > 0) {
     result.input.input = positionals
   }
+
   return result
 }

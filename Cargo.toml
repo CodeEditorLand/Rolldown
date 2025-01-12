@@ -20,8 +20,6 @@ lto = "thin"
 opt-level = "z"
 strip = "none"
 
-[workspace.lints.rust]
-
 [workspace.lints.clippy]
 # Guidelines
 # - We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
@@ -76,24 +74,25 @@ single_match = "allow"
 single_match_else = "allow"
 
 [workspace.dependencies]
-criterion2 = { version = "2.0.0", default-features = false }
-css-module-lexer = "0.0.15"
-rolldown = { version = "0.1.0", path = "./crates/rolldown" }
-rolldown_common = { version = "0.1.0", path = "./crates/rolldown_common" }
-rolldown_ecmascript = { version = "0.1.0", path = "./crates/rolldown_ecmascript" }
-rolldown_ecmascript_utils = { version = "0.1.0", path = "./crates/rolldown_ecmascript_utils" }
-rolldown_error = { version = "0.1.0", path = "./crates/rolldown_error" }
-rolldown_fs = { version = "0.1.0", path = "./crates/rolldown_fs" }
-rolldown_loader_utils = { version = "0.1.0", path = "./crates/rolldown_loader_utils" }
-rolldown_plugin = { version = "0.1.0", path = "./crates/rolldown_plugin" }
-rolldown_plugin_alias = { version = "0.1.0", path = "./crates/rolldown_plugin_alias/" }
-rolldown_plugin_build_import_analysis = { version = "0.1.0", path = "./crates/rolldown_plugin_build_import_analysis" }
-rolldown_plugin_data_url = { version = "0.1.0", path = "./crates/rolldown_plugin_data_url" }
-rolldown_plugin_dynamic_import_vars = { version = "0.0.1", path = "./crates/rolldown_plugin_dynamic_import_vars" }
-rolldown_plugin_import_glob = { version = "0.1.0", path = "./crates/rolldown_plugin_import_glob" }
-rolldown_plugin_json = { version = "0.1.0", path = "./crates/rolldown_plugin_json" }
-rolldown_plugin_load_fallback = { version = "0.1.0", path = "./crates/rolldown_plugin_load_fallback" }
-rolldown_plugin_manifest = { version = "0.1.0", path = "./crates/rolldown_plugin_manifest" }
+criterion2                              = { version = "2.0.0", default-features = false }
+css-module-lexer                        = "0.0.15"
+rolldown                                = { version = "0.1.0", path = "./crates/rolldown" }
+rolldown_common                         = { version = "0.1.0", path = "./crates/rolldown_common" }
+rolldown_ecmascript                     = { version = "0.1.0", path = "./crates/rolldown_ecmascript" }
+rolldown_ecmascript_utils               = { version = "0.1.0", path = "./crates/rolldown_ecmascript_utils" }
+rolldown_error                          = { version = "0.1.0", path = "./crates/rolldown_error" }
+rolldown_fs                             = { version = "0.1.0", path = "./crates/rolldown_fs" }
+rolldown_loader_utils                   = { version = "0.1.0", path = "./crates/rolldown_loader_utils" }
+rolldown_plugin                         = { version = "0.1.0", path = "./crates/rolldown_plugin" }
+rolldown_plugin_alias                   = { version = "0.1.0", path = "./crates/rolldown_plugin_alias/" }
+rolldown_plugin_build_import_analysis   = { version = "0.1.0", path = "./crates/rolldown_plugin_build_import_analysis" }
+rolldown_plugin_data_url                = { version = "0.1.0", path = "./crates/rolldown_plugin_data_url" }
+rolldown_plugin_dynamic_import_vars     = { version = "0.0.1", path = "./crates/rolldown_plugin_dynamic_import_vars" }
+rolldown_plugin_import_glob             = { version = "0.1.0", path = "./crates/rolldown_plugin_import_glob" }
+rolldown_plugin_json                    = { version = "0.1.0", path = "./crates/rolldown_plugin_json" }
+rolldown_plugin_load_fallback           = { version = "0.1.0", path = "./crates/rolldown_plugin_load_fallback" }
+rolldown_plugin_manifest                = { version = "0.1.0", path = "./crates/rolldown_plugin_manifest" }
+rolldown_plugin_module_federation       = { version = "0.1.0", path = "./crates/rolldown_plugin_module_federation" }
 rolldown_plugin_module_preload_polyfill = { version = "0.1.0", path = "./crates/rolldown_plugin_module_preload_polyfill" }
 rolldown_plugin_replace = { version = "0.1.0", path = "./crates/rolldown_plugin_replace" }
 rolldown_plugin_transform = { version = "0.1.0", path = "./crates/rolldown_plugin_transform" }
@@ -171,8 +170,8 @@ xxhash-rust         = "0.8.10"
 
 
 # oxc crates with the same version
-oxc                = { version = "0.44.0", features = ["transformer", "minifier", "semantic", "codegen"] }
-oxc_transform_napi = { version = "0.44.0" }
+oxc                = { version = "0.45.0", features = ["transformer", "minifier", "semantic", "codegen"] }
+oxc_transform_napi = { version = "0.45.0" }
 
 # oxc crates in their own repos
 # Versions must be relaxed for usage in oxc.

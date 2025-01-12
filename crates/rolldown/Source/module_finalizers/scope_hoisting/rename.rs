@@ -24,7 +24,7 @@ impl<'ast> ScopeHoistingFinalizer<'_, 'ast> {
     )?;
 
     let symbol_ref: SymbolRef = (self.ctx.id, symbol_id).into();
-    let mut expr = self.finalized_expr_for_symbol_ref(symbol_ref, is_callee);
+    let mut expr = self.finalized_expr_for_symbol_ref(symbol_ref, is_callee, Some(reference_id));
 
     // See https://github.com/oxc-project/oxc/issues/4606
 
@@ -135,7 +135,7 @@ impl<'ast> ScopeHoistingFinalizer<'_, 'ast> {
   }
 
   pub fn rewrite_object_pat_shorthand(&mut self, pat: &mut ast::ObjectPattern<'ast>) {
-    for prop in pat.properties.iter_mut() {
+    for prop in &mut pat.properties {
       match &mut prop.value.kind {
         // Ensure `const { a } = ...;` will be rewritten to `const { a: a } = ...` instead of `const { a } = ...`
         // Ensure `function foo({ a }) {}` will be rewritten to `function foo({ a: a }) {}` instead of `function foo({ a }) {}`

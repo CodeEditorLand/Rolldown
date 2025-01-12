@@ -1,14 +1,17 @@
 import * as v from 'valibot'
 import { colors } from '../cli/colors'
+import { toJsonSchema } from '@valibot/to-json-schema'
 import type { PreRenderedChunk } from '../binding'
 import type { RolldownPluginOption } from '../plugin'
+import type { ObjectSchema } from '../types/schema'
 import type { RenderedChunk } from '../types/rolldown-output'
+import type { TreeshakingOptions } from '../types/module-side-effects'
 import type {
   SourcemapIgnoreListOption,
   SourcemapPathTransformOption,
 } from '../types/misc'
 
-const stringOrRegExpSchema = v.union([v.string(), v.instance(RegExp)])
+const StringOrRegExpSchema = v.union([v.string(), v.instance(RegExp)])
 
 const LogLevelSchema = v.union([
   v.literal('debug'),
@@ -24,15 +27,15 @@ const RollupLogWithStringSchema = v.union([RollupLogSchema, v.string()])
 
 /// --- InputSchema ---
 
-const inputOptionSchema = v.union([
+const InputOptionSchema = v.union([
   v.string(),
   v.array(v.string()),
   v.record(v.string(), v.string()),
 ])
 
-const externalSchema = v.union([
-  stringOrRegExpSchema,
-  v.array(stringOrRegExpSchema),
+const ExternalSchema = v.union([
+  StringOrRegExpSchema,
+  v.array(StringOrRegExpSchema),
   v.pipe(
     v.function(),
     v.args(v.tuple([v.string(), v.optional(v.string()), v.boolean()])),
@@ -40,7 +43,7 @@ const externalSchema = v.union([
   ),
 ])
 
-const moduleTypesSchema = v.record(
+const ModuleTypesSchema = v.record(
   v.string(),
   v.union([
     v.literal('base64'),
@@ -57,7 +60,7 @@ const moduleTypesSchema = v.record(
   ]),
 )
 
-const jsxOptionsSchema = v.strictObject({
+const JsxOptionsSchema = v.strictObject({
   development: v.pipe(
     v.optional(v.boolean()),
     v.description('Development specific information'),
@@ -92,13 +95,13 @@ const jsxOptionsSchema = v.strictObject({
   ),
 })
 
-const watchOptionsSchema = v.strictObject({
+const WatchOptionsSchema = v.strictObject({
   chokidar: v.optional(v.any()),
   exclude: v.optional(
-    v.union([stringOrRegExpSchema, v.array(stringOrRegExpSchema)]),
+    v.union([StringOrRegExpSchema, v.array(StringOrRegExpSchema)]),
   ),
   include: v.optional(
-    v.union([stringOrRegExpSchema, v.array(stringOrRegExpSchema)]),
+    v.union([StringOrRegExpSchema, v.array(StringOrRegExpSchema)]),
   ),
   notify: v.pipe(
     v.optional(
@@ -115,7 +118,7 @@ const watchOptionsSchema = v.strictObject({
   ),
 })
 
-const checksOptionsSchema = v.strictObject({
+const ChecksOptionsSchema = v.strictObject({
   circularDependency: v.pipe(
     v.optional(v.boolean()),
     v.description(
@@ -124,7 +127,7 @@ const checksOptionsSchema = v.strictObject({
   ),
 })
 
-const resolveOptionsSchema = v.strictObject({
+const ResolveOptionsSchema = v.strictObject({
   alias: v.optional(
     v.record(v.string(), v.union([v.string(), v.array(v.string())])),
   ),
@@ -179,11 +182,11 @@ const OnwarnSchema = v.pipe(
   ),
 )
 
-const inputOptionsSchema = v.strictObject({
-  input: v.optional(inputOptionSchema),
+const InputOptionsSchema = v.strictObject({
+  input: v.optional(InputOptionSchema),
   plugins: v.optional(v.custom<RolldownPluginOption>(() => true)),
-  external: v.optional(externalSchema),
-  resolve: v.optional(resolveOptionsSchema),
+  external: v.optional(ExternalSchema),
+  resolve: v.optional(ResolveOptionsSchema),
   cwd: v.pipe(
     v.optional(v.string()),
     v.description('Current working directory'),
@@ -210,7 +213,7 @@ const inputOptionsSchema = v.strictObject({
   onLog: v.optional(OnLogSchema),
   onwarn: v.optional(OnwarnSchema),
   moduleTypes: v.pipe(
-    v.optional(moduleTypesSchema),
+    v.optional(ModuleTypesSchema),
     v.description('Module types for customized extensions'),
   ),
   experimental: v.optional(
@@ -232,16 +235,16 @@ const inputOptionsSchema = v.strictObject({
     ),
   ),
   profilerNames: v.optional(v.boolean()),
-  jsx: v.optional(jsxOptionsSchema),
-  watch: v.optional(v.union([watchOptionsSchema, v.literal(false)])),
+  jsx: v.optional(JsxOptionsSchema),
+  watch: v.optional(v.union([WatchOptionsSchema, v.literal(false)])),
   dropLabels: v.pipe(
     v.optional(v.array(v.string())),
     v.description('Remove labeled statements with these label names'),
   ),
-  checks: v.optional(checksOptionsSchema),
+  checks: v.optional(ChecksOptionsSchema),
 })
 
-const inputCliOverrideSchema = v.strictObject({
+const InputCliOverrideSchema = v.strictObject({
   external: v.pipe(
     v.optional(v.array(v.string())),
     v.description(
@@ -258,10 +261,10 @@ const inputCliOverrideSchema = v.strictObject({
   ),
 })
 
-const inputCliOptionsSchema = v.omit(
+const InputCliOptionsSchema = v.omit(
   v.strictObject({
-    ...inputOptionsSchema.entries,
-    ...inputCliOverrideSchema.entries,
+    ...InputOptionsSchema.entries,
+    ...InputCliOverrideSchema.entries,
   }),
   [
     'input',
@@ -302,7 +305,7 @@ const ModuleFormatSchema = v.union([
   v.literal('umd'),
 ])
 
-const addonFunctionSchema = v.pipe(
+const AddonFunctionSchema = v.pipe(
   v.function(),
   v.args(v.tuple([v.custom<RenderedChunk>(() => true)])),
   v.returnsAsync(
@@ -313,7 +316,7 @@ const addonFunctionSchema = v.pipe(
   ),
 )
 
-const chunkFileNamesSchema = v.union([
+const ChunkFileNamesSchema = v.union([
   v.string(),
   v.pipe(
     v.function(),
@@ -328,7 +331,7 @@ const GlobalsFunctionSchema = v.pipe(
   v.returns(v.string()),
 )
 
-const advancedChunksSchema = v.strictObject({
+const AdvancedChunksSchema = v.strictObject({
   minSize: v.optional(v.number()),
   minShareCount: v.optional(v.number()),
   groups: v.optional(
@@ -344,7 +347,7 @@ const advancedChunksSchema = v.strictObject({
   ),
 })
 
-const outputOptionsSchema = v.strictObject({
+const OutputOptionsSchema = v.strictObject({
   dir: v.pipe(
     v.optional(v.string()),
     v.description('Output directory, defaults to `dist` if `file` is not set'),
@@ -390,10 +393,10 @@ const outputOptionsSchema = v.strictObject({
   sourcemapPathTransform: v.optional(
     v.custom<SourcemapPathTransformOption>(() => true),
   ),
-  banner: v.optional(v.union([v.string(), addonFunctionSchema])),
-  footer: v.optional(v.union([v.string(), addonFunctionSchema])),
-  intro: v.optional(v.union([v.string(), addonFunctionSchema])),
-  outro: v.optional(v.union([v.string(), addonFunctionSchema])),
+  banner: v.optional(v.union([v.string(), AddonFunctionSchema])),
+  footer: v.optional(v.union([v.string(), AddonFunctionSchema])),
+  intro: v.optional(v.union([v.string(), AddonFunctionSchema])),
+  outro: v.optional(v.union([v.string(), AddonFunctionSchema])),
   extend: v.pipe(
     v.optional(v.boolean()),
     v.description(
@@ -405,10 +408,10 @@ const outputOptionsSchema = v.strictObject({
     v.optional(v.string()),
     v.description('Name pattern for asset files'),
   ),
-  entryFileNames: v.optional(chunkFileNamesSchema),
-  chunkFileNames: v.optional(chunkFileNamesSchema),
-  cssEntryFileNames: v.optional(chunkFileNamesSchema),
-  cssChunkFileNames: v.optional(chunkFileNamesSchema),
+  entryFileNames: v.optional(ChunkFileNamesSchema),
+  chunkFileNames: v.optional(ChunkFileNamesSchema),
+  cssEntryFileNames: v.optional(ChunkFileNamesSchema),
+  cssChunkFileNames: v.optional(ChunkFileNamesSchema),
   minify: v.pipe(
     v.optional(v.boolean()),
     v.description('Minify the bundled file'),
@@ -433,13 +436,12 @@ const outputOptionsSchema = v.strictObject({
     v.optional(v.boolean(), false),
     v.description('Inline dynamic imports'),
   ),
-  advancedChunks: v.optional(advancedChunksSchema),
+  advancedChunks: v.optional(AdvancedChunksSchema),
   comments: v.pipe(
     v.optional(v.union([v.literal('none'), v.literal('preserve-legal')])),
     v.description('Control comments in the output'),
   ),
   target: v.pipe(
-    // TODO: Verify if it needs to be changed to a union literal
     v.optional(v.enum(ESTarget)),
     v.description('The JavaScript target environment'),
   ),
@@ -452,7 +454,7 @@ const getAddonDescription = (
   return `Code to insert the ${colors.bold(placement)} of the bundled file (${colors.bold(wrapper)} the wrapper function)`
 }
 
-const outputCliOverrideSchema = v.strictObject({
+const OutputCliOverrideSchema = v.strictObject({
   // Reject all functions in CLI
   entryFileNames: v.pipe(
     v.optional(v.string()),
@@ -518,17 +520,17 @@ const outputCliOverrideSchema = v.strictObject({
   ),
 })
 
-const outputCliOptionsSchema = v.omit(
+const OutputCliOptionsSchema = v.omit(
   v.strictObject({
-    ...outputOptionsSchema.entries,
-    ...outputCliOverrideSchema.entries,
+    ...OutputOptionsSchema.entries,
+    ...OutputCliOverrideSchema.entries,
   }),
   ['sourcemapIgnoreList', 'sourcemapPathTransform'],
 )
 
 /// --- CliSchema ---
 
-const cliOptionsSchema = v.strictObject({
+const CliOptionsSchema = v.strictObject({
   config: v.pipe(
     v.optional(v.union([v.string(), v.boolean()])),
     v.description('Path to the config file (default: `rolldown.config.js`)'),
@@ -541,13 +543,35 @@ const cliOptionsSchema = v.strictObject({
   ),
   watch: v.pipe(
     v.optional(v.boolean()),
-
     v.description('Watch files in bundle and rebuild on changes'),
   ),
-  ...inputCliOptionsSchema.entries,
-  ...outputCliOptionsSchema.entries,
+  ...InputCliOptionsSchema.entries,
+  ...OutputCliOptionsSchema.entries,
 })
 
-export function validateCliOptions(options: any): boolean {
-  return v.safeParse(cliOptionsSchema, options).success
+export function validateTreeShakingOptions(options: TreeshakingOptions): void {
+  v.parse(TreeshakingOptionsSchema, options)
+}
+
+export function validateCliOptions<T>(options: T): [T, string[]?] {
+  let parsed = v.safeParse(CliOptionsSchema, options)
+
+  return [
+    parsed.output as T,
+    parsed.issues
+      ?.map((issue) => issue.path?.join(', '))
+      .filter((v) => v !== undefined),
+  ]
+}
+
+export function getInputCliKeys(): string[] {
+  return v.keyof(InputCliOptionsSchema).options
+}
+
+export function getOutputCliKeys(): string[] {
+  return v.keyof(OutputCliOptionsSchema).options
+}
+
+export function getJsonSchema(): ObjectSchema {
+  return toJsonSchema(CliOptionsSchema) as ObjectSchema
 }

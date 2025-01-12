@@ -90,7 +90,7 @@ impl<'a> GenerateStage<'a> {
       .filter(|(_ast, owner)| {
         self.link_output.module_table.modules[*owner]
           .as_normal()
-          .map_or(false, |m| m.meta.is_included())
+          .is_some_and(|m| m.meta.is_included())
       })
       .for_each(|(ast, owner)| {
         let Module::Normal(module) = &self.link_output.module_table.modules[*owner] else {
@@ -271,7 +271,7 @@ impl<'a> GenerateStage<'a> {
           chunk.asset_absolute_preliminary_filenames.insert(
             module.idx,
             preliminary
-              .absolutize_with(self.options.cwd.join(&self.options.dir))
+              .absolutize_with(self.options.cwd.join(&self.options.out_dir))
               .expect_into_string(),
           );
           chunk.asset_preliminary_filenames.insert(module.idx, preliminary);
@@ -282,12 +282,12 @@ impl<'a> GenerateStage<'a> {
 
       chunk.absolute_preliminary_filename = Some(
         preliminary_filename
-          .absolutize_with(self.options.cwd.join(&self.options.dir))
+          .absolutize_with(self.options.cwd.join(&self.options.out_dir))
           .expect_into_string(),
       );
       chunk.css_absolute_preliminary_filename = Some(
         css_preliminary_filename
-          .absolutize_with(self.options.cwd.join(&self.options.dir))
+          .absolutize_with(self.options.cwd.join(&self.options.out_dir))
           .expect_into_string(),
       );
       chunk.preliminary_filename = Some(preliminary_filename);

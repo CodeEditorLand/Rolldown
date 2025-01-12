@@ -85,7 +85,12 @@ impl WatcherTask {
     match result {
       Ok(()) => {
         self.emitter.emit(WatcherEvent::Event(BundleEvent::BundleEnd(BundleEndEventData {
-          output: bundler.options.cwd.join(&bundler.options.dir).to_string_lossy().to_string(),
+          output: bundler
+            .options
+            .cwd
+            .join(bundler.options.file.as_ref().unwrap_or(&bundler.options.out_dir))
+            .to_string_lossy()
+            .to_string(),
           #[allow(clippy::cast_possible_truncation)]
           duration: start_time.elapsed().as_millis() as u32,
         })))?;

@@ -10,6 +10,7 @@ use rolldown_plugin_import_glob::{ImportGlobPlugin, ImportGlobPluginConfig};
 use rolldown_plugin_json::{JsonPlugin, JsonPluginStringify};
 use rolldown_plugin_load_fallback::LoadFallbackPlugin;
 use rolldown_plugin_manifest::{ManifestPlugin, ManifestPluginConfig};
+use rolldown_plugin_module_federation::ModuleFederationPlugin;
 use rolldown_plugin_module_preload_polyfill::ModulePreloadPolyfillPlugin;
 use rolldown_plugin_replace::{ReplaceOptions, ReplacePlugin};
 use rolldown_plugin_transform::TransformPlugin;
@@ -26,6 +27,7 @@ use std::sync::Arc;
 use super::types::binding_builtin_plugin_name::BindingBuiltinPluginName;
 use super::types::binding_js_or_regex::{bindingify_string_or_regex_array, BindingStringOrRegex};
 use super::types::binding_limited_boolean::BindingTrueValue;
+use super::types::binding_module_federation_plugin_option::BindingModuleFederationPluginOption;
 use crate::types::js_callback::{JsCallback, JsCallbackExt};
 
 #[allow(clippy::pub_underscore_fields)]
@@ -309,6 +311,7 @@ impl From<BindingTransformPluginConfig> for TransformPlugin {
 impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
   type Error = napi::Error;
 
+  #[allow(clippy::too_many_lines)]
   fn try_from(plugin: BindingBuiltinPlugin) -> Result<Self, Self::Error> {
     Ok(match plugin.__name {
       BindingBuiltinPluginName::WasmHelper => Arc::new(WasmHelperPlugin {}),
@@ -408,6 +411,17 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         };
 
         Arc::new(ViteResolvePlugin::new(config.into()))
+      }
+      BindingBuiltinPluginName::ModuleFederation => {
+        let config = if let Some(options) = plugin.options {
+          BindingModuleFederationPluginOption::from_unknown(options)?
+        } else {
+          return Err(napi::Error::new(
+            napi::Status::InvalidArg,
+            "Missing options for ViteResolvePlugin",
+          ));
+        };
+        Arc::new(ModuleFederationPlugin::new(config.into()))
       }
     })
   }
