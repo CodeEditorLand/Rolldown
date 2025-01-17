@@ -58,11 +58,11 @@
 		"@ls-lint/ls-lint": "2.2.3",
 		"@playform/build": "0.2.1",
 		"@taplo/cli": "0.7.0",
-		"@types/node": "22.10.6",
+		"@types/node": "22.10.7",
 		"cjs-module-lexer": "1.4.1",
 		"conventional-changelog-cli": "5.0.0",
 		"cspell": "8.17.2",
-		"lint-staged": "15.3.0",
+		"lint-staged": "15.4.1",
 		"npm-run-all": "4.1.5",
 		"oxlint": "0.15.6",
 		"rolldown": "workspace:*"
