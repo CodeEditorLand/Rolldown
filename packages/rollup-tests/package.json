@@ -36,7 +36,7 @@
 	},
 	"devDependencies": {
 		"@playform/build": "0.2.1",
-		"@types/node": "22.10.9",
+		"@types/node": "22.10.10",
 		"buble": "0.20.0",
 		"source-map": "0.7.4",
 		"terser": "5.37.0"

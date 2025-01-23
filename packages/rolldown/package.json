@@ -95,7 +95,7 @@
 		"glob": "11.0.1",
 		"locate-character": "3.0.0",
 		"npm-run-all2": "7.0.2",
-		"remeda": "2.19.2",
+		"remeda": "2.20.0",
 		"rolldown": "workspace:*",
 		"signal-exit": "4.1.0",
 		"source-map": "0.7.4",
