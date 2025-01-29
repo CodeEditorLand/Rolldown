@@ -1,160 +1,161 @@
 {
-  "name": "rolldown",
-  "version": "1.0.0-beta.3",
-  "description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-  "homepage": "https://rolldown.rs/",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/rolldown/rolldown.git",
-    "directory": "packages/rolldown"
-  },
-  "license": "MIT",
-  "keywords": [
-    "webpack",
-    "parcel",
-    "esbuild",
-    "rollup",
-    "bundler",
-    "rolldown"
-  ],
-  "files": [
-    "bin",
-    "cli",
-    "dist",
-    "!dist/*.node"
-  ],
-  "bin": {
-    "rolldown": "./bin/cli.js"
-  },
-  "type": "module",
-  "main": "./dist/cjs/index.cjs",
-  "types": "./dist/types/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "require": "./dist/cjs/index.cjs",
-      "import": "./dist/esm/index.mjs"
-    },
-    "./experimental": {
-      "types": "./dist/types/experimental-index.d.ts",
-      "require": "./dist/cjs/experimental-index.cjs",
-      "import": "./dist/esm/experimental-index.mjs"
-    },
-    "./parallel-plugin": {
-      "types": "./dist/types/parallel-plugin.d.ts",
-      "require": "./dist/cjs/parallel-plugin.cjs",
-      "import": "./dist/esm/parallel-plugin.mjs"
-    },
-    "./parseAst": {
-      "types": "./dist/types/parse-ast-index.d.ts",
-      "require": "./dist/cjs/parse-ast-index.cjs",
-      "import": "./dist/esm/parse-ast-index.mjs"
-    },
-    "./package.json": "./package.json"
-  },
-  "imports": {
-    "#parallel-plugin-worker": "./dist/esm/parallel-plugin-worker.mjs"
-  },
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
-  },
-  "scripts": {
-    "# Scrips for binding #": "_",
-    "artifacts": "napi artifacts --cwd ./src --package-json-path ../package.json -o=../artifacts --npm-dir ../npm",
-    "build-binding": "napi build -o=./src --manifest-path ../../crates/rolldown_binding/Cargo.toml --platform -p rolldown_binding --js binding.cjs --dts binding.d.ts --no-const-enum",
-    "build-binding:release": "pnpm build-binding --release",
-    "build-binding:wasi": "pnpm build-binding --target wasm32-wasip1-threads",
-    "build-binding:wasi:release": "pnpm build-binding --profile release-wasi --target wasm32-wasip1-threads",
-    "# Scrips for node #": "_",
-    "bak_build-node": "unbuild",
-    "build-node": "node --import @oxc-node/core/register ./build.ts",
-    "build-types": "tsc -p ./tsconfig.json",
-    "build-native:debug": "run-s build-binding build-types build-node",
-    "build-native:release": "run-s build-binding:release build-types build-node",
-    "build-wasi:debug": "run-s build-binding build-binding:wasi build-node",
-    "build-wasi:release": "run-s build-binding build-binding:wasi:release build-node",
-    "# Scrips for docs #": "_",
-    "extract-options-doc": "typedoc"
-  },
-  "napi": {
-    "binaryName": "rolldown-binding",
-    "packageName": "@rolldown/binding",
-    "targets": [
-      "x86_64-apple-darwin",
-      "x86_64-pc-windows-msvc",
-      "x86_64-unknown-linux-gnu",
-      "x86_64-unknown-linux-musl",
-      "x86_64-unknown-freebsd",
-      "i686-pc-windows-msvc",
-      "armv7-unknown-linux-gnueabihf",
-      "aarch64-unknown-linux-gnu",
-      "aarch64-apple-darwin",
-      "aarch64-unknown-linux-musl",
-      "aarch64-pc-windows-msvc",
-      "wasm32-wasip1-threads"
-    ],
-    "wasm": {
-      "initialMemory": 16384,
-      "browser": {
-        "fs": true
-      }
-    },
-    "dtsHeader": "type MaybePromise<T> = T | Promise<T>\ntype Nullable<T> = T | null | undefined\ntype VoidNullable<T = void> = T | null | undefined | void\nexport type BindingStringOrRegex = string | RegExp\n\n"
-  },
-  "dependencies": {
-    "@oxc-project/types": "0.46.0",
-    "@valibot/to-json-schema": "1.0.0-beta.4",
-    "valibot": "1.0.0-beta.12"
-  },
-  "peerDependencies": {
-    "@babel/runtime": ">=7"
-  },
-  "peerDependenciesMeta": {
-    "@babel/runtime": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@jridgewell/sourcemap-codec": "^1.5.0",
-    "@napi-rs/cli": "^3.0.0-alpha.65",
-    "@napi-rs/wasm-runtime": "^0.2.4",
-    "@oxc-node/core": "^0.0.17",
-    "@rolldown/testing": "workspace:*",
-    "@types/fs-extra": "^11.0.4",
-    "@types/lodash-es": "^4.17.12",
-    "colorette": "^2.0.20",
-    "consola": "^3.2.3",
-    "emnapi": "^1.2.0",
-    "execa": "^9.2.0",
-    "fs-extra": "^11.2.0",
-    "glob": "^11.0.0",
-    "locate-character": "^3.0.0",
-    "npm-run-all2": "^7.0.0",
-    "remeda": "^2.10.0",
-    "rolldown": "workspace:*",
-    "rollup": "^4.18.0",
-    "signal-exit": "4.1.0",
-    "source-map": "^0.7.4",
-    "tsx": "^4.19.2",
-    "type-fest": "^4.20.0",
-    "typedoc": "^0.27.6",
-    "typescript": "^5.7.3",
-    "unbuild": "^3.0.0",
-    "why-is-node-running": "^3.0.0"
-  },
-  "optionalDependencies": {
-    "@rolldown/binding-darwin-arm64": "workspace:*",
-    "@rolldown/binding-darwin-x64": "workspace:*",
-    "@rolldown/binding-freebsd-x64": "workspace:*",
-    "@rolldown/binding-linux-arm-gnueabihf": "workspace:*",
-    "@rolldown/binding-linux-arm64-gnu": "workspace:*",
-    "@rolldown/binding-linux-arm64-musl": "workspace:*",
-    "@rolldown/binding-linux-x64-gnu": "workspace:*",
-    "@rolldown/binding-linux-x64-musl": "workspace:*",
-    "@rolldown/binding-wasm32-wasi": "workspace:*",
-    "@rolldown/binding-win32-arm64-msvc": "workspace:*",
-    "@rolldown/binding-win32-ia32-msvc": "workspace:*",
-    "@rolldown/binding-win32-x64-msvc": "workspace:*"
-  }
+	"name": "rolldown",
+	"version": "0.0.1",
+	"private": false,
+	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "Source 🖋️ Open 👐🏻",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
+	},
+	"type": "module",
+	"imports": {
+		"#parallel-plugin-worker": "./dist/esm/parallel-plugin-worker.mjs"
+	},
+	"exports": {
+		".": {
+			"import": "./dist/esm/index.mjs",
+			"require": "./dist/cjs/index.cjs",
+			"types": "./dist/types/index.d.ts"
+		},
+		"./experimental": {
+			"import": "./dist/esm/experimental-index.mjs",
+			"require": "./dist/cjs/experimental-index.cjs",
+			"types": "./dist/types/experimental-index.d.ts"
+		},
+		"./package.json": "./package.json",
+		"./parallel-plugin": {
+			"import": "./dist/esm/parallel-plugin.mjs",
+			"require": "./dist/cjs/parallel-plugin.cjs",
+			"types": "./dist/types/parallel-plugin.d.ts"
+		},
+		"./parseAst": {
+			"import": "./dist/esm/parse-ast-index.mjs",
+			"require": "./dist/cjs/parse-ast-index.cjs",
+			"types": "./dist/types/parse-ast-index.d.ts"
+		}
+	},
+	"main": "./dist/cjs/index.cjs",
+	"types": "./dist/types/index.d.ts",
+	"bin": {
+		"rolldown": "./bin/cli.js"
+	},
+	"files": [
+		"bin",
+		"cli",
+		"dist",
+		"!dist/*.node"
+	],
+	"scripts": {
+		"# Scrips for binding #": "_",
+		"# Scrips for docs #": "_",
+		"# Scrips for node #": "_",
+		"artifacts": "napi artifacts --cwd ./src --package-json-path ../package.json -o=../artifacts --npm-dir ../npm",
+		"bak_build-node": "unbuild",
+		"build-binding": "napi build -o=./src --manifest-path ../../crates/rolldown_binding/Cargo.toml --platform -p rolldown_binding --js binding.cjs --dts binding.d.ts --no-const-enum",
+		"build-binding:release": "pnpm build-binding --release",
+		"build-binding:wasi": "pnpm build-binding --target wasm32-wasip1-threads",
+		"build-binding:wasi:release": "pnpm build-binding --profile release-wasi --target wasm32-wasip1-threads",
+		"build-native:debug": "run-s build-binding build-types build-node",
+		"build-native:release": "run-s build-binding:release build-types build-node",
+		"build-node": "node --import @oxc-node/core/register ./build.ts",
+		"build-types": "tsc -p ./tsconfig.json",
+		"build-wasi:debug": "run-s build-binding build-binding:wasi build-node",
+		"build-wasi:release": "run-s build-binding build-binding:wasi:release build-node",
+		"extract-options-doc": "typedoc",
+		"prepublishOnly": "Build 'Source/**/*.ts'"
+	},
+	"dependencies": {
+		"@codeeditorland-project/types": "0.46.0",
+		"@valibot/to-json-schema": "1.0.0-beta.4",
+		"valibot": "1.0.0-beta.12"
+	},
+	"devDependencies": {
+		"@codeeditorland-node/core": "^0.0.17",
+		"@codeeditorland/testing": "workspace:*",
+		"@jridgewell/sourcemap-codec": "^1.5.0",
+		"@napi-rs/cli": "^3.0.0-alpha.65",
+		"@napi-rs/wasm-runtime": "^0.2.4",
+		"@playform/build": "0.2.1",
+		"@types/fs-extra": "^11.0.4",
+		"@types/lodash-es": "^4.17.12",
+		"colorette": "^2.0.20",
+		"consola": "^3.2.3",
+		"emnapi": "^1.2.0",
+		"execa": "^9.2.0",
+		"fs-extra": "^11.2.0",
+		"glob": "^11.0.0",
+		"locate-character": "^3.0.0",
+		"npm-run-all2": "^7.0.0",
+		"remeda": "^2.10.0",
+		"rolldown": "workspace:*",
+		"signal-exit": "4.1.0",
+		"source-map": "^0.7.4",
+		"tsx": "^4.19.2",
+		"type-fest": "^4.20.0",
+		"typedoc": "^0.27.6",
+		"unbuild": "^3.0.0",
+		"why-is-node-running": "^3.0.0"
+	},
+	"peerDependenciesMeta": {
+		"@babel/runtime": {
+			"optional": true
+		}
+	},
+	"optionalDependencies": {
+		"@rolldown/binding-darwin-arm64": "workspace:*",
+		"@rolldown/binding-darwin-x64": "workspace:*",
+		"@rolldown/binding-freebsd-x64": "workspace:*",
+		"@rolldown/binding-linux-arm-gnueabihf": "workspace:*",
+		"@rolldown/binding-linux-arm64-gnu": "workspace:*",
+		"@rolldown/binding-linux-arm64-musl": "workspace:*",
+		"@rolldown/binding-linux-x64-gnu": "workspace:*",
+		"@rolldown/binding-linux-x64-musl": "workspace:*",
+		"@rolldown/binding-wasm32-wasi": "workspace:*",
+		"@rolldown/binding-win32-arm64-msvc": "workspace:*",
+		"@rolldown/binding-win32-ia32-msvc": "workspace:*",
+		"@rolldown/binding-win32-x64-msvc": "workspace:*"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"napi": {
+		"binaryName": "rolldown-binding",
+		"dtsHeader": "type MaybePromise<T> = T | Promise<T>\ntype Nullable<T> = T | null | undefined\ntype VoidNullable<T = void> = T | null | undefined | void\nexport type BindingStringOrRegex = string | RegExp\n\n",
+		"packageName": "@rolldown/binding",
+		"targets": [
+			"x86_64-apple-darwin",
+			"x86_64-pc-windows-msvc",
+			"x86_64-unknown-linux-gnu",
+			"x86_64-unknown-linux-musl",
+			"x86_64-unknown-freebsd",
+			"i686-pc-windows-msvc",
+			"armv7-unknown-linux-gnueabihf",
+			"aarch64-unknown-linux-gnu",
+			"aarch64-apple-darwin",
+			"aarch64-unknown-linux-musl",
+			"aarch64-pc-windows-msvc",
+			"wasm32-wasip1-threads"
+		],
+		"wasm": {
+			"browser": {
+				"fs": true
+			},
+			"initialMemory": 16384
+		}
+	}
 }

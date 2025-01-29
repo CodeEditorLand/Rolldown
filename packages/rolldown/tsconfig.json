@@ -1,13 +1,23 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": ["./src/**/*"],
-  "exclude": ["*.js", "*.mjs", "*.cjs", "dist", "lib"],
-  "compilerOptions": {
-    "composite": true,
-    "rootDir": "./src",
-    "outDir": "./dist/types",
-    "resolveJsonModule": true,
-    "noEmit": false,
-    "tsBuildInfoFile": ".tsbuildinfo"
-  }
+	"compilerOptions": {
+		"baseUrl": "./",
+		"composite": true,
+		"noEmit": false,
+		"outDir": "Target",
+		"resolveJsonModule": true,
+		"rootDir": "src",
+		"tsBuildInfoFile": ".tsbuildinfo"
+	},
+	"exclude": [
+		"*.js",
+		"*.mjs",
+		"*.cjs",
+		"dist",
+		"lib"
+	],
+	"extends": "@playform/build/tsconfig",
+	"include": [
+		"./src/**/*",
+		"src"
+	]
 }

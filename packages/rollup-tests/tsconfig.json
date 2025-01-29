@@ -1,15 +1,24 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": ["src/**/*.js"],
-  "compilerOptions": {
-    "resolveJsonModule": true,
-    "isolatedDeclarations": false,
-    "allowJs": true,
-    "checkJs": true,
-    "esModuleInterop": true,
-    "composite": true,
-    "types": ["mocha", "node"],
-    "module": "CommonJS",
-    "moduleResolution": "Node"
-  }
+	"compilerOptions": {
+		"allowJs": true,
+		"baseUrl": "./",
+		"checkJs": true,
+		"composite": true,
+		"esModuleInterop": true,
+		"isolatedDeclarations": false,
+		"module": "CommonJS",
+		"moduleResolution": "Node",
+		"outDir": "Target",
+		"resolveJsonModule": true,
+		"rootDir": "src",
+		"types": [
+			"mocha",
+			"node"
+		]
+	},
+	"extends": "@playform/build/tsconfig",
+	"include": [
+		"src/**/*.js",
+		"src"
+	]
 }
