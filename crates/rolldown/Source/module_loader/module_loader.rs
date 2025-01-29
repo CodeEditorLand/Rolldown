@@ -2,7 +2,8 @@ use super::module_task::{ModuleTask, ModuleTaskOwner};
 use super::runtime_module_task::RuntimeModuleTask;
 use super::task_context::TaskContextMeta;
 use crate::module_loader::task_context::TaskContext;
-use crate::type_alias::IndexEcmaAst;
+use crate::type_alias::{IndexAstScope, IndexEcmaAst};
+use crate::utils::load_entry_module::load_entry_module;
 use arcstr::ArcStr;
 use oxc::semantic::{ScopeId, SymbolTable};
 use oxc::transformer::ReplaceGlobalDefinesConfig;
@@ -10,10 +11,11 @@ use oxc_index::IndexVec;
 use rolldown_common::dynamic_import_usage::DynamicImportExportsUsage;
 use rolldown_common::side_effects::{DeterminedSideEffects, HookSideEffects};
 use rolldown_common::{
-  EcmaRelated, EntryPoint, EntryPointKind, ExternalModule, ImportKind, ImportRecordIdx,
-  ImporterRecord, Module, ModuleId, ModuleIdx, ModuleInfo, ModuleLoaderMsg, ModuleSideEffects,
-  ModuleTable, ModuleType, NormalModuleTaskResult, ResolvedId, RuntimeModuleBrief,
-  RuntimeModuleTaskResult, SymbolRefDb, SymbolRefDbForModule, TreeshakeOptions, RUNTIME_MODULE_ID,
+  Cache, EcmaRelated, EntryPoint, EntryPointKind, ExternalModule, ImportKind, ImportRecordIdx,
+  ImportRecordMeta, ImporterRecord, Module, ModuleId, ModuleIdx, ModuleInfo, ModuleLoaderMsg,
+  ModuleSideEffects, ModuleTable, ModuleType, NormalModuleTaskResult, ResolvedId,
+  RuntimeModuleBrief, RuntimeModuleTaskResult, SymbolRefDb, SymbolRefDbForModule, TreeshakeOptions,
+  DUMMY_MODULE_IDX, RUNTIME_MODULE_ID,
 };
 use rolldown_error::{BuildDiagnostic, BuildResult};
 use rolldown_fs::OsFileSystem;
@@ -31,6 +33,7 @@ pub struct IntermediateNormalModules {
   pub modules: IndexVec<ModuleIdx, Option<Module>>,
   pub importers: IndexVec<ModuleIdx, Vec<ImporterRecord>>,
   pub index_ecma_ast: IndexEcmaAst,
+  pub index_ast_scope: IndexAstScope,
 }
 
 impl IntermediateNormalModules {
@@ -39,6 +42,7 @@ impl IntermediateNormalModules {
       modules: IndexVec::new(),
       importers: IndexVec::new(),
       index_ecma_ast: IndexVec::default(),
+      index_ast_scope: IndexVec::default(),
     }
   }
 
@@ -52,7 +56,7 @@ impl IntermediateNormalModules {
 pub struct ModuleLoader {
   options: SharedOptions,
   shared_context: Arc<TaskContext>,
-  tx: tokio::sync::mpsc::Sender<ModuleLoaderMsg>,
+  pub tx: tokio::sync::mpsc::Sender<ModuleLoaderMsg>,
   rx: tokio::sync::mpsc::Receiver<ModuleLoaderMsg>,
   visited: FxHashMap<ArcStr, ModuleIdx>,
   runtime_id: ModuleIdx,
@@ -65,6 +69,7 @@ pub struct ModuleLoaderOutput {
   // Stored all modules
   pub module_table: ModuleTable,
   pub index_ecma_ast: IndexEcmaAst,
+  pub index_ast_scope: IndexAstScope,
   pub symbol_ref_db: SymbolRefDb,
   // Entries that user defined + dynamic import entries
   pub entry_points: Vec<EntryPoint>,
@@ -79,6 +84,7 @@ impl ModuleLoader {
     options: SharedOptions,
     resolver: SharedResolver,
     plugin_driver: SharedPluginDriver,
+    cache: Arc<Cache>,
   ) -> BuildResult<Self> {
     // 1024 should be enough for most cases
     // over 1024 pending tasks are insane
@@ -104,6 +110,7 @@ impl ModuleLoader {
       fs,
       plugin_driver,
       meta,
+      cache,
     });
 
     let mut intermediate_normal_modules = IntermediateNormalModules::new();
@@ -216,18 +223,13 @@ impl ModuleLoader {
     mut self,
     user_defined_entries: Vec<(Option<ArcStr>, ResolvedId)>,
   ) -> BuildResult<ModuleLoaderOutput> {
-    if self.options.input.is_empty() {
-      Err(anyhow::anyhow!("You must supply options.input to rolldown"))?;
-    }
-
-    self.shared_context.plugin_driver.set_context_load_modules_tx(Some(self.tx.clone())).await;
-
     let mut errors = vec![];
     let mut all_warnings: Vec<BuildDiagnostic> = vec![];
 
     let entries_count = user_defined_entries.len() + /* runtime */ 1;
     self.intermediate_normal_modules.modules.reserve(entries_count);
     self.intermediate_normal_modules.index_ecma_ast.reserve(entries_count);
+    self.intermediate_normal_modules.index_ast_scope.reserve(entries_count);
 
     // Store the already consider as entry module
     let mut user_defined_entry_ids = FxHashSet::with_capacity(user_defined_entries.len());
@@ -238,6 +240,8 @@ impl ModuleLoader {
         name,
         id: self.try_spawn_new_task(info, None, true, None),
         kind: EntryPointKind::UserDefined,
+        file_name: None,
+        reference_id: None,
       })
       .inspect(|e| {
         user_defined_entry_ids.insert(e.id);
@@ -246,6 +250,7 @@ impl ModuleLoader {
 
     let mut dynamic_import_entry_ids = FxHashSet::default();
     let mut dynamic_import_exports_usage_pairs = vec![];
+    let mut extra_entry_points = vec![];
 
     let mut runtime_brief: Option<RuntimeModuleBrief> = None;
     while self.remaining > 0 {
@@ -272,6 +277,9 @@ impl ModuleLoader {
               .into_iter_enumerated()
               .zip(resolved_deps)
               .map(|((rec_idx, raw_rec), info)| {
+                if raw_rec.meta.contains(ImportRecordMeta::IS_DUMMY) {
+                  return raw_rec.into_resolved(DUMMY_MODULE_IDX);
+                }
                 let normal_module = module.as_normal().unwrap();
                 let owner = ModuleTaskOwner::new(
                   normal_module.source.clone(),
@@ -304,9 +312,11 @@ impl ModuleLoader {
               .collect::<IndexVec<ImportRecordIdx, _>>();
 
           module.set_import_records(import_records);
-          if let Some(EcmaRelated { ast, symbols, .. }) = ecma_related {
+          if let Some(EcmaRelated { ast, symbols, ast_scope, .. }) = ecma_related {
             let ast_idx = self.intermediate_normal_modules.index_ecma_ast.push((ast, module.idx()));
+            let ast_scope_idx = self.intermediate_normal_modules.index_ast_scope.push(ast_scope);
             module.set_ecma_ast_idx(ast_idx);
+            module.set_ast_scope_idx(ast_scope_idx);
             self.symbol_ref_db.store_local_db(module_idx, symbols);
           }
           self.intermediate_normal_modules.modules[module_idx] = Some(module);
@@ -320,6 +330,7 @@ impl ModuleLoader {
             ast,
             raw_import_records,
             resolved_deps,
+            ast_scope,
           } = task_result;
           let import_records: IndexVec<ImportRecordIdx, rolldown_common::ResolvedImportRecord> =
             raw_import_records
@@ -341,7 +352,9 @@ impl ModuleLoader {
               })
               .collect::<IndexVec<ImportRecordIdx, _>>();
           let ast_idx = self.intermediate_normal_modules.index_ecma_ast.push((ast, module.idx));
+          let ast_scope_idx = self.intermediate_normal_modules.index_ast_scope.push(ast_scope);
           module.ecma_ast_idx = Some(ast_idx);
+          module.ast_scope_idx = Some(ast_scope_idx);
           module.import_records = import_records;
           self.intermediate_normal_modules.modules[self.runtime_id] = Some(module.into());
 
@@ -351,6 +364,30 @@ impl ModuleLoader {
         }
         ModuleLoaderMsg::FetchModule(resolve_id) => {
           self.try_spawn_new_task(resolve_id, None, false, None);
+        }
+        ModuleLoaderMsg::AddEntryModule(msg) => {
+          let data = msg.chunk;
+          let result = load_entry_module(
+            &self.shared_context.resolver,
+            &self.shared_context.plugin_driver,
+            &data.id,
+            data.importer.as_deref(),
+          )
+          .await;
+          let resolved_id = match result {
+            Ok(result) => result,
+            Err(e) => {
+              errors.push(e);
+              continue;
+            }
+          };
+          extra_entry_points.push(EntryPoint {
+            name: data.name.clone(),
+            id: self.try_spawn_new_task(resolved_id, None, true, None),
+            kind: EntryPointKind::UserDefined,
+            file_name: data.file_name.clone(),
+            reference_id: Some(msg.reference_id),
+          });
         }
         ModuleLoaderMsg::BuildErrors(e) => {
           errors.extend(e);
@@ -378,7 +415,6 @@ impl ModuleLoader {
       },
     );
 
-    self.shared_context.plugin_driver.set_context_load_modules_tx(None).await;
     let mut none_empty_importer_module = vec![];
     let modules: IndexVec<ModuleIdx, Module> = self
       .intermediate_normal_modules
@@ -428,13 +464,19 @@ impl ModuleLoader {
         name: None,
         id,
         kind: EntryPointKind::DynamicImport,
+        file_name: None,
+        reference_id: None,
       }));
     }
+
+    extra_entry_points.sort_unstable_by_key(|entry| modules[entry.id].stable_id());
+    entry_points.extend(extra_entry_points);
 
     Ok(ModuleLoaderOutput {
       module_table: ModuleTable { modules },
       symbol_ref_db: self.symbol_ref_db,
       index_ecma_ast: self.intermediate_normal_modules.index_ecma_ast,
+      index_ast_scope: self.intermediate_normal_modules.index_ast_scope,
       entry_points,
       runtime: runtime_brief.expect("Failed to find runtime module. This should not happen"),
       warnings: all_warnings,

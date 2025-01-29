@@ -1,5 +1,5 @@
+mod cjs_ast_analyzer;
 pub mod dynamic_import;
-mod esmodule_flag_analyzer;
 pub mod impl_visit;
 mod import_assign_analyzer;
 mod new_url;
@@ -172,7 +172,9 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       source,
       id: file_path,
       comments,
-      ast_usage: EcmaModuleAstUsage::empty(),
+      ast_usage: EcmaModuleAstUsage::empty()
+        .union(EcmaModuleAstUsage::AllStaticExportPropertyAccess)
+        .union(EcmaModuleAstUsage::IsCjsReexport),
       cur_class_decl: None,
       visit_path: vec![],
       ignore_comment: options.experimental.get_ignore_comment(),
@@ -684,10 +686,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
   }
 
   /// return a `Some(SymbolRef)` if the identifier referenced a top level `IdentBinding`
-  fn resolve_identifier_reference(
-    &mut self,
-    ident: &IdentifierReference,
-  ) -> IdentifierReferenceKind {
+  fn resolve_identifier_reference(&self, ident: &IdentifierReference) -> IdentifierReferenceKind {
     match self.resolve_symbol_from_reference(ident) {
       Some(symbol_id) => {
         if self.is_root_symbol(symbol_id) {

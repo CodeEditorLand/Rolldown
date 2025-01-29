@@ -1,0 +1,87 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# warnings
+
+## COMMONJS_VARIABLE_IN_ESM
+
+```text
+[COMMONJS_VARIABLE_IN_ESM] Warning: The CommonJS `module` variable is treated as a global variable in an ECMAScript module and may not work as expected
+   ╭─[esm-export-cjs-export.js:1:1]
+   │
+ 1 │ module.exports = 1;
+   │ ───┬──  
+   │    ╰──── 
+ 2 │ export const value = 1;
+   │ ───┬──  
+   │    ╰──── This file is considered to be an ECMAScript module because of the `export` keyword here:
+───╯
+
+```
+# Assets
+
+## main.js
+
+```js
+import assert from "node:assert";
+
+
+//#region esm-export-cjs-export.js
+module.exports = 1;
+
+//#endregion
+//#region foo.js
+var require_foo = __commonJS({ "foo.js"() {} });
+
+//#endregion
+//#region esm-export-cjs-require.js
+require_foo();
+
+//#endregion
+//#region esm-import-cjs-export.js
+var require_esm_import_cjs_export = __commonJS({ "esm-import-cjs-export.js"(exports, module) {
+	module.exports = 1;
+} });
+
+//#endregion
+//#region cjs.js
+var require_cjs = __commonJS({ "cjs.js"(exports, module) {
+	module.exports = 1;
+} });
+var import_cjs = __toESM(require_cjs());
+
+//#endregion
+//#region esm-import-cjs-require.js
+require_foo();
+assert.equal(import_cjs.a, undefined);
+
+//#endregion
+//# sourceMappingURL=main.js.map
+```
+
+# Sourcemap Visualizer
+
+```
+- ../esm-export-cjs-export.js
+(0:0) "module." --> (29:0) "module."
+(0:7) "exports = " --> (29:7) "exports = "
+(0:17) "1;\n" --> (29:17) "1;\n"
+- ../esm-export-cjs-require.js
+(0:0) "require('./foo')\n" --> (37:0) "require_foo();\n"
+- ../esm-import-cjs-export.js
+(1:0) "module." --> (42:0) "\tmodule."
+(1:7) "exports = " --> (42:8) "exports = "
+(1:17) "1" --> (42:18) "1;\n"
+- ../cjs.js
+(0:0) "module." --> (48:0) "\tmodule."
+(0:7) "exports = " --> (48:8) "exports = "
+(0:17) "1;" --> (48:18) "1;\n"
+- ../esm-import-cjs-require.js
+(2:0) "require('./foo')\n" --> (54:0) "require_foo();\n"
+(3:0) "assert." --> (55:0) "assert."
+(3:7) "equal(" --> (55:7) "equal("
+(3:13) "a, " --> (55:13) "import_cjs.a, "
+(3:16) "undefined)" --> (55:27) "undefined)"
+(3:26) "\n" --> (55:37) ";\n"
+```

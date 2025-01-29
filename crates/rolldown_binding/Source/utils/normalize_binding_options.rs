@@ -1,4 +1,4 @@
-use crate::options::ChunkFileNamesOutputOption;
+use crate::options::{AssetFileNamesOutputOption, ChunkFileNamesOutputOption, SanitizeFileName};
 use crate::{
   options::binding_inject_import::normalize_binding_inject_import,
   types::js_callback::JsCallbackExt,
@@ -10,9 +10,9 @@ use crate::{
 };
 use napi::bindgen_prelude::Either;
 use rolldown::{
-  AddonOutputOption, AdvancedChunksOptions, BundlerOptions, ChunkFilenamesOutputOption,
-  ExperimentalOptions, HashCharacters, IsExternal, MatchGroup, ModuleType, OutputExports,
-  OutputFormat, Platform,
+  AddonOutputOption, AdvancedChunksOptions, AssetFilenamesOutputOption, BundlerOptions,
+  ChunkFilenamesOutputOption, ExperimentalOptions, HashCharacters, IsExternal, MatchGroup,
+  ModuleType, OutputExports, OutputFormat, Platform, SanitizeFilename,
 };
 use rolldown_plugin::__inner::SharedPluginable;
 use rolldown_utils::indexmap::FxIndexMap;
@@ -54,6 +54,36 @@ fn normalize_chunk_file_names_option(
         let func = Arc::clone(&func);
         let chunk = chunk.clone();
         Box::pin(async move { func.invoke_async(chunk.into()).await.map_err(anyhow::Error::from) })
+      }))),
+    })
+    .transpose()
+}
+
+fn normalize_sanitize_filename(
+  option: Option<SanitizeFileName>,
+) -> napi::Result<Option<SanitizeFilename>> {
+  option
+    .map(move |value| match value {
+      Either::A(value) => Ok(SanitizeFilename::Boolean(value)),
+      Either::B(func) => Ok(SanitizeFilename::Fn(Arc::new(move |name| {
+        let func = Arc::clone(&func);
+        let name = name.to_string();
+        Box::pin(async move { func.invoke_async(name).await.map_err(anyhow::Error::from) })
+      }))),
+    })
+    .transpose()
+}
+
+fn normalize_asset_file_names_option(
+  option: Option<AssetFileNamesOutputOption>,
+) -> napi::Result<Option<AssetFilenamesOutputOption>> {
+  option
+    .map(move |value| match value {
+      Either::A(str) => Ok(AssetFilenamesOutputOption::String(str)),
+      Either::B(func) => Ok(AssetFilenamesOutputOption::Fn(Arc::new(move |asset| {
+        let func = Arc::clone(&func);
+        let asset = asset.clone();
+        Box::pin(async move { func.invoke_async(asset.into()).await.map_err(anyhow::Error::from) })
       }))),
     })
     .transpose()
@@ -151,11 +181,12 @@ pub fn normalize_binding_options(
       .map_err(|err| napi::Error::new(napi::Status::GenericFailure, err))?,
     shim_missing_exports: input_options.shim_missing_exports,
     name: output_options.name,
-    asset_filenames: output_options.asset_file_names,
+    asset_filenames: normalize_asset_file_names_option(output_options.asset_file_names)?,
     entry_filenames: normalize_chunk_file_names_option(output_options.entry_file_names)?,
     chunk_filenames: normalize_chunk_file_names_option(output_options.chunk_file_names)?,
     css_entry_filenames: normalize_chunk_file_names_option(output_options.css_entry_file_names)?,
     css_chunk_filenames: normalize_chunk_file_names_option(output_options.css_chunk_file_names)?,
+    sanitize_filename: normalize_sanitize_filename(output_options.sanitize_file_name)?,
     dir: output_options.dir,
     file: output_options.file,
     sourcemap: output_options.sourcemap.map(Into::into),
@@ -198,6 +229,9 @@ pub fn normalize_binding_options(
       disable_live_bindings: inner.disable_live_bindings,
       vite_mode: inner.vite_mode,
       resolve_new_url_to_asset: inner.resolve_new_url_to_asset,
+      // TODO: binding
+      incremental_build: None,
+      development_mode: inner.development_mode,
     }),
     minify: output_options.minify,
     extend: output_options.extend,
@@ -210,6 +244,9 @@ pub fn normalize_binding_options(
     advanced_chunks: output_options.advanced_chunks.map(|inner| AdvancedChunksOptions {
       min_size: inner.min_size,
       min_share_count: inner.min_share_count,
+      min_module_size: inner.min_module_size,
+      max_module_size: inner.max_module_size,
+      max_size: inner.max_size,
       groups: inner.groups.map(|inner| {
         inner
           .into_iter()
@@ -219,6 +256,9 @@ pub fn normalize_binding_options(
             priority: item.priority,
             min_size: item.min_size,
             min_share_count: item.min_share_count,
+            max_module_size: item.max_module_size,
+            min_module_size: item.min_module_size,
+            max_size: item.max_size,
           })
           .collect::<Vec<_>>()
       }),

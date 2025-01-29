@@ -72,6 +72,27 @@
             "$ref": "#/definitions/MatchGroup"
           }
         },
+        "maxModuleSize": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "maxSize": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "minModuleSize": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
         "minShareCount": {
           "type": [
             "integer",
@@ -386,6 +407,12 @@
             }
           ]
         },
+        "sanitizeFilename": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "shimMissingExports": {
           "type": [
             "boolean",
@@ -555,7 +582,19 @@
     "ExperimentalOptions": {
       "type": "object",
       "properties": {
+        "developmentMode": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
         "disableLiveBindings": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "incrementalBuild": {
           "type": [
             "boolean",
             "null"
@@ -689,6 +728,27 @@
         "name"
       ],
       "properties": {
+        "maxModuleSize": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "maxSize": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "minModuleSize": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
         "minShareCount": {
           "type": [
             "integer",

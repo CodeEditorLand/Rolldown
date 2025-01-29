@@ -11,7 +11,11 @@ import type {
   ExternalOption,
   JsxOptions,
 } from './options/input-options'
-import type { ModuleFormat, OutputOptions } from './options/output-options'
+import type {
+  ModuleFormat,
+  OutputOptions,
+  PreRenderedAsset,
+} from './options/output-options'
 import type { RolldownOptions } from './types/rolldown-options'
 import type {
   AsyncPluginHooks,
@@ -26,6 +30,7 @@ import type {
   PartialResolvedId,
   Plugin,
   RolldownPlugin,
+  RolldownPluginOption,
   ResolveIdResult,
   ResolvedId,
   SourceDescription,
@@ -74,6 +79,7 @@ export type {
   NormalizedOutputOptions,
   Plugin,
   RolldownPlugin,
+  RolldownPluginOption,
   DefineParallelPluginResult,
   ConfigExport,
   ImportKind,
@@ -89,6 +95,7 @@ export type {
   TransformPluginContext,
   ObjectHook,
   PreRenderedChunk,
+  PreRenderedAsset,
   SourceMap,
   SourceDescription,
   PartialNull,

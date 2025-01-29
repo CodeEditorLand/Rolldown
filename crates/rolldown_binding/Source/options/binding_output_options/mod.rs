@@ -1,6 +1,7 @@
 mod binding_advanced_chunks_options;
+mod binding_pre_rendered_asset;
 mod binding_pre_rendered_chunk;
-
+use binding_pre_rendered_asset::BindingPreRenderedAsset;
 use derive_more::Debug;
 use napi::Either;
 use napi_derive::napi;
@@ -17,7 +18,9 @@ use crate::types::{
 
 pub type AddonOutputOption = MaybeAsyncJsCallback<RenderedChunk, Option<String>>;
 pub type ChunkFileNamesOutputOption = Either<String, JsCallback<PreRenderedChunk, String>>;
+pub type AssetFileNamesOutputOption = Either<String, JsCallback<BindingPreRenderedAsset, String>>;
 pub type GlobalsOutputOption = Either<FxHashMap<String, String>, JsCallback<String, String>>;
+pub type SanitizeFileName = Either<bool, JsCallback<String, String>>;
 
 #[napi(object, object_to_js = false)]
 #[derive(Debug)]
@@ -26,7 +29,9 @@ pub struct BindingOutputOptions {
   // /** @deprecated Use the "renderDynamicImport" plugin hook instead. */
   // dynamicImportFunction: string | undefined;
   pub name: Option<String>,
-  pub asset_file_names: Option<String>,
+  #[debug(skip)]
+  #[napi(ts_type = "string | ((chunk: BindingPreRenderedAsset) => string)")]
+  pub asset_file_names: Option<AssetFileNamesOutputOption>,
 
   #[debug(skip)]
   #[napi(ts_type = "string | ((chunk: PreRenderedChunk) => string)")]
@@ -40,7 +45,9 @@ pub struct BindingOutputOptions {
   #[debug(skip)]
   #[napi(ts_type = "string | ((chunk: PreRenderedChunk) => string)")]
   pub css_chunk_file_names: Option<ChunkFileNamesOutputOption>,
-
+  #[debug(skip)]
+  #[napi(ts_type = "boolean | ((name: string) => string)")]
+  pub sanitize_file_name: Option<SanitizeFileName>,
   // amd: NormalizedAmdOptions;
   // assetFileNames: string | ((chunkInfo: PreRenderedAsset) => string);
   #[debug(skip)]

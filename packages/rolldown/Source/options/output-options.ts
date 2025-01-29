@@ -21,6 +21,15 @@ export type AddonFunction = (chunk: RenderedChunk) => string | Promise<string>
 
 export type ChunkFileNamesFunction = (chunkInfo: PreRenderedChunk) => string
 
+export interface PreRenderedAsset {
+  names: string[]
+  originalFileNames: string[]
+  source: string | Uint8Array
+  type: 'asset'
+}
+
+export type AssetFileNamesFunction = (chunkInfo: PreRenderedAsset) => string
+
 export type GlobalsFunction = (name: string) => string
 
 export type ESTarget =
@@ -61,11 +70,12 @@ export interface OutputOptions {
   outro?: string | AddonFunction
   extend?: boolean
   esModule?: boolean | 'if-default-prop'
-  assetFileNames?: string
+  assetFileNames?: string | AssetFileNamesFunction
   entryFileNames?: string | ChunkFileNamesFunction
   chunkFileNames?: string | ChunkFileNamesFunction
   cssEntryFileNames?: string | ChunkFileNamesFunction
   cssChunkFileNames?: string | ChunkFileNamesFunction
+  sanitizeFileName?: boolean | ((name: string) => string)
   minify?: boolean
   name?: string
   globals?: Record<string, string> | GlobalsFunction
@@ -73,6 +83,9 @@ export interface OutputOptions {
   inlineDynamicImports?: boolean
   advancedChunks?: {
     minSize?: number
+    maxSize?: number
+    maxModuleSize?: number
+    minModuleSize?: number
     minShareCount?: number
     groups?: {
       name: string
@@ -80,6 +93,9 @@ export interface OutputOptions {
       priority?: number
       minSize?: number
       minShareCount?: number
+      maxSize?: number
+      maxModuleSize?: number
+      minModuleSize?: number
     }[]
   }
   /**

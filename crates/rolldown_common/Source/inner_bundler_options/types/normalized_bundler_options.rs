@@ -4,6 +4,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
+use arcstr::ArcStr;
 use oxc::transformer::InjectGlobalVariablesConfig;
 use rustc_hash::{FxHashMap, FxHashSet};
 
@@ -12,18 +13,19 @@ use super::checks_options::ChecksOptions;
 use super::comments::Comments;
 use super::experimental_options::ExperimentalOptions;
 use super::jsx::Jsx;
-use super::output_option::ChunkFilenamesOutputOption;
+use super::output_option::{AssetFilenamesOutputOption, ChunkFilenamesOutputOption};
+use super::sanitize_filename::SanitizeFilename;
 use super::target::ESTarget;
 use super::treeshake::TreeshakeOptions;
 use super::watch_option::WatchOption;
 use super::{
-  filename_template::FilenameTemplate, is_external::IsExternal, output_exports::OutputExports,
-  output_format::OutputFormat, output_option::AddonOutputOption, platform::Platform,
-  source_map_type::SourceMapType, sourcemap_ignore_list::SourceMapIgnoreList,
-  sourcemap_path_transform::SourceMapPathTransform,
+  is_external::IsExternal, output_exports::OutputExports, output_format::OutputFormat,
+  output_option::AddonOutputOption, platform::Platform, source_map_type::SourceMapType,
+  sourcemap_ignore_list::SourceMapIgnoreList, sourcemap_path_transform::SourceMapPathTransform,
 };
 use crate::{
-  EsModuleFlag, GlobalsOutputOption, HashCharacters, InjectImport, InputItem, ModuleType,
+  EmittedAsset, EsModuleFlag, FilenameTemplate, GlobalsOutputOption, HashCharacters, InjectImport,
+  InputItem, ModuleType, RollupPreRenderedAsset,
 };
 
 #[allow(clippy::struct_excessive_bools)] // Using raw booleans is more clear in this case
@@ -45,7 +47,8 @@ pub struct NormalizedBundlerOptions {
   pub css_chunk_filenames: ChunkFilenamesOutputOption,
   pub entry_filenames: ChunkFilenamesOutputOption,
   pub chunk_filenames: ChunkFilenamesOutputOption,
-  pub asset_filenames: FilenameTemplate,
+  pub asset_filenames: AssetFilenamesOutputOption,
+  pub sanitize_filename: SanitizeFilename,
   // The user specified output directory config
   pub dir: Option<String>,
   // The rolldown resolved output directory from `dir` or `file`.
@@ -95,6 +98,10 @@ impl NormalizedBundlerOptions {
     matches!(self.format, OutputFormat::Esm) && matches!(self.platform, Platform::Node)
   }
 
+  pub fn is_esm_dev(&self) -> bool {
+    matches!(self.format, OutputFormat::Esm) && self.experimental.development_mode.unwrap_or(false)
+  }
+
   /// make sure the `polyfill_require` is only valid for `esm` format with `node` platform
   #[inline]
   pub fn polyfill_require_for_esm_format_with_node_platform(&self) -> bool {
@@ -102,5 +109,42 @@ impl NormalizedBundlerOptions {
       return self.polyfill_require;
     }
     true
+  }
+
+  pub async fn asset_filename_template(
+    &self,
+    rollup_pre_rendered_asset: &RollupPreRenderedAsset,
+  ) -> anyhow::Result<FilenameTemplate> {
+    Ok(FilenameTemplate::new(self.asset_filenames.call(rollup_pre_rendered_asset).await?))
+  }
+
+  pub async fn asset_filename_with_file(
+    &self,
+    file: &EmittedAsset,
+  ) -> anyhow::Result<Option<String>> {
+    if file.file_name.is_some() {
+      return Ok(None);
+    }
+    // TODO avoid clone
+    let rollup_pre_rendered_asset = RollupPreRenderedAsset {
+      source: file.source.clone(),
+      names: file.name.clone().map_or(vec![], |name| vec![name.into()]),
+      original_file_names: file
+        .original_file_name
+        .clone()
+        .map_or(vec![], |original_file_name| vec![original_file_name.into()]),
+    };
+    let asset_filename = self.asset_filenames.call(&rollup_pre_rendered_asset).await?;
+    Ok(Some(asset_filename))
+  }
+
+  pub async fn sanitize_file_name_with_file(
+    &self,
+    file: &EmittedAsset,
+  ) -> anyhow::Result<Option<ArcStr>> {
+    match file.file_name {
+      Some(_) => Ok(None),
+      None => Ok(Some(self.sanitize_filename.call(file.name_for_sanitize()).await?)),
+    }
   }
 }

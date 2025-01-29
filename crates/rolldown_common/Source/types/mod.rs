@@ -1,8 +1,10 @@
 pub mod asset;
 pub mod asset_idx;
 pub mod asset_meta;
+pub mod ast_scope_idx;
 pub mod ast_scopes;
 pub mod bundler_file_system;
+pub mod cache;
 pub mod chunk_idx;
 pub mod chunk_kind;
 pub mod ecma_ast_idx;
@@ -33,6 +35,7 @@ pub mod package_json;
 pub mod rendered_module;
 pub mod resolved_export;
 pub mod resolved_request_info;
+pub mod rollup_pre_rendered_asset;
 pub mod rollup_pre_rendered_chunk;
 pub mod rollup_rendered_chunk;
 pub mod side_effects;

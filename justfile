@@ -22,7 +22,7 @@ setup-submodule:
     git submodule update --init
 
 setup-bench:
-    node ./scripts/misc/setup-benchmark-input/index.js
+    node --import @oxc-node/core/register ./scripts/misc/setup-benchmark-input/index.js
 
 # Update the submodule to the latest commit
 update-submodule:
@@ -153,7 +153,7 @@ bench-node-par:
 # RELEASING
 
 bump-packages *args:
-    node ./scripts/misc/bump-version.js {{ args }}
+    node --import @oxc-node/core/register ./scripts/misc/bump-version.js {{ args }}
 
 changelog:
     pnpm conventional-changelog --preset angular --i CHANGELOG.md --same-file --pkg=./packages/rolldown/package.json

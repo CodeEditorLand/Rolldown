@@ -52,12 +52,20 @@ impl RuntimeModuleTask {
     }
   }
 
+  #[expect(clippy::too_many_lines)]
   fn run_inner(&mut self) -> BuildResult<()> {
     let source = if self.options.is_esm_format_with_node_platform() {
       arcstr::literal!(concat!(
         include_str!("../runtime/runtime-head-node.js"),
         include_str!("../runtime/runtime-base.js"),
         include_str!("../runtime/runtime-tail-node.js"),
+      ))
+    } else if self.options.is_esm_dev() {
+      arcstr::literal!(concat!(
+        include_str!("../runtime/runtime-head-node.js"),
+        include_str!("../runtime/runtime-base.js"),
+        include_str!("../runtime/runtime-tail-node.js"),
+        include_str!("../runtime/runtime-extra-dev.js"),
       ))
     } else {
       arcstr::literal!(concat!(
@@ -121,7 +129,7 @@ impl RuntimeModuleTask {
         stmt_infos,
         imports,
         default_export_ref,
-        scope: ast_scope,
+        ast_scope_idx: None,
         exports_kind: ExportsKind::Esm,
         namespace_object_ref,
         def_format: ModuleDefFormat::EsmMjs,
@@ -139,6 +147,8 @@ impl RuntimeModuleTask {
         mutations: vec![],
         new_url_references,
         this_expr_replace_map: FxHashMap::default(),
+        esm_namespace_in_cjs: None,
+        esm_namespace_in_cjs_node_mode: None,
       },
       css_view: None,
       asset_view: None,
@@ -159,6 +169,7 @@ impl RuntimeModuleTask {
         runtime,
         resolved_deps,
         raw_import_records,
+        ast_scope,
         local_symbol_ref_db: symbol_ref_db,
       }))
     {
