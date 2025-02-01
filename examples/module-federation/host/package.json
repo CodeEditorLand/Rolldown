@@ -27,7 +27,7 @@
 		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
 	"dependencies": {
-		"@module-federation/runtime": "^0.8.8"
+		"@module-federation/runtime": "^0.8.9"
 	},
 	"devDependencies": {
 		"@playform/build": "0.2.1",
