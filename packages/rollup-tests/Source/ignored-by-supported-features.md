@@ -304,7 +304,7 @@
 ### The chunk information is not compatible with rollup
  - rollup@form@addon-functions: provides module information when adding addons@generates es
 
-## Features
+## Feature
 
 ### The `import.meta.ROLLUP_FILE_URL_<referenceId>` is not supported
  - rollup@form@emit-asset-file: supports emitting assets from plugin hooks@generates es

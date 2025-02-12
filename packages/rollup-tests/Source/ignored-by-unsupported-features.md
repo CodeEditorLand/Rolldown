@@ -307,7 +307,7 @@
 ### The rolldown `output.dir` default to be `dist`, the rollup not specific `dir` or `file` by default
  - rollup@hooks@Throws when not specifying "file" or "dir"
 
-## Features
+## Feature
 
 ### The `import.meta.ROLLUP_FILE_URL_<referenceId>` is not supported
  - rollup@form@emit-asset-file: supports emitting assets from plugin hooks@generates es
