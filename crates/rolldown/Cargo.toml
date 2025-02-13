@@ -1,10 +1,10 @@
 [package]
-edition.workspace = true
-homepage.workspace = true
-license-file.workspace = true
-name = "rolldown"
+edition.workspace    = true
+homepage.workspace   = true
+license.workspace    = true
+name                 = "rolldown"
 repository.workspace = true
-version = "0.1.0"
+version              = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -59,8 +59,8 @@ tracing-chrome            = { workspace = true }
 xxhash-rust               = { workspace = true, features = ["xxh3"] }
 
 [dev-dependencies]
-glob = { workspace = true }
-insta = { workspace = true }
+glob             = { workspace = true }
+insta            = { workspace = true }
 rolldown_testing = { workspace = true }
 sugar_path       = { workspace = true }
 testing_macros   = { workspace = true }
