@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
-license-file = "LICENSE"
-name = "rolldown_plugin_data_url"
+license = "MIT"
+name    = "rolldown_plugin_data_url"
 version = "0.1.0"
 
 [lib]
