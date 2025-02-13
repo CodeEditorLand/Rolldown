@@ -1,11 +1,11 @@
 [package]
 description = "This crate is mostly for sharing code between rolldwon crates."
-name = "rolldown_common"
-version = "0.1.0"
+name        = "rolldown_common"
+version     = "0.1.0"
 
-edition.workspace = true
-homepage.workspace = true
-license-file.workspace = true
+edition.workspace    = true
+homepage.workspace   = true
+license.workspace    = true
 repository.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -21,7 +21,6 @@ anyhow              = { workspace = true }
 arcstr              = { workspace = true }
 bitflags            = { workspace = true }
 dashmap             = { workspace = true }
-either              = { workspace = true }
 glob-match          = { workspace = true }
 itertools           = { workspace = true }
 oxc                 = { workspace = true }
