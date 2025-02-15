@@ -1,16 +1,26 @@
-[package]
-edition.workspace    = true
-homepage.workspace   = true
-license.workspace    = true
-name                 = "rolldown_ecmascript_utils"
-repository.workspace = true
-version              = "0.1.0"
-
 [dependencies]
-oxc             = { workspace = true }
+oxc = { workspace = true }
 rolldown_common = { workspace = true }
-smallvec        = { workspace = true }
+smallvec = { workspace = true }
 
+[lib]
+path = "Source/lib.rs"
 
 [lints]
+workspace = true
+
+[package]
+name = "rolldown_ecmascript_utils"
+version = "0.1.0"
+
+[package.edition]
+workspace = true
+
+[package.homepage]
+workspace = true
+
+[package.license-file]
+workspace = true
+
+[package.repository]
 workspace = true

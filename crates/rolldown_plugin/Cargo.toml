@@ -1,42 +1,51 @@
-[package]
-edition.workspace    = true
-homepage.workspace   = true
-license.workspace    = true
-name                 = "rolldown_plugin"
-repository.workspace = true
-version              = "0.1.0"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-doctest = false
+[dependencies]
+anyhow = { workspace = true }
+arcstr = { workspace = true }
+async-trait = { workspace = true }
+dashmap = { workspace = true }
+oxc_index = { workspace = true }
+rolldown_common = { workspace = true }
+rolldown_ecmascript = { workspace = true }
+rolldown_error = { workspace = true }
+rolldown_resolver = { workspace = true }
+rolldown_sourcemap = { workspace = true }
+rolldown_utils = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true, optional = true }
+string_wizard = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
+tracing = { workspace = true }
+typedmap = { workspace = true, features = ["dashmap"] }
 
 [features]
 default = ["serde"]
-inner   = []
-serde   = ["dep:serde", "oxc_index/serde"]
+inner = []
+serde = ["dep:serde", "oxc_index/serde"]
+
+[lib]
+doctest = false
+path = "Source/lib.rs"
 
 [lints]
 workspace = true
 
-[dependencies]
-anyhow              = { workspace = true }
-arcstr              = { workspace = true }
-async-trait         = { workspace = true }
-dashmap             = { workspace = true }
-oxc_index           = { workspace = true }
-rolldown_common     = { workspace = true }
-rolldown_ecmascript = { workspace = true }
-rolldown_error      = { workspace = true }
-rolldown_resolver   = { workspace = true }
-rolldown_sourcemap  = { workspace = true }
-rolldown_utils      = { workspace = true }
-rustc-hash          = { workspace = true }
-serde               = { workspace = true, optional = true }
-string_wizard       = { workspace = true }
-tokio               = { workspace = true, features = ["sync"] }
-tracing             = { workspace = true }
-typedmap            = { workspace = true, features = ["dashmap"] }
+[package]
+name = "rolldown_plugin"
+version = "0.1.0"
+
+[package.edition]
+workspace = true
+
+[package.homepage]
+workspace = true
+
+[package.license-file]
+workspace = true
+
+[package.metadata]
 
 [package.metadata.cargo-shear]
 ignored = ["serde"]
+
+[package.repository]
+workspace = true

@@ -1,44 +1,51 @@
-[package]
-name    = "rolldown_testing"
-version = "0.1.0"
+[[bin]]
+doctest = false
+name = "run-fixture"
+path = "./bin/run-fixture.rs"
+test = false
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-edition.workspace    = true
-homepage.workspace   = true
-license.workspace    = true
-repository.workspace = true
+[build-dependencies]
+rolldown_testing_config = { workspace = true }
+schemars = { workspace = true }
+serde_json = { workspace = true }
+
+[dependencies]
+anyhow = { workspace = true }
+dunce = { workspace = true }
+insta = { workspace = true }
+json-strip-comments = { workspace = true }
+jsonschema = { workspace = true }
+regex = { workspace = true }
+rolldown = { workspace = true }
+rolldown_common = { workspace = true }
+rolldown_error = { workspace = true }
+rolldown_sourcemap = { workspace = true }
+rolldown_testing_config = { workspace = true }
+rustc-hash = { workspace = true }
+serde_json = { workspace = true }
+sugar_path = { workspace = true }
+tokio = { workspace = true, features = ["rt", "macros", "sync", "rt-multi-thread"] }
 
 [lib]
 doctest = false
-test    = false
+path = "Source/lib.rs"
+test = false
 
 [lints]
 workspace = true
 
-[dependencies]
-anyhow                  = { workspace = true }
-dunce                   = { workspace = true }
-insta                   = { workspace = true }
-json-strip-comments     = { workspace = true }
-jsonschema              = { workspace = true }
-regex                   = { workspace = true }
-rolldown                = { workspace = true }
-rolldown_common         = { workspace = true }
-rolldown_error          = { workspace = true }
-rolldown_sourcemap      = { workspace = true }
-rolldown_testing_config = { workspace = true }
-rustc-hash              = { workspace = true }
-serde_json              = { workspace = true }
-sugar_path              = { workspace = true }
-tokio                   = { workspace = true, features = ["rt", "macros", "sync", "rt-multi-thread"] }
+[package]
+name = "rolldown_testing"
+version = "0.1.0"
 
-[build-dependencies]
-rolldown_testing_config = { workspace = true }
-schemars                = { workspace = true }
-serde_json              = { workspace = true }
+[package.edition]
+workspace = true
 
-[[bin]]
-doctest = false
-name    = "run-fixture"
-path    = "./bin/run-fixture.rs"
-test    = false
+[package.homepage]
+workspace = true
+
+[package.license-file]
+workspace = true
+
+[package.repository]
+workspace = true
