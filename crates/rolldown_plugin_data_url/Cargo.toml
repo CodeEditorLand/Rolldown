@@ -11,7 +11,7 @@ doctest = false
 path = "Source/lib.rs"
 
 [package]
-edition = "2021"
+edition = "2024"
 license-file = "LICENSE"
 name = "rolldown_plugin_data_url"
 version = "0.1.0"

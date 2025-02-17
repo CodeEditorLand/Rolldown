@@ -165,7 +165,7 @@ single_match_else = "allow"
 unnecessary_safety_comment = "deny"
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 homepage = "https://rolldown.rs/"
 license-file = "LICENSE"
 repository = "https://github.com/rolldown/rolldown"

@@ -17,7 +17,7 @@ path = "Source/lib.rs"
 
 [package]
 description = "manipulate string like a wizard"
-edition = "2021"
+edition = "2024"
 license-file = "LICENSE"
 name = "string_wizard"
 version = "0.0.26"
