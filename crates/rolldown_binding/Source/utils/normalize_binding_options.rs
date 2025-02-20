@@ -8,12 +8,14 @@ use crate::{
   options::plugin::JsPlugin,
   types::{binding_rendered_chunk::RenderedChunk, js_callback::MaybeAsyncJsCallbackExt},
 };
-use napi::bindgen_prelude::Either;
+use napi::bindgen_prelude::{Either, FnArgs};
 use rolldown::{
   AddonOutputOption, AdvancedChunksOptions, AssetFilenamesOutputOption, BundlerOptions,
-  ChunkFilenamesOutputOption, ExperimentalOptions, HashCharacters, IsExternal, MatchGroup,
-  ModuleType, OutputExports, OutputFormat, Platform, SanitizeFilename,
+  ChunkFilenamesOutputOption, DeferSyncScanDataOption, ExperimentalOptions, HashCharacters,
+  IsExternal, MatchGroup, ModuleType, OutputExports, OutputFormat, Platform, RawMinifyOptions,
+  SanitizeFilename,
 };
+use rolldown_common::DeferSyncScanData;
 use rolldown_plugin::__inner::SharedPluginable;
 use rolldown_utils::indexmap::FxIndexMap;
 use rolldown_utils::rustc_hash::FxHashMapExt;
@@ -38,7 +40,10 @@ fn normalize_addon_option(
       let fn_js = Arc::clone(&value);
       let chunk = chunk.clone();
       Box::pin(async move {
-        fn_js.await_call(RenderedChunk::from(chunk)).await.map_err(anyhow::Error::from)
+        fn_js
+          .await_call(FnArgs { data: (RenderedChunk::from(chunk),) })
+          .await
+          .map_err(anyhow::Error::from)
       })
     }))
   })
@@ -52,8 +57,10 @@ fn normalize_chunk_file_names_option(
       Either::A(str) => Ok(ChunkFilenamesOutputOption::String(str)),
       Either::B(func) => Ok(ChunkFilenamesOutputOption::Fn(Arc::new(move |chunk| {
         let func = Arc::clone(&func);
-        let chunk = chunk.clone();
-        Box::pin(async move { func.invoke_async(chunk.into()).await.map_err(anyhow::Error::from) })
+        let chunk = (chunk.clone().into(),);
+        Box::pin(async move {
+          func.invoke_async(FnArgs { data: chunk }).await.map_err(anyhow::Error::from)
+        })
       }))),
     })
     .transpose()
@@ -68,7 +75,9 @@ fn normalize_sanitize_filename(
       Either::B(func) => Ok(SanitizeFilename::Fn(Arc::new(move |name| {
         let func = Arc::clone(&func);
         let name = name.to_string();
-        Box::pin(async move { func.invoke_async(name).await.map_err(anyhow::Error::from) })
+        Box::pin(async move {
+          func.invoke_async(FnArgs { data: (name,) }).await.map_err(anyhow::Error::from)
+        })
       }))),
     })
     .transpose()
@@ -82,8 +91,10 @@ fn normalize_asset_file_names_option(
       Either::A(str) => Ok(AssetFilenamesOutputOption::String(str)),
       Either::B(func) => Ok(AssetFilenamesOutputOption::Fn(Arc::new(move |asset| {
         let func = Arc::clone(&func);
-        let asset = asset.clone();
-        Box::pin(async move { func.invoke_async(asset.into()).await.map_err(anyhow::Error::from) })
+        let asset = (asset.clone().into(),);
+        Box::pin(async move {
+          func.invoke_async(FnArgs { data: asset }).await.map_err(anyhow::Error::from)
+        })
       }))),
     })
     .transpose()
@@ -99,7 +110,7 @@ fn normalize_globals_option(
     Either::B(func) => rolldown_common::GlobalsOutputOption::Fn(Arc::new(move |name| {
       let func = Arc::clone(&func);
       let name = name.to_string();
-      Box::pin(async move { func.invoke_async(name).await.map_err(anyhow::Error::from) })
+      Box::pin(async move { func.invoke_async((name,).into()).await.map_err(anyhow::Error::from) })
     })),
   })
 }
@@ -122,9 +133,22 @@ pub fn normalize_binding_options(
       let ts_fn = Arc::clone(&ts_fn);
       Box::pin(async move {
         ts_fn
-          .invoke_async((source.to_string(), importer.map(|v| v.to_string()), is_resolved))
+          .invoke_async((source.to_string(), importer.map(|v| v.to_string()), is_resolved).into())
           .await
           .map_err(anyhow::Error::from)
+      })
+    })
+  });
+
+  let get_defer_sync_scan_data = input_options.defer_sync_scan_data.map(|ts_fn| {
+    DeferSyncScanDataOption::new(move || {
+      let ts_fn = Arc::clone(&ts_fn);
+      Box::pin(async move {
+        ts_fn
+          .invoke_async(())
+          .await
+          .map_err(anyhow::Error::from)
+          .map(|ret| ret.into_iter().map(Into::into).collect::<Vec<DeferSyncScanData>>())
       })
     })
   });
@@ -135,7 +159,7 @@ pub fn normalize_binding_options(
       let source = source.to_string();
       let sourcemap_path = sourcemap_path.to_string();
       Box::pin(async move {
-        ts_fn.invoke_async((source, sourcemap_path)).await.map_err(anyhow::Error::from)
+        ts_fn.invoke_async((source, sourcemap_path).into()).await.map_err(anyhow::Error::from)
       })
     }))
   });
@@ -146,7 +170,7 @@ pub fn normalize_binding_options(
       let source = source.to_string();
       let sourcemap_path = sourcemap_path.to_string();
       Box::pin(async move {
-        ts_fn.invoke_async((source, sourcemap_path)).await.map_err(anyhow::Error::from)
+        ts_fn.invoke_async((source, sourcemap_path).into()).await.map_err(anyhow::Error::from)
       })
     }))
   });
@@ -231,9 +255,22 @@ pub fn normalize_binding_options(
       resolve_new_url_to_asset: inner.resolve_new_url_to_asset,
       // TODO: binding
       incremental_build: None,
-      development_mode: inner.development_mode,
+      hmr: inner.hmr,
     }),
-    minify: output_options.minify,
+    minify: output_options
+      .minify
+      .map(|opts| match opts {
+        napi::bindgen_prelude::Either3::A(opts) => Ok(opts.into()),
+        napi::bindgen_prelude::Either3::B(opts) => {
+          if opts == "dce-only" {
+            Ok(RawMinifyOptions::DeadCodeEliminationOnly)
+          } else {
+            Err(napi::Error::new(napi::Status::InvalidArg, "Invalid minify option"))
+          }
+        }
+        napi::bindgen_prelude::Either3::C(opts) => Ok(opts.into()),
+      })
+      .transpose()?,
     extend: output_options.extend,
     define: input_options.define.map(FxIndexMap::from_iter),
     inject: input_options
@@ -282,6 +319,7 @@ pub fn normalize_binding_options(
     target: output_options.target.as_deref().map(std::str::FromStr::from_str).transpose()?,
     keep_names: input_options.keep_names,
     polyfill_require: output_options.polyfill_require,
+    defer_sync_scan_data: get_defer_sync_scan_data,
   };
 
   #[cfg(not(target_family = "wasm"))]

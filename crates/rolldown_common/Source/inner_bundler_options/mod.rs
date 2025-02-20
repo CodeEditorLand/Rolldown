@@ -6,6 +6,7 @@ use types::checks_options::ChecksOptions;
 use types::comments::Comments;
 use types::inject_import::InjectImport;
 use types::jsx::Jsx;
+use types::minify_options::RawMinifyOptions;
 use types::output_option::{AssetFilenamesOutputOption, GlobalsOutputOption};
 use types::sanitize_filename::SanitizeFilename;
 use types::target::ESTarget;
@@ -21,10 +22,11 @@ use types::experimental_options::ExperimentalOptions;
 
 use self::types::treeshake::TreeshakeOptions;
 use self::types::{
-  es_module_flag::EsModuleFlag, hash_characters::HashCharacters, input_item::InputItem,
-  is_external::IsExternal, output_exports::OutputExports, output_format::OutputFormat,
-  output_option::AddonOutputOption, platform::Platform, resolve_options::ResolveOptions,
-  source_map_type::SourceMapType, sourcemap_path_transform::SourceMapPathTransform,
+  defer_sync_scan_data_option::DeferSyncScanDataOption, es_module_flag::EsModuleFlag,
+  hash_characters::HashCharacters, input_item::InputItem, is_external::IsExternal,
+  output_exports::OutputExports, output_format::OutputFormat, output_option::AddonOutputOption,
+  platform::Platform, resolve_options::ResolveOptions, source_map_type::SourceMapType,
+  sourcemap_path_transform::SourceMapPathTransform,
 };
 use crate::{ChunkFilenamesOutputOption, ModuleType, SourceMapIgnoreList};
 
@@ -148,7 +150,7 @@ pub struct BundlerOptions {
   )]
   pub treeshake: TreeshakeOptions,
   pub experimental: Option<ExperimentalOptions>,
-  pub minify: Option<bool>,
+  pub minify: Option<RawMinifyOptions>,
   #[cfg_attr(
     feature = "deserialize_bundler_options",
     schemars(with = "Option<FxHashMap<String, String>>")
@@ -172,6 +174,28 @@ pub struct BundlerOptions {
   pub comments: Option<Comments>,
   pub target: Option<ESTarget>,
   pub polyfill_require: Option<bool>,
+
+  #[cfg_attr(
+    feature = "deserialize_bundler_options",
+    serde(default, skip_deserializing),
+    schemars(skip)
+  )]
+  pub defer_sync_scan_data: Option<DeferSyncScanDataOption>,
+}
+
+impl BundlerOptions {
+  /// # Panic
+  /// 1. If `cwd` is not set.
+  ///
+  /// This method is used to sync the path after the `cwd` is set,
+  /// so make sure to call this method after the cwd is canonicalized
+  pub fn canonicalize_option_path(&mut self) {
+    if let Some(resolve) = self.resolve.as_mut() {
+      resolve.tsconfig_filename = resolve.tsconfig_filename.as_ref().map(|tsconfig_filename| {
+        self.cwd.as_ref().unwrap().join(tsconfig_filename).to_string_lossy().to_string()
+      });
+    }
+  }
 }
 
 #[cfg(feature = "deserialize_bundler_options")]

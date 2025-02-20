@@ -32,7 +32,7 @@ fn wrap_module_recursively(ctx: &mut Context, target: ModuleIdx) {
     }
   }
 
-  module.import_records.iter().for_each(|importee| {
+  module.import_records.iter().filter(|item| !item.is_dummy()).for_each(|importee| {
     wrap_module_recursively(ctx, importee.resolved_module);
   });
 }
@@ -75,7 +75,7 @@ fn has_dynamic_exports_due_to_export_star(
 
 impl LinkStage<'_> {
   #[tracing::instrument(level = "debug", skip_all)]
-  pub fn wrap_modules(&mut self) {
+  pub(super) fn wrap_modules(&mut self) {
     let mut visited_modules_for_wrapping =
       oxc_index::index_vec![false; self.module_table.modules.len()];
     let mut visited_modules_for_dynamic_exports =
@@ -166,6 +166,7 @@ pub fn create_wrapper(
         side_effect: true,
         is_included: false,
         import_records: Vec::new(),
+        #[cfg(debug_assertions)]
         debug_label: None,
         meta: StmtInfoMeta::default(),
       };
@@ -196,6 +197,7 @@ pub fn create_wrapper(
         side_effect: false,
         is_included: false,
         import_records: Vec::new(),
+        #[cfg(debug_assertions)]
         debug_label: None,
         meta: StmtInfoMeta::default(),
       };

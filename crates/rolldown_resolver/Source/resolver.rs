@@ -1,7 +1,9 @@
 use arcstr::ArcStr;
 use dashmap::DashMap;
 use itertools::Itertools;
-use rolldown_common::{ImportKind, ModuleDefFormat, PackageJson, Platform, ResolveOptions};
+use rolldown_common::{
+  ImportKind, ModuleDefFormat, PackageJson, Platform, ResolveOptions, ResolvedId,
+};
 use rolldown_fs::{FileSystem, OsFileSystem};
 use rolldown_utils::{dashmap::FxDashMap, indexmap::FxIndexMap};
 use std::{
@@ -12,7 +14,8 @@ use sugar_path::SugarPath;
 
 use oxc_resolver::{
   EnforceExtension, FsCache, PackageJsonSerde as OxcPackageJson, PackageType, Resolution,
-  ResolveError, ResolveOptions as OxcResolverOptions, ResolverGeneric, TsconfigOptions,
+  ResolveError, ResolveOptions as OxcResolverOptions, ResolverGeneric, TsConfigSerde,
+  TsconfigOptions,
 };
 
 #[derive(Debug)]
@@ -148,7 +151,6 @@ impl<F: FileSystem + Default> Resolver<F> {
       default_resolver.clone_with_options(resolve_options_with_require_conditions);
     let css_resolver = default_resolver.clone_with_options(resolve_options_for_css);
     let new_url_resolver = default_resolver.clone_with_options(resolve_options_for_new_url);
-
     Self {
       cwd,
       default_resolver,
@@ -172,6 +174,20 @@ pub struct ResolveReturn {
   pub package_json: Option<Arc<PackageJson>>,
 }
 
+impl From<ResolveReturn> for ResolvedId {
+  fn from(resolved_return: ResolveReturn) -> Self {
+    ResolvedId {
+      id: resolved_return.path,
+      ignored: false,
+      module_def_format: resolved_return.module_def_format,
+      is_external: false,
+      package_json: resolved_return.package_json,
+      side_effects: None,
+      is_external_without_side_effects: false,
+    }
+  }
+}
+
 impl<F: FileSystem + Default> Resolver<F> {
   pub fn resolve(
     &self,
@@ -181,7 +197,9 @@ impl<F: FileSystem + Default> Resolver<F> {
     is_user_defined_entry: bool,
   ) -> Result<ResolveReturn, ResolveError> {
     let selected_resolver = match import_kind {
-      ImportKind::Import | ImportKind::DynamicImport => &self.import_resolver,
+      ImportKind::Import | ImportKind::DynamicImport | ImportKind::HotAccept => {
+        &self.import_resolver
+      }
       ImportKind::NewUrl => &self.new_url_resolver,
       ImportKind::Require => &self.require_resolver,
       ImportKind::AtImport | ImportKind::UrlImport => &self.css_resolver,
@@ -240,11 +258,19 @@ impl<F: FileSystem + Default> Resolver<F> {
             PackageType::CommonJs => "commonjs",
             PackageType::Module => "module",
           }))
-          .with_side_effects(oxc_pkg_json.side_effects.as_ref()),
+          .with_side_effects(oxc_pkg_json.side_effects.as_ref())
+          .with_version(oxc_pkg_json.raw_json().get("version").and_then(|v| v.as_str())),
       );
       self.package_json_cache.insert(oxc_pkg_json.realpath.clone(), Arc::clone(&pkg_json));
       pkg_json
     }
+  }
+
+  pub fn resolve_tsconfig<T: AsRef<Path>>(
+    &self,
+    path: &T,
+  ) -> Result<Arc<TsConfigSerde>, ResolveError> {
+    self.default_resolver.resolve_tsconfig(path)
   }
 }
 

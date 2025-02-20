@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use arcstr::ArcStr;
-use oxc::transformer::InjectGlobalVariablesConfig;
+use oxc::transformer::{InjectGlobalVariablesConfig, JsxOptions, TransformOptions};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::advanced_chunks_options::AdvancedChunksOptions;
@@ -13,6 +13,7 @@ use super::checks_options::ChecksOptions;
 use super::comments::Comments;
 use super::experimental_options::ExperimentalOptions;
 use super::jsx::Jsx;
+use super::minify_options::MinifyOptions;
 use super::output_option::{AssetFilenamesOutputOption, ChunkFilenamesOutputOption};
 use super::sanitize_filename::SanitizeFilename;
 use super::target::ESTarget;
@@ -24,8 +25,8 @@ use super::{
   sourcemap_ignore_list::SourceMapIgnoreList, sourcemap_path_transform::SourceMapPathTransform,
 };
 use crate::{
-  EmittedAsset, EsModuleFlag, FilenameTemplate, GlobalsOutputOption, HashCharacters, InjectImport,
-  InputItem, ModuleType, RollupPreRenderedAsset,
+  DeferSyncScanDataOption, EmittedAsset, EsModuleFlag, FilenameTemplate, GlobalsOutputOption,
+  HashCharacters, InjectImport, InputItem, ModuleType, RollupPreRenderedAsset,
 };
 
 #[allow(clippy::struct_excessive_bools)] // Using raw booleans is more clear in this case
@@ -68,7 +69,7 @@ pub struct NormalizedBundlerOptions {
   pub sourcemap_path_transform: Option<SourceMapPathTransform>,
   pub sourcemap_debug_ids: bool,
   pub experimental: ExperimentalOptions,
-  pub minify: bool,
+  pub minify: MinifyOptions,
   pub extend: bool,
   pub define: Vec<(/* Target to be replaced */ String, /* Replacement */ String)>,
   pub keep_names: bool,
@@ -85,6 +86,9 @@ pub struct NormalizedBundlerOptions {
   pub drop_labels: FxHashSet<String>,
   pub target: ESTarget,
   pub polyfill_require: bool,
+  pub defer_sync_scan_data: Option<DeferSyncScanDataOption>,
+  /// TODO: expose to binding when `oxc-transform` is stable
+  pub base_transform_options: TransformOptions,
 }
 
 pub type SharedNormalizedBundlerOptions = Arc<NormalizedBundlerOptions>;
@@ -98,8 +102,8 @@ impl NormalizedBundlerOptions {
     matches!(self.format, OutputFormat::Esm) && matches!(self.platform, Platform::Node)
   }
 
-  pub fn is_esm_dev(&self) -> bool {
-    matches!(self.format, OutputFormat::Esm) && self.experimental.development_mode.unwrap_or(false)
+  pub fn is_hmr_enabled(&self) -> bool {
+    self.experimental.hmr.unwrap_or(false)
   }
 
   /// make sure the `polyfill_require` is only valid for `esm` format with `node` platform
@@ -145,6 +149,17 @@ impl NormalizedBundlerOptions {
     match file.file_name {
       Some(_) => Ok(None),
       None => Ok(Some(self.sanitize_filename.call(file.name_for_sanitize()).await?)),
+    }
+  }
+
+  /// This function only merge some common fields in oxc `JsxOptions` and tsconfig.json `compilerOptions`
+  /// only replace field if it is `None` in `dest`
+  pub fn merge_jsx_options(dest: JsxOptions, src: JsxOptions) -> JsxOptions {
+    JsxOptions {
+      pragma: dest.pragma.or(src.pragma),
+      pragma_frag: dest.pragma_frag.or(src.pragma_frag),
+      import_source: dest.import_source.or(src.import_source),
+      ..dest
     }
   }
 }

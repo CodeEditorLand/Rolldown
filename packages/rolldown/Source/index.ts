@@ -35,7 +35,14 @@ import type {
   ResolvedId,
   SourceDescription,
   TransformResult,
+  HookFilterExtension,
 } from './plugin'
+import type {
+  HookFilter,
+  StringFilter,
+  ModuleTypeFilter,
+} from './plugin/hook-filter'
+import type { LogOrStringHandler } from './log/logging'
 import { DefineParallelPluginResult } from './plugin/parallel-plugin'
 import { defineConfig } from './utils/define-config'
 import { rolldown } from './api/rolldown'
@@ -45,6 +52,7 @@ import { RolldownBuild } from './api/rolldown/rolldown-build'
 import {
   EmittedAsset,
   EmittedFile,
+  GetModuleInfo,
   PluginContext,
 } from './plugin/plugin-context'
 import { TransformPluginContext } from './plugin/transform-plugin-context'
@@ -56,7 +64,10 @@ import { PreRenderedChunk } from './binding'
 import { PartialNull } from './types/utils'
 import { NormalizedInputOptions } from './options/normalized-input-options'
 import { ModuleInfo } from './types/module-info'
-import { MinimalPluginContext } from './plugin/minimal-plugin-context'
+import {
+  PluginContextMeta,
+  MinimalPluginContext,
+} from './plugin/minimal-plugin-context'
 import { ExistingRawSourceMap, SourceMapInput } from './types/sourcemap'
 import { OutputBundle } from './types/output-bundle'
 import { version } from '../package.json'
@@ -91,6 +102,10 @@ export type {
   LoadResult,
   TransformResult,
   ResolveIdResult,
+  HookFilterExtension,
+  HookFilter,
+  StringFilter,
+  ModuleTypeFilter,
   PluginContext,
   TransformPluginContext,
   ObjectHook,
@@ -103,6 +118,7 @@ export type {
   ResolvedId,
   ModuleOptions,
   ModuleInfo,
+  PluginContextMeta,
   MinimalPluginContext,
   EmittedFile,
   EmittedAsset,
@@ -118,6 +134,14 @@ export type {
   RolldownWatcher,
   BuildOptions,
   RenderedChunk,
+  LogOrStringHandler,
+  GetModuleInfo,
 }
 
-export type { RollupError, RollupLog, LoggingFunction } from './types/misc'
+export type {
+  RollupError,
+  RollupLog,
+  LoggingFunction,
+  LogLevel,
+  WarningHandlerWithDefault,
+} from './types/misc'

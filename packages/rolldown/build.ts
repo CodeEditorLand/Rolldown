@@ -158,7 +158,7 @@ const configs = defineConfig([
       },
 
       {
-        name: 'cleanup binding.cjs',
+        name: 'cleanup binding.js',
         transform: {
           filter: {
             code: {
@@ -166,7 +166,7 @@ const configs = defineConfig([
             },
           },
           handler(code, id) {
-            if (id.endsWith('binding.cjs')) {
+            if (id.endsWith('binding.js')) {
               const ret = code.replace(
                 'require = createRequire(__filename)',
                 '',
@@ -206,6 +206,8 @@ const configs = defineConfig([
   },
 ])
 
-for (const config of configs) {
-  await (await rolldown(config)).write(config.output as OutputOptions)
-}
+;(async () => {
+  for (const config of configs) {
+    await (await rolldown(config)).write(config.output as OutputOptions)
+  }
+})()

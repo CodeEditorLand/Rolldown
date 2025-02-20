@@ -6,7 +6,7 @@ use std::{
 use oxc::span::Span;
 use rolldown_rstr::Rstr;
 
-use crate::{ImportKind, ModuleIdx, ModuleType, SymbolRef, DUMMY_MODULE_IDX};
+use crate::{ImportKind, ModuleIdx, ModuleType, StmtInfoIdx, SymbolRef, DUMMY_MODULE_IDX};
 
 oxc_index::define_index_type! {
   pub struct ImportRecordIdx = u32;
@@ -26,7 +26,7 @@ pub struct ImportRecordStateResolved {
 
 bitflags::bitflags! {
   #[derive(Debug)]
-  pub struct ImportRecordMeta: u8 {
+  pub struct ImportRecordMeta: u16 {
     /// If it is `import * as ns from '...'` or `export * as ns from '...'`
     const CONTAINS_IMPORT_STAR = 1;
     /// If it is `import def from '...'`, `import { default as def }`, `export { default as def }` or `export { default } from '...'`
@@ -45,6 +45,8 @@ bitflags::bitflags! {
     /// `require` ExpressionIdentifier should be considering as a import record,
     /// but it did not import any module.
     const IS_DUMMY = 1 << 7;
+    /// if the import record is in a try-catch block
+    const IN_TRY_CATCH_BLOCK = 1 << 8;
   }
 }
 
@@ -58,6 +60,7 @@ pub struct ImportRecord<State: Debug> {
   /// `namespace_ref` represent the potential `import_foo` in above example. It's useless if we imported n esm module.
   pub namespace_ref: SymbolRef,
   pub meta: ImportRecordMeta,
+  pub related_stmt_info_idx: Option<StmtInfoIdx>,
 }
 
 impl<State: Debug> ImportRecord<State> {
@@ -89,6 +92,7 @@ impl RawImportRecord {
     namespace_ref: SymbolRef,
     span: Span,
     assert_module_type: Option<ModuleType>,
+    related_stmt_info_idx: Option<StmtInfoIdx>,
   ) -> RawImportRecord {
     RawImportRecord {
       module_request: specifier,
@@ -96,6 +100,7 @@ impl RawImportRecord {
       namespace_ref,
       meta: ImportRecordMeta::empty(),
       state: ImportRecordStateInit { span, asserted_module_type: assert_module_type },
+      related_stmt_info_idx,
     }
   }
 
@@ -111,6 +116,7 @@ impl RawImportRecord {
       kind: self.kind,
       namespace_ref: self.namespace_ref,
       meta: self.meta,
+      related_stmt_info_idx: self.related_stmt_info_idx,
     }
   }
 }

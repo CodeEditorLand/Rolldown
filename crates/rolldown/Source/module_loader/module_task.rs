@@ -181,16 +181,16 @@ impl ModuleTask {
             ecma_view.dynamically_imported_ids.insert(ArcStr::clone(&info.id).into());
           }
           // for a none css module, we should not have `at-import` or `url-import`
-          ImportKind::AtImport | ImportKind::UrlImport => unreachable!(),
+          ImportKind::AtImport | ImportKind::UrlImport | ImportKind::HotAccept => unreachable!(),
         }
       }
     }
 
-    let repr_name = self.resolved_id.id.as_path().representative_file_name().into_owned();
-    let repr_name = legitimize_identifier_name(&repr_name);
+    let repr_name = self.resolved_id.id.as_path().representative_file_name();
+    let repr_name = legitimize_identifier_name(&repr_name).into_owned();
 
     let module = NormalModule {
-      repr_name: repr_name.into_owned(),
+      repr_name,
       stable_id,
       id,
       debug_id: self.resolved_id.debug_id(&self.ctx.options.cwd),
@@ -205,7 +205,7 @@ impl ModuleTask {
 
     let module_info = Arc::new(module.to_module_info(Some(&raw_import_records)));
     self.ctx.plugin_driver.set_module_info(&module.id, Arc::clone(&module_info));
-    self.ctx.plugin_driver.module_parsed(Arc::clone(&module_info)).await?;
+    self.ctx.plugin_driver.module_parsed(Arc::clone(&module_info), &module).await?;
     self.ctx.plugin_driver.mark_context_load_modules_loaded(&module.id).await?;
 
     let result = ModuleLoaderMsg::NormalModuleDone(NormalModuleTaskResult {
@@ -386,23 +386,13 @@ impl ModuleTask {
           let dep = &dependencies[idx];
           match &e {
             ResolveError::NotFound(..) => {
-              // https://github.com/rollup/rollup/blob/49b57c2b30d55178a7316f23cc9ccc457e1a2ee7/src/ModuleLoader.ts#L643-L646
-              if ecmascript::is_path_like_specifier(&specifier) {
-                // Unlike rollup, we also emit errors for absolute path
-                build_errors.push(BuildDiagnostic::resolve_error(
-                  source.clone(),
-                  self.resolved_id.id.clone(),
-                  if dep.is_unspanned() || is_css_module {
-                    DiagnosableArcstr::String(concat_string!("'", specifier.as_str(), "'").into())
-                  } else {
-                    DiagnosableArcstr::Span(dep.state.span)
-                  },
-                  "Module not found.".into(),
-                  Some("UNRESOLVED_IMPORT"),
-                ));
-              } else {
-                warnings.push(
-                  BuildDiagnostic::resolve_error(
+              // NOTE: IN_TRY_CATCH_BLOCK meta if it is a `require` import
+              // record
+              if !dep.meta.contains(ImportRecordMeta::IN_TRY_CATCH_BLOCK) {
+                // https://github.com/rollup/rollup/blob/49b57c2b30d55178a7316f23cc9ccc457e1a2ee7/src/ModuleLoader.ts#L643-L646
+                if ecmascript::is_path_like_specifier(&specifier) {
+                  // Unlike rollup, we also emit errors for absolute path
+                  build_errors.push(BuildDiagnostic::resolve_error(
                     source.clone(),
                     self.resolved_id.id.clone(),
                     if dep.is_unspanned() || is_css_module {
@@ -410,11 +400,27 @@ impl ModuleTask {
                     } else {
                       DiagnosableArcstr::Span(dep.state.span)
                     },
-                    "Module not found, treating it as an external dependency".into(),
+                    "Module not found.".into(),
                     Some("UNRESOLVED_IMPORT"),
-                  )
-                  .with_severity_warning(),
-                );
+                  ));
+                } else {
+                  warnings.push(
+                    BuildDiagnostic::resolve_error(
+                      source.clone(),
+                      self.resolved_id.id.clone(),
+                      if dep.is_unspanned() || is_css_module {
+                        DiagnosableArcstr::String(
+                          concat_string!("'", specifier.as_str(), "'").into(),
+                        )
+                      } else {
+                        DiagnosableArcstr::Span(dep.state.span)
+                      },
+                      "Module not found, treating it as an external dependency".into(),
+                      Some("UNRESOLVED_IMPORT"),
+                    )
+                    .with_severity_warning(),
+                  );
+                }
               }
               ret.push(ResolvedId {
                 id: specifier.to_string().into(),

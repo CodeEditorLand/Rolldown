@@ -1,0 +1,30 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["github>Boshen/renovate", ":dependencyDashboard"],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/examples/**",
+    "**/crates/rolldown/tests/**"
+  ],
+  "packageRules": [
+    {
+      "matchDepNames": ["oxlint"],
+      "rangeStrategy": "replace",
+      "groupName": "oxlint"
+    },
+    {
+      "matchPackageNames": ["pnpm"],
+      "enabled": false
+    },
+    {
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch",
+      "matchUpdateTypes": ["minor", "patch"]
+    }
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "extends": ["schedule:weekly"]
+  }
+}

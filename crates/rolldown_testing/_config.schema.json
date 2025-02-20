@@ -348,9 +348,13 @@
           ]
         },
         "minify": {
-          "type": [
-            "boolean",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RawMinifyOptions"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "moduleTypes": {
@@ -532,6 +536,12 @@
             "string",
             "null"
           ]
+        },
+        "strictExecutionOrder": {
+          "type": [
+            "boolean",
+            "null"
+          ]
         }
       },
       "additionalProperties": false
@@ -582,13 +592,13 @@
     "ExperimentalOptions": {
       "type": "object",
       "properties": {
-        "developmentMode": {
+        "disableLiveBindings": {
           "type": [
             "boolean",
             "null"
           ]
         },
-        "disableLiveBindings": {
+        "hmr": {
           "type": [
             "boolean",
             "null"
@@ -784,6 +794,26 @@
       },
       "additionalProperties": false
     },
+    "MinifyOptionsObject": {
+      "type": "object",
+      "required": [
+        "compress",
+        "mangle",
+        "removeWhitespace"
+      ],
+      "properties": {
+        "compress": {
+          "type": "boolean"
+        },
+        "mangle": {
+          "type": "boolean"
+        },
+        "removeWhitespace": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
     "ModuleType": {
       "oneOf": [
         {
@@ -851,6 +881,19 @@
           "enum": [
             "node"
           ]
+        }
+      ]
+    },
+    "RawMinifyOptions": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/MinifyOptionsObject"
         }
       ]
     },
@@ -1010,6 +1053,14 @@
         "skipWrite"
       ],
       "properties": {
+        "buildDelay": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
+        },
         "exclude": {
           "type": [
             "array",

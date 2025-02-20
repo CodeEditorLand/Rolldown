@@ -1,0 +1,33 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# Assets
+
+## entry.js
+
+```js
+
+
+//#region entry.js
+__require(tag`./b`);
+__require(`./${b}`);
+try {
+	__require(tag`./b`);
+	__require(`./${b}`);
+} catch {}
+(async () => {
+	import(tag`./b`);
+	import(`./${b}`);
+	await import(tag`./b`);
+	await import(`./${b}`);
+	try {
+		import(tag`./b`);
+		import(`./${b}`);
+		await import(tag`./b`);
+		await import(`./${b}`);
+	} catch {}
+})();
+
+//#endregion
+```

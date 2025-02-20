@@ -63,7 +63,7 @@ export declare class BindingNormalizedOptions {
   get globals(): Record<string, string> | undefined
   get hashCharacters(): 'base64' | 'base36' | 'hex'
   get sourcemapDebugIds(): boolean
-  get minify(): boolean
+  get minify(): false | BindingMinifyOptions
   get polyfillRequire(): boolean
   get comments(): 'none' | 'preserve-legal'
 }
@@ -113,6 +113,7 @@ export declare class BindingPluginContext {
 
 export declare class BindingRenderedModule {
   get code(): string | null
+  get renderedExports(): Array<string>
 }
 
 export declare class BindingTransformPluginContext {
@@ -287,6 +288,12 @@ export interface BindingChecksOptions {
   circularDependency?: boolean
 }
 
+export interface BindingDeferSyncScanData {
+  /** ModuleId */
+  id: string
+  sideEffects?: BindingHookSideEffects
+}
+
 export interface BindingEmittedAsset {
   name?: string
   fileName?: string
@@ -306,7 +313,7 @@ export interface BindingExperimentalOptions {
   disableLiveBindings?: boolean
   viteMode?: boolean
   resolveNewUrlToAsset?: boolean
-  developmentMode?: boolean
+  hmr?: boolean
 }
 
 export interface BindingGeneralHookFilter {
@@ -411,6 +418,7 @@ export interface BindingInputOptions {
   watch?: BindingWatchOption
   keepNames?: boolean
   checks?: BindingChecksOptions
+  deferSyncScanData?: undefined | (() => BindingDeferSyncScanData[])
 }
 
 export interface BindingJsonPluginConfig {
@@ -463,6 +471,18 @@ export interface BindingMatchGroup {
   maxSize?: number
 }
 
+export interface BindingMfManifest {
+  filePath?: string
+  disableAssetsAnalyze?: boolean
+  fileName?: string
+}
+
+export interface BindingMinifyOptions {
+  mangle: boolean
+  compress: boolean
+  removeWhitespace: boolean
+}
+
 export interface BindingModuleFederationPluginOption {
   name: string
   filename?: string
@@ -470,6 +490,8 @@ export interface BindingModuleFederationPluginOption {
   remotes?: Array<BindingRemote>
   shared?: Record<string, BindingShared>
   runtimePlugins?: Array<string>
+  manifest?: BindingMfManifest
+  getPublicPath?: string
 }
 
 export interface BindingModulePreloadPolyfillPluginConfig {
@@ -477,8 +499,8 @@ export interface BindingModulePreloadPolyfillPluginConfig {
 }
 
 export interface BindingModules {
-  value: Array<BindingRenderedModule>
-  idToIndex: Record<string, number>
+  values: Array<BindingRenderedModule>
+  keys: Array<string>
 }
 
 export interface BindingModuleSideEffectsRule {
@@ -519,7 +541,7 @@ export interface BindingOutputOptions {
   sourcemapIgnoreList?: (source: string, sourcemapPath: string) => boolean
   sourcemapDebugIds?: boolean
   sourcemapPathTransform?: (source: string, sourcemapPath: string) => string
-  minify?: boolean
+  minify?: boolean | 'dce-only' | BindingMinifyOptions
   advancedChunks?: BindingAdvancedChunksOptions
   comments?: 'none' | 'preserve-legal'
   polyfillRequire?: boolean
@@ -703,6 +725,7 @@ export interface BindingWatchOption {
   skipWrite?: boolean
   include?: Array<BindingStringOrRegex>
   exclude?: Array<BindingStringOrRegex>
+  buildDelay?: number
 }
 
 export interface Comment {
@@ -718,6 +741,19 @@ export interface CompilerAssumptions {
   objectRestNoSymbols?: boolean
   pureGetters?: boolean
   setPublicClassFields?: boolean
+}
+
+export interface DecoratorOptions {
+  /**
+   * Enables experimental support for decorators, which is a version of decorators that predates the TC39 standardization process.
+   *
+   * Decorators are a language feature which hasn’t yet been fully ratified into the JavaScript specification.
+   * This means that the implementation version in TypeScript may differ from the implementation in JavaScript when it it decided by TC39.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#experimentalDecorators
+   * @default false
+   */
+  legacy?: boolean
 }
 
 export interface DynamicImport {
@@ -823,7 +859,7 @@ export type HelperMode = /**
  * Example:
  *
  * ```js
- * import helperName from "@babel/runtime/helpers/helperName";
+ * import helperName from "@oxc-project/runtime/helpers/helperName";
  * helperName(...arguments);
  * ```
  */
@@ -1041,6 +1077,11 @@ export interface ParserOptions {
    * Default: true
    */
   preserveParens?: boolean
+  /**
+   * Default: false
+   * @experimental Only for internal usage on Rolldown and Vite.
+   */
+  convertSpanUtf16?: boolean
 }
 
 /** Parse synchronously. */
@@ -1245,6 +1286,8 @@ export interface TransformOptions {
   define?: Record<string, string>
   /** Inject Plugin */
   inject?: Record<string, string | [string, string]>
+  /** Decorator plugin */
+  decorator?: DecoratorOptions
 }
 
 export interface TransformResult {
@@ -1285,7 +1328,7 @@ export interface TransformResult {
    * Example:
    *
    * ```text
-   * { "_objectSpread": "@babel/runtime/helpers/objectSpread2" }
+   * { "_objectSpread": "@oxc-project/runtime/helpers/objectSpread2" }
    * ```
    */
   helpersUsed: Record<string, string>

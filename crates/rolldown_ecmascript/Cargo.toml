@@ -17,14 +17,10 @@ workspace = true
 name = "rolldown_ecmascript"
 version = "0.1.0"
 
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true
+[dependencies]
+arcstr         = { workspace = true }
+itertools      = { workspace = true }
+oxc            = { workspace = true }
+oxc_sourcemap  = { workspace = true }
+rolldown_error = { workspace = true }
+self_cell      = { workspace = true }

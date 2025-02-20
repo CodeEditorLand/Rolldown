@@ -1,13 +1,13 @@
 use crate::{
-  AddEntryModuleMsg, FileNameRenderOptions, FilenameTemplate, ModuleLoaderMsg,
-  NormalizedBundlerOptions, Output, OutputAsset, StrOrBytes,
+  AddEntryModuleMsg, FilenameTemplate, ModuleLoaderMsg, NormalizedBundlerOptions, Output,
+  OutputAsset, StrOrBytes,
 };
 use anyhow::Context;
 use arcstr::ArcStr;
 use dashmap::{DashMap, DashSet};
+use rolldown_error::BuildDiagnostic;
 use rolldown_utils::dashmap::{FxDashMap, FxDashSet};
-use rolldown_utils::extract_hash_pattern::extract_hash_pattern;
-use rolldown_utils::xxhash::xxhash_base64_url;
+use rolldown_utils::xxhash::{xxhash_base64_url, xxhash_with_base};
 use std::ffi::OsStr;
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -55,6 +55,7 @@ pub struct FileEmitter {
   /// Mark the files that have been emitted to bundle.
   emitted_files: FxDashSet<ArcStr>,
   emitted_chunks: FxDashMap<ArcStr, ArcStr>,
+  emitted_filenames: FxDashSet<ArcStr>,
 }
 
 impl FileEmitter {
@@ -69,6 +70,7 @@ impl FileEmitter {
       base_reference_id: AtomicUsize::new(0),
       options,
       emitted_files: DashSet::default(),
+      emitted_filenames: FxDashSet::default(),
     }
   }
 
@@ -100,7 +102,8 @@ impl FileEmitter {
     asset_filename_template: Option<FilenameTemplate>,
     sanitized_file_name: Option<ArcStr>,
   ) -> ArcStr {
-    let hash: ArcStr = xxhash_base64_url(file.source.as_bytes()).into();
+    let hash: ArcStr =
+      xxhash_with_base(file.source.as_bytes(), self.options.hash_characters.base()).into();
     // Deduplicate assets if an explicit fileName is not provided
     if file.file_name.is_none() {
       if let Some(reference_id) = self.source_hash_to_reference_id.get(&hash) {
@@ -170,49 +173,54 @@ impl FileEmitter {
     &self,
     file: &mut EmittedAsset,
     hash: &ArcStr,
-    asset_filename_template: Option<FilenameTemplate>,
+    filename_template: Option<FilenameTemplate>,
     sanitized_file_name: Option<ArcStr>,
   ) {
     if file.file_name.is_none() {
       let sanitized_file_name = sanitized_file_name.expect("should has sanitized file name");
       let path = Path::new(sanitized_file_name.as_str());
-      let extension = path.extension().and_then(OsStr::to_str);
       let name = path.file_stem().and_then(OsStr::to_str);
-      let asset_filename_template =
-        asset_filename_template.expect("should has filename template without filename");
-      let extract_hash_pattern = extract_hash_pattern(asset_filename_template.template());
-      let mut file_name: ArcStr = asset_filename_template
-        .render(&FileNameRenderOptions {
-          name,
-          hash: extract_hash_pattern
-            .map(|p| &hash.as_str()[..p.len.map_or(8, |hash_len| hash_len.max(6))]),
-          ext: Some(extension.unwrap_or_default()),
-        })
-        .into();
+      let extension = path.extension().and_then(OsStr::to_str);
+      let filename_template =
+        filename_template.expect("should has filename template without filename");
+
+      let mut filename = filename_template.render(
+        name,
+        Some(extension.unwrap_or_default()),
+        Some(|len: Option<usize>| &hash[..len.map_or(8, |hash_len| hash_len.max(6))]),
+      );
+
       // deconflict file name
-      if let Some(count) = self.names.get_mut(file_name.as_str()).as_deref_mut() {
+      if let Some(count) = self.names.get_mut(filename.as_str()).as_deref_mut() {
         *count += 1;
         let extension = extension.map(|e| format!(".{e}")).unwrap_or_default();
-        file_name = format!(
-          "{}{count}{extension}",
-          &file_name.to_string()[..file_name.len() - extension.len()],
-        )
-        .into();
+        filename = format!("{}{count}{extension}", &filename[..filename.len() - extension.len()],);
       } else {
-        self.names.insert(file_name.clone(), 1);
+        self.names.insert(filename.clone().into(), 1);
       }
 
-      file.file_name = Some(file_name);
+      file.file_name = Some(filename.into());
     }
   }
 
-  pub fn add_additional_files(&self, bundle: &mut Vec<Output>) {
+  pub fn add_additional_files(
+    &self,
+    bundle: &mut Vec<Output>,
+    warnings: &mut Vec<BuildDiagnostic>,
+  ) {
     self.files.iter_mut().for_each(|mut file| {
       let (key, value) = file.pair_mut();
       if self.emitted_files.contains(key) {
         return;
       }
       self.emitted_files.insert(key.clone());
+
+      // Follow rollup using lowercase filename to check conflicts
+      let lowercase_filename = value.filename.as_str().to_lowercase().into();
+      if !self.emitted_filenames.insert(lowercase_filename) {
+        warnings
+          .push(BuildDiagnostic::filename_conflict(value.filename.clone()).with_severity_warning());
+      }
 
       let mut names = std::mem::take(&mut value.names);
       sort_names(&mut names);

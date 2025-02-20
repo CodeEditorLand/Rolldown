@@ -13,14 +13,17 @@ import type {
   BindingInputOptions,
   BindingInjectImportNamed,
   BindingInjectImportNamespace,
+  BindingDeferSyncScanData,
 } from '../binding'
 import { LogHandler } from '../types/misc'
 import { LogLevelOption } from '../log/logging'
+import { bindingifySideEffects } from './transform-side-effects'
 
 export function bindingifyInputOptions(
   rawPlugins: RolldownPlugin[],
   inputOptions: InputOptions,
   outputOptions: OutputOptions,
+  normalizedOutputPlugins: RolldownPlugin[],
   onLog: LogHandler,
   logLevel: LogLevelOption,
 ): BindingInputOptions {
@@ -38,6 +41,7 @@ export function bindingifyInputOptions(
       inputOptions,
       outputOptions,
       pluginContextData,
+      normalizedOutputPlugins,
       onLog,
       logLevel,
     )
@@ -67,7 +71,7 @@ export function bindingifyInputOptions(
       disableLiveBindings: inputOptions.experimental?.disableLiveBindings,
       viteMode: inputOptions.experimental?.viteMode,
       resolveNewUrlToAsset: inputOptions.experimental?.resolveNewUrlToAsset,
-      developmentMode: inputOptions.experimental?.developmentMode,
+      hmr: inputOptions.experimental?.hmr,
     },
     profilerNames: inputOptions?.profilerNames,
     jsx: bindingifyJsx(inputOptions.jsx),
@@ -75,6 +79,18 @@ export function bindingifyInputOptions(
     dropLabels: inputOptions.dropLabels,
     keepNames: inputOptions.keepNames,
     checks: inputOptions.checks,
+    deferSyncScanData: () => {
+      let ret: BindingDeferSyncScanData[] = []
+      pluginContextData.moduleOptionMap.forEach((value, key) => {
+        if (value.invalidate) {
+          ret.push({
+            id: key,
+            sideEffects: bindingifySideEffects(value.moduleSideEffects),
+          })
+        }
+      })
+      return ret
+    },
   }
 }
 
@@ -242,6 +258,7 @@ function bindingifyWatch(
 ): BindingInputOptions['watch'] {
   if (watch) {
     let value = {
+      buildDelay: watch.buildDelay,
       skipWrite: watch.skipWrite,
       include: normalizedStringOrRegex(watch.include),
       exclude: normalizedStringOrRegex(watch.exclude),

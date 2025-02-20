@@ -4,20 +4,20 @@ use arcstr::ArcStr;
 use futures::future::try_join_all;
 use oxc::ast::VisitMut;
 use oxc_index::IndexVec;
+use render_chunk_to_assets::set_emitted_chunk_preliminary_filenames;
 use rolldown_ecmascript_utils::AstSnippet;
 use rolldown_error::BuildResult;
 use rolldown_std_utils::OptionExt;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use rolldown_common::{
-  ChunkIdx, ChunkKind, CssAssetNameReplacer, FileNameRenderOptions,
-  ImportMetaRolldownAssetReplacer, Module, PreliminaryFilename, RollupPreRenderedAsset,
+  ChunkIdx, ChunkKind, CssAssetNameReplacer, ImportMetaRolldownAssetReplacer, Module,
+  PreliminaryFilename, RollupPreRenderedAsset,
 };
 use rolldown_plugin::SharedPluginDriver;
 use rolldown_std_utils::{PathBufExt, PathExt};
 use rolldown_utils::{
   concat_string,
-  extract_hash_pattern::extract_hash_pattern,
   hash_placeholder::HashPlaceholderGenerator,
   rayon::{IntoParallelRefMutIterator, ParallelIterator},
 };
@@ -35,7 +35,6 @@ use crate::{
       deconflict_chunk_symbols::deconflict_chunk_symbols, generate_pre_rendered_chunk,
       validate_options_for_multi_chunk_output::validate_options_for_multi_chunk_output,
     },
-    extract_meaningful_input_name_from_path::try_extract_meaningful_input_name_from_path,
     finalize_normal_module,
   },
   BundleOutput, SharedOptions,
@@ -75,6 +74,7 @@ impl<'a> GenerateStage<'a> {
     let index_chunk_id_to_name =
       self.generate_chunk_name_and_preliminary_filenames(&mut chunk_graph).await?;
     self.patch_asset_modules(&chunk_graph);
+    set_emitted_chunk_preliminary_filenames(&self.plugin_driver.file_emitter, &chunk_graph);
 
     chunk_graph.chunk_table.par_iter_mut().for_each(|chunk| {
       deconflict_chunk_symbols(
@@ -106,6 +106,7 @@ impl<'a> GenerateStage<'a> {
             ScopeHoistingFinalizerContext {
               canonical_names: &chunk.canonical_names,
               id: module.idx,
+              chunk_id,
               symbol_db: &self.link_output.symbol_db,
               linking_info,
               module,
@@ -116,6 +117,7 @@ impl<'a> GenerateStage<'a> {
               options: self.options,
               cur_stmt_index: 0,
               keep_name_statement_to_insert: Vec::new(),
+              file_emitter: &self.plugin_driver.file_emitter,
             },
             ast,
             ast_scope,
@@ -166,9 +168,12 @@ impl<'a> GenerateStage<'a> {
           ChunkKind::EntryPoint { module: entry_module_id, is_user_defined, .. } => {
             let module = &modules[entry_module_id];
             let generated = if is_user_defined {
-              try_extract_meaningful_input_name_from_path(module.id())
-                .map(ArcStr::from)
-                .unwrap_or(arcstr::literal!("input"))
+              // try extract meaningful input name from path
+              if let Some(file_stem) = module.id().as_path().file_stem().and_then(|f| f.to_str()) {
+                sanitize_filename.call(file_stem).await?
+              } else {
+                arcstr::literal!("input")
+              }
             } else {
               sanitize_filename.call(&module.id().as_path().representative_file_name()).await?
             };
@@ -260,7 +265,7 @@ impl<'a> GenerateStage<'a> {
             .sanitize_filename
             .call(module.id.as_path().file_stem().and_then(|s| s.to_str()).unpack())
             .await?;
-          let asset_filename_template = &self
+          let asset_filename_template = self
             .options
             .asset_filename_template(&RollupPreRenderedAsset {
               names: vec![name.clone()],
@@ -269,21 +274,23 @@ impl<'a> GenerateStage<'a> {
               source: asset_view.source.clone().to_vec().into(),
             })
             .await?;
-          let extracted_asset_hash_pattern =
-            extract_hash_pattern(asset_filename_template.template());
 
-          let hash_placeholder = extracted_asset_hash_pattern
-            .as_ref()
-            .map(|p| hash_placeholder_generator.generate(p.len.unwrap_or(8)));
+          let has_hash_pattern = asset_filename_template.has_hash_pattern();
+          let extension = module.id.as_path().extension().and_then(|s| s.to_str());
 
-          let preliminary = PreliminaryFilename::new(
-            asset_filename_template.render(&FileNameRenderOptions {
-              name: Some(&name),
-              hash: hash_placeholder.as_deref(),
-              ext: module.id.as_path().extension().and_then(|s| s.to_str()),
-            }),
-            hash_placeholder,
-          );
+          let mut hash_placeholder = has_hash_pattern.then_some(vec![]);
+          let hash_replacer = has_hash_pattern.then_some({
+            |len: Option<usize>| {
+              let hash = hash_placeholder_generator.generate(len.unwrap_or(8));
+              if let Some(hash_placeholder) = hash_placeholder.as_mut() {
+                hash_placeholder.push(hash.clone());
+              }
+              hash
+            }
+          });
+
+          let filename = asset_filename_template.render(Some(&name), extension, hash_replacer);
+          let preliminary = PreliminaryFilename::new(filename, hash_placeholder);
 
           chunk.asset_absolute_preliminary_filenames.insert(
             module.idx,

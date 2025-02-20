@@ -1,23 +1,21 @@
 {
-	"compilerOptions": {
-		"baseUrl": "./",
-		"composite": true,
-		"noEmit": false,
-		"outDir": "Target",
-		"resolveJsonModule": true,
-		"rootDir": "src",
-		"tsBuildInfoFile": ".tsbuildinfo"
-	},
-	"exclude": [
-		"*.js",
-		"*.mjs",
-		"*.cjs",
-		"dist",
-		"lib"
-	],
-	"extends": "@playform/build/tsconfig",
-	"include": [
-		"./src/**/*",
-		"src"
-	]
+  "extends": "../../tsconfig.json",
+  "include": ["./src/**/*"],
+  "exclude": [
+    "*.js",
+    "*.mjs",
+    "*.cjs",
+    "dist",
+    "lib",
+    "./src/log/locate-character" // the extracted .d.ts from js files has typing error, ignore it because it's not used
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "./src",
+    "outDir": "./dist/types",
+    "resolveJsonModule": true,
+    "noEmit": false,
+    "tsBuildInfoFile": ".tsbuildinfo",
+    "emitDeclarationOnly": true
+  }
 }

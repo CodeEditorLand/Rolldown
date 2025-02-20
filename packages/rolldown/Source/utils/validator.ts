@@ -116,15 +116,26 @@ const WatchOptionsSchema = v.strictObject({
     v.optional(v.boolean()),
     v.description('Skip the bundle.write() step'),
   ),
+  buildDelay: v.pipe(
+    v.optional(v.number()),
+    v.description('Throttle watch rebuilds'),
+  ),
 })
 
 const ChecksOptionsSchema = v.strictObject({
   circularDependency: v.pipe(
     v.optional(v.boolean()),
     v.description(
-      'Wether to emit warnings when detecting circular dependencies',
+      'Whether to emit warnings when detecting circular dependencies',
     ),
   ),
+})
+
+const MinifyOptionsSchema = v.strictObject({
+  mangle: v.boolean(),
+  compress: v.boolean(),
+  deadCodeElimination: v.boolean(),
+  removeWhitespace: v.boolean(),
 })
 
 const ResolveOptionsSchema = v.strictObject({
@@ -222,7 +233,7 @@ const InputOptionsSchema = v.strictObject({
       enableComposingJsPlugins: v.optional(v.boolean()),
       resolveNewUrlToAsset: v.optional(v.boolean()),
       strictExecutionOrder: v.optional(v.boolean()),
-      developmentMode: v.optional(v.boolean()),
+      hmr: v.optional(v.boolean()),
     }),
   ),
   define: v.pipe(
@@ -420,7 +431,7 @@ const OutputOptionsSchema = v.strictObject({
   cssEntryFileNames: v.optional(ChunkFileNamesSchema),
   cssChunkFileNames: v.optional(ChunkFileNamesSchema),
   minify: v.pipe(
-    v.optional(v.boolean()),
+    v.optional(v.union([v.boolean(), MinifyOptionsSchema])),
     v.description('Minify the bundled file'),
   ),
   name: v.pipe(
@@ -436,11 +447,11 @@ const OutputOptionsSchema = v.strictObject({
     ),
   ),
   externalLiveBindings: v.pipe(
-    v.optional(v.boolean(), true),
+    v.optional(v.boolean()),
     v.description('external live bindings'),
   ),
   inlineDynamicImports: v.pipe(
-    v.optional(v.boolean(), false),
+    v.optional(v.boolean()),
     v.description('Inline dynamic imports'),
   ),
   advancedChunks: v.optional(AdvancedChunksSchema),
@@ -524,6 +535,10 @@ const OutputCliOverrideSchema = v.strictObject({
     v.description(
       'Global variable of UMD / IIFE dependencies (syntax: `key=value`)',
     ),
+  ),
+  minify: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Minify the bundled file'),
   ),
 })
 

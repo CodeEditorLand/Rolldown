@@ -49,8 +49,20 @@ impl Generator for EcmaGenerator {
       })
       .collect::<Vec<_>>();
 
-    rendered_module_sources.iter().for_each(|(_, module_id, sources)| {
-      rendered_modules.insert(module_id.clone(), RenderedModule::new(sources.clone()));
+    rendered_module_sources.iter().for_each(|(module_idx, module_id, sources)| {
+      let rendered_exports = ctx.link_output.metas[*module_idx]
+        .resolved_exports
+        .iter()
+        .filter_map(|(key, export)| {
+          if ctx.link_output.used_symbol_refs.contains(&export.symbol_ref) {
+            Some(key.clone())
+          } else {
+            None
+          }
+        })
+        .collect::<Vec<_>>();
+      rendered_modules
+        .insert(module_id.clone(), RenderedModule::new(sources.clone(), rendered_exports));
     });
 
     let rendered_chunk = generate_rendered_chunk(
@@ -60,13 +72,10 @@ impl Generator for EcmaGenerator {
       ctx.chunk_graph,
     );
     let hashbang = match ctx.chunk.user_defined_entry_module(&ctx.link_output.module_table) {
-      Some(normal_module) => {
-        let source = &normal_module.source;
-        normal_module
-          .ecma_view
-          .hashbang_range
-          .map(|range| &source.as_str()[range.start as usize..range.end as usize])
-      }
+      Some(normal_module) => normal_module
+        .ecma_view
+        .hashbang_range
+        .map(|range| &normal_module.source[range.start as usize..range.end as usize]),
       None => None,
     };
 
