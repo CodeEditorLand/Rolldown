@@ -147,6 +147,7 @@ export declare class Bundler {
   scan(): Promise<BindingOutputs>
   close(): Promise<void>
   get closed(): boolean
+  generateHmrPatch(changedFiles: Array<string>): Promise<string>
 }
 
 export declare class MagicString {
@@ -754,6 +755,16 @@ export interface DecoratorOptions {
    * @default false
    */
   legacy?: boolean
+  /**
+   * Enables emitting decorator metadata.
+   *
+   * This option the same as [emitDecoratorMetadata](https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata)
+   * in TypeScript, and it only works when `legacy` is true.
+   *
+   * @see https://www.typescriptlang.org/tsconfig/#emitDecoratorMetadata
+   * @default false
+   */
+  emitDecoratorMetadata?: boolean
 }
 
 export interface DynamicImport {
