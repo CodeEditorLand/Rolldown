@@ -13,6 +13,7 @@
 		"./src/**/*.ts",
 		"vite.config.ts",
 		"src",
+		"src",
 		"src"
 	],
 	"references": [
