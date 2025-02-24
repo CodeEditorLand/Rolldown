@@ -1,28 +1,6 @@
 {
 	"name": "rolldown",
-	"version": "0.0.1",
-	"private": false,
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "Source 🖋️ Open 👐🏻",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
 	"imports": {
 		"#parallel-plugin-worker": "./dist/esm/parallel-plugin-worker.mjs"
 	},
@@ -130,9 +108,6 @@
 		"@rolldown/binding-win32-arm64-msvc": "workspace:*",
 		"@rolldown/binding-win32-ia32-msvc": "workspace:*",
 		"@rolldown/binding-win32-x64-msvc": "workspace:*"
-	},
-	"publishConfig": {
-		"access": "public"
 	},
 	"napi": {
 		"binaryName": "rolldown-binding",
