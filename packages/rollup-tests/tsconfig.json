@@ -21,6 +21,7 @@
 		"src/**/*.js",
 		"src",
 		"src",
+		"src",
 		"src"
 	]
 }

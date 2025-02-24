@@ -14,6 +14,7 @@
 		"src/**/*.ts",
 		"src",
 		"src",
+		"src",
 		"src"
 	]
 }
