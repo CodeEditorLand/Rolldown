@@ -1,16 +1,17 @@
-use glob::glob;
+use glob::{Pattern, glob};
 use oxc::{
   allocator::Vec,
   ast::{
+    AstBuilder, NONE, VisitMut,
     ast::{
       Argument, ArrayExpressionElement, Expression, FormalParameterKind, ImportOrExportKind,
-      ObjectPropertyKind, PropertyKey, PropertyKind, Statement,
+      NumberBase, ObjectPropertyKind, PropertyKey, PropertyKind, Statement,
     },
     visit::walk_mut,
-    AstBuilder, VisitMut, NONE,
   },
-  span::{Span, SPAN},
+  span::{SPAN, Span},
 };
+use rolldown_ecmascript_utils::ExpressionExt;
 use rolldown_plugin::{HookTransformAstArgs, HookTransformAstReturn, Plugin, PluginContext};
 use rustc_hash::FxHashMap;
 use std::{
@@ -82,52 +83,84 @@ pub struct GlobImportVisit<'ast, 'a> {
 
 impl<'ast> VisitMut<'ast> for GlobImportVisit<'ast, '_> {
   fn visit_expression(&mut self, expr: &mut Expression<'ast>) {
-    if let Expression::CallExpression(call_expr) = expr {
-      match &call_expr.callee {
-        Expression::StaticMemberExpression(e) => {
-          if e.property.name == "glob" {
-            match &e.object {
-              Expression::MetaProperty(p) => {
-                if p.meta.name == "import" && p.property.name == "meta" {
-                  let mut files = vec![];
-                  // import.meta.glob('./dir/*.js')
-                  // import.meta.glob(['./dir/*.js', './dir2/*.js'])
+    if !self.maybe_visit_obj_call(expr).unwrap_or_default() {
+      self.maybe_visit_glob_import_call(expr, None);
+    };
+    walk_mut::walk_expression(self, expr);
+  }
+}
 
-                  let mut opts = ImportGlobOptions::default();
-                  match call_expr.arguments.as_slice() {
-                    [first] => self.eval_glob_expr(first, &mut files),
-                    // import.meta.glob('./dir/*.js', { import: 'setup' })
-                    [first, second] => {
-                      self.eval_glob_expr(first, &mut files);
-                      extract_import_glob_options(second, &mut opts);
-                    }
-                    [first, second, _rest @ ..] => {
-                      self.eval_glob_expr(first, &mut files);
-                      extract_import_glob_options(second, &mut opts);
-                    }
-                    [] => {}
-                  }
+#[derive(Debug, PartialEq, Eq)]
+enum OmitType {
+  Keys,
+  Values,
+}
 
-                  // generate:
-                  //
-                  // {
-                  //   './dir/ind.js': __glob__0_0_,
-                  //   './dir/foo.js': () => import('./dir/foo.js'),
-                  //   './dir/bar.js': () => import('./dir/bar.js').then((m) => m.setup),
-                  // }
-                  *expr = self.generate_glob_object_expression(&files, &opts, call_expr.span);
-                  self.current += 1;
-                }
-              }
-              _ => {}
-            }
-          }
-        }
-        _ => {}
+impl<'ast> GlobImportVisit<'ast, '_> {
+  fn maybe_visit_obj_call(&mut self, expr: &mut Expression<'ast>) -> Option<bool> {
+    let call_expr = expr.as_call_expression_mut()?;
+    let member_expr = call_expr.callee.as_static_member_expr_mut()?;
+
+    let property_name = member_expr.property.name;
+    if property_name != "keys" && property_name != "values" {
+      return None;
+    }
+    let ident = member_expr.object.as_identifier()?;
+    // TODO: check is_global_identifier_reference
+    if ident.name != "Object" {
+      return None;
+    }
+    let [arg] = call_expr.arguments.as_mut_slice() else { return None };
+    let arg_expr = arg.as_expression_mut()?;
+    self.maybe_visit_glob_import_call(
+      arg_expr,
+      Some(if property_name == "keys" { OmitType::Values } else { OmitType::Keys }).as_ref(),
+    );
+    Some(true)
+  }
+
+  fn maybe_visit_glob_import_call(
+    &mut self,
+    expr: &mut Expression<'ast>,
+    omit_type: Option<&OmitType>,
+  ) {
+    let omit_keys = omit_type == Some(&OmitType::Keys);
+    let omit_values = omit_type == Some(&OmitType::Values);
+
+    let Expression::CallExpression(call_expr) = expr else { return };
+    let Expression::StaticMemberExpression(callee) = &call_expr.callee else { return };
+    if callee.property.name != "glob" {
+      return;
+    }
+    let Expression::MetaProperty(p) = &callee.object else { return };
+    if p.meta.name != "import" || p.property.name != "meta" {
+      return;
+    }
+    let mut files = vec![];
+    // import.meta.glob('./dir/*.js')
+    // import.meta.glob(['./dir/*.js', './dir2/*.js'])
+
+    let mut opts = ImportGlobOptions::default();
+    match call_expr.arguments.as_slice() {
+      [first] => self.eval_glob_expr(first, &mut files),
+      // import.meta.glob('./dir/*.js', { import: 'setup' })
+      [first, second, ..] => {
+        self.eval_glob_expr(first, &mut files);
+        extract_import_glob_options(second, &mut opts);
       }
+      [] => {}
     }
 
-    walk_mut::walk_expression(self, expr);
+    // generate:
+    //
+    // {
+    //   './dir/ind.js': __glob__0_0_,
+    //   './dir/foo.js': () => import('./dir/foo.js'),
+    //   './dir/bar.js': () => import('./dir/bar.js').then((m) => m.setup),
+    // }
+    *expr =
+      self.generate_glob_object_expression(&files, &opts, call_expr.span, omit_keys, omit_values);
+    self.current += 1;
   }
 }
 
@@ -164,7 +197,11 @@ fn extract_import_glob_options(arg: &Argument, opts: &mut ImportGlobOptions) {
       }
       "query" => match &p.value {
         Expression::StringLiteral(str) => {
-          opts.query = Some(str.value.to_string());
+          opts.query = if str.value.starts_with('?') {
+            Some(str.value.to_string())
+          } else {
+            Some(format!("?{}", str.value))
+          }
         }
         Expression::ObjectExpression(expr) => {
           let map = expr
@@ -206,64 +243,117 @@ fn extract_import_glob_options(arg: &Argument, opts: &mut ImportGlobOptions) {
   }
 }
 
+struct FileData {
+  key: String,
+  import_path: String,
+}
+
 impl<'ast> GlobImportVisit<'ast, '_> {
-  fn eval_glob_expr(&mut self, arg: &Argument, files: &mut std::vec::Vec<String>) {
-    let mut glob_exprs = vec![];
+  fn eval_glob_expr(&self, arg: &Argument, files: &mut std::vec::Vec<FileData>) {
+    let mut positive_globs = vec![];
+    let mut negated_globs = vec![];
     match arg {
       Argument::StringLiteral(str) => {
-        glob_exprs.push(str.value.as_str());
+        if let Some(glob) = str.value.strip_prefix('!') {
+          negated_globs.push(glob);
+        } else {
+          positive_globs.push(str.value.as_str());
+        }
       }
       Argument::ArrayExpression(array_expr) => {
         for expr in &array_expr.elements {
           if let ArrayExpressionElement::StringLiteral(str) = expr {
-            glob_exprs.push(str.value.as_str());
+            if let Some(glob) = str.value.strip_prefix('!') {
+              negated_globs.push(glob);
+            } else {
+              positive_globs.push(str.value.as_str());
+            }
           }
         }
       }
       _ => {}
     }
 
-    for glob_expr in glob_exprs {
+    let root = &self.root;
+    let dir = Path::new(self.id).parent().unwrap_or_else(|| Path::new(root));
+    let dir = if dir.to_slash_lossy() == "" { Path::new(root) } else { dir };
+
+    let negated_globs = negated_globs
+      .iter()
+      .map(|g| {
+        let g = preprocess_glob_expr(g);
+        let g = to_absolute_glob(&g, dir, root).unwrap();
+        Pattern::new(&g).unwrap()
+      })
+      .collect::<std::vec::Vec<_>>();
+
+    let is_relative = positive_globs.iter().all(|g| g.starts_with('.'));
+
+    let self_path = self.format_path(Path::new(self.id), Some(dir));
+
+    for glob_expr in positive_globs {
       let processed_glob_expr = preprocess_glob_expr(glob_expr);
-      let root = &self.root.to_slash_lossy();
-      let (absolute_glob, mut dir) = to_absolute_glob(&processed_glob_expr, root, self.id).unwrap();
-      if dir == "" {
-        dir = Cow::Borrowed(root);
-      }
+      let absolute_glob = to_absolute_glob(&processed_glob_expr, dir, root).unwrap();
       // TODO handle error
       for file in glob(&absolute_glob).unwrap() {
-        let file = file.unwrap().as_path().relative(dir.as_ref()).to_slash_lossy().to_string();
-        let prefix = if file.starts_with('.') { "" } else { "./" };
-        files.push(format!("{prefix}{file}"));
+        let file = file.unwrap();
+        if negated_globs.iter().any(|g| g.matches_path(&file)) {
+          continue;
+        }
+        let import_path = self.format_path(&file, Some(dir));
+        if import_path == self_path {
+          continue;
+        }
+        let key = if is_relative { import_path.clone() } else { self.format_path(&file, None) };
+        files.push(FileData { key, import_path });
       }
     }
+  }
+
+  fn format_path(&self, path: &Path, relative_to: Option<&Path>) -> String {
+    let dir = relative_to.unwrap_or(self.root);
+    let path = path.relative(dir).to_slash_lossy().to_string();
+    let prefix = if path.starts_with('.') {
+      ""
+    } else if relative_to.is_some() {
+      "./"
+    } else {
+      "/"
+    };
+    format!("{prefix}{path}")
   }
 
   #[allow(clippy::too_many_lines, clippy::cast_possible_truncation)]
   fn generate_glob_object_expression(
     &mut self,
-    files: &[String],
+    files: &[FileData],
     opts: &ImportGlobOptions,
     call_expr_span: Span,
+    omit_keys: bool,
+    omit_values: bool,
   ) -> Expression<'ast> {
-    let properties = files.iter().enumerate().map(|(index, file)| {
+    let properties = files.iter().enumerate().map(|(index, file_data)| {
+      let import_path = &file_data.import_path;
       let formatted_file = if let Some(query) = &opts.query {
         let normalized_query = if query == "?raw" {
           query
         } else {
           let file_extension =
-            Path::new(&file).extension().unwrap_or_default().to_str().unwrap_or_default();
+            Path::new(&import_path).extension().unwrap_or_default().to_str().unwrap_or_default();
           if !file_extension.is_empty() && self.restore_query_extension {
             &format!("{query}&lang.{file_extension}")
           } else {
             query
           }
         };
-        Cow::Owned(format!("{file}{normalized_query}"))
+        Cow::Owned(format!("{import_path}{normalized_query}"))
       } else {
-        Cow::Borrowed(file)
+        Cow::Borrowed(import_path)
       };
-      let value = if opts.eager.unwrap_or_default() {
+
+      let value = if omit_values {
+        self.ast_builder.expression_numeric_literal(SPAN, 0.0, None, NumberBase::Decimal)
+      } else if opts.eager.unwrap_or_default() {
         // import * as __glob__0 from './dir/foo.js'
         // const modules = {
         //   './dir/foo.js': __glob__0,
@@ -399,19 +489,32 @@ impl<'ast> GlobImportVisit<'ast, '_> {
         )
       };
 
-      self.ast_builder.object_property_kind_object_property(
-        SPAN,
-        PropertyKind::Init,
-        PropertyKey::from(self.ast_builder.expression_string_literal(Span::default(), file, None)),
-        value,
-        false,
-        false,
-        false,
-      )
+      (&file_data.key, value)
     });
 
-    let properties = self.ast_builder.vec_from_iter(properties);
-    self.ast_builder.expression_object(call_expr_span, properties, None)
+    if omit_keys {
+      let elements = properties.map(|(_, value)| ArrayExpressionElement::from(value));
+      let elements = self.ast_builder.vec_from_iter(elements);
+      self.ast_builder.expression_array(call_expr_span, elements, None)
+    } else {
+      let properties = properties.map(|(file, value)| {
+        self.ast_builder.object_property_kind_object_property(
+          SPAN,
+          PropertyKind::Init,
+          PropertyKey::from(self.ast_builder.expression_string_literal(
+            Span::default(),
+            file,
+            None,
+          )),
+          value,
+          false,
+          false,
+          false,
+        )
+      });
+      let properties = self.ast_builder.vec_from_iter(properties);
+      self.ast_builder.expression_object(call_expr_span, properties, None)
+    }
   }
 }
 
@@ -429,31 +532,19 @@ fn preprocess_glob_expr(glob_expr: &str) -> String {
   new_glob_expr
 }
 
-fn to_absolute_glob<'a>(
-  mut glob: &'a str,
-  root: &'a str,
-  importer: &'a str,
-) -> anyhow::Result<(String, Cow<'a, str>)> {
-  let mut pre: Option<char> = None;
-  if glob.starts_with('!') {
-    pre = Some('!');
-    glob = &glob[1..];
-  }
-
-  let dir = Path::new(importer).parent().unwrap_or_else(|| Path::new(root));
-
-  let mut ret = if let Some(pre) = pre { String::from(pre) } else { String::new() };
-
-  if let Some(glob) = glob.strip_prefix('/') {
-    ret.push_str(&Path::new(root).join(glob).to_slash_lossy());
+fn to_absolute_glob(glob: &str, dir: &Path, root: &Path) -> anyhow::Result<String> {
+  let absolute_glob = if let Some(glob) = glob.strip_prefix('/') {
+    root.join(glob)
   } else if glob.starts_with('.') {
-    ret.push_str(&dir.join(glob).to_slash_lossy());
+    dir.join(glob)
   } else if glob.starts_with("**") {
-    ret.push_str(glob);
+    // TODO allow this only when pattern is negated to avoid globbing entire fs
+    // or consider making it relative to root when it's not negated
+    return Ok(glob.to_string());
   } else {
     // https://github.com/rolldown/vite/blob/454c8fff9f7115ed29281c2d927366280508a0ab/packages/vite/src/node/plugins/importMetaGlob.ts#L563-L569
     // Needs to investigate if oxc resolver support this pattern
     return Err(anyhow::format_err!("Invalid glob pattern: {}", glob));
   };
-  Ok((ret, dir.to_slash_lossy()))
+  Ok(absolute_glob.to_slash_lossy().to_string())
 }

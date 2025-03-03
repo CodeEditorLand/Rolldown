@@ -1,11 +1,12 @@
-[profile]
+[workspace]
+members  = ["./crates/*", "tasks/*"]
+resolver = "3"
 
-[profile.release]
-codegen-units = 1
-debug = false     # Set to `true` for debug information
-lto = "fat"
-opt-level = 3
-strip = "symbols" # Set to `false` for debug information
+[workspace.package]
+edition    = "2024"
+homepage   = "https://rolldown.rs/"
+license    = "MIT"
+repository = "https://github.com/rolldown/rolldown"
 
 [profile.release-debug]
 debug = true
@@ -24,7 +25,13 @@ members = ["./crates/*"]
 resolver = "2"
 
 # Though the following are nursery rules, they’re still useful.
-redundant_clone = "warn"
+debug_assert_with_mut_call    = "warn"
+iter_on_single_items          = "warn"
+needless_pass_by_ref_mut      = "warn"
+redundant_clone               = "warn"
+redundant_pub_crate           = "warn"
+significant_drop_in_scrutinee = "warn"
+unused_peekable               = "warn"
 
 [workspace.dependencies]
 criterion2                              = { version = "2.0.0", default-features = false }
@@ -81,18 +88,19 @@ futures             = "0.3.30"
 glob                = "0.3.1"
 heck                = { version = "0.5.0" }
 indexmap            = "2.2.6"
-infer               = "0.16.0"
+infer               = "0.19.0"
 insta               = "1.39.0"
 itertools           = "0.14.0"
 itoa                = "1.0.11"
 json-strip-comments = "1.0.4"
-jsonschema          = { version = "0.28.0", default-features = false }
+jsonschema          = { version = "0.29.0", default-features = false }
 memchr              = "2.7.2"
 mimalloc            = "0.1.42"
 mime                = "0.3.17"
-napi                = { version = "3.0.0-alpha.29", features = ["async", "anyhow"] }
-napi-build          = { version = "2.1.1" }
-napi-derive         = { version = "3.0.0-alpha.27", default-features = false, features = ["type-def"] }
+napi                = { version = "3.0.0-alpha.31", features = ["async", "anyhow"] }
+napi-build          = { version = "2.1.5" }
+napi-derive         = { version = "3.0.0-alpha.28", default-features = false, features = ["type-def"] }
+nom                 = "8.0.0"
 notify              = { version = "8.0.0" }
 phf                 = "0.11.3"
 rayon               = "1.10.0"
@@ -121,16 +129,16 @@ xxhash-rust         = "0.8.10"
 
 
 # oxc crates with the same version
-oxc                = { version = "0.52.0", features = ["transformer", "minifier", "mangler", "semantic", "codegen", "serialize"] }
-oxc_parser_napi    = { version = "0.52.0" }
-oxc_transform_napi = { version = "0.52.0" }
+oxc                = { version = "0.53.0", features = ["transformer", "minifier", "mangler", "semantic", "codegen", "serialize"] }
+oxc_parser_napi    = { version = "0.53.0" }
+oxc_transform_napi = { version = "0.53.0" }
 
 # oxc crates in their own repos
 # Versions must be relaxed for usage in oxc.
 # Please update with `cargo update oxc_resolver oxc_sourcemap oxc_index`
-oxc_index     = { version = "2", features = ["rayon", "serde"] }            # https://github.com/oxc-project/oxc-index-vec
+oxc_index     = { version = "3", features = ["rayon", "serde"] }            # https://github.com/oxc-project/oxc-index-vec
 oxc_resolver  = { version = "4", features = ["package_json_raw_json_api"] } # https://github.com/oxc-project/oxc-resolver
-oxc_sourcemap = { version = "1" }                                           # https://github.com/oxc-project/oxc-sourcemap
+oxc_sourcemap = { version = "2" }                                           # https://github.com/oxc-project/oxc-sourcemap
 
 [workspace.lints.clippy]
 clone_on_ref_ptr = "deny"

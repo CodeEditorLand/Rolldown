@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use crate::utils::resolve_id::resolve_id;
 use crate::SharedResolver;
+use crate::utils::resolve_id::resolve_id;
 use rolldown_common::{ImportKind, ResolvedId};
 use rolldown_error::ResultExt;
 use rolldown_error::{BuildDiagnostic, SingleBuildResult};
@@ -30,7 +30,7 @@ pub async fn load_entry_module(
   match result {
     Ok(result) => {
       if result.is_external {
-        Err(BuildDiagnostic::entry_cannot_be_external(result.id.to_string()))
+        Err(BuildDiagnostic::entry_cannot_be_external(result.id.as_str()))
       } else {
         Ok(result)
       }

@@ -1,6 +1,6 @@
 use rolldown_common::{
-  dynamic_import_usage::DynamicImportExportsUsage, EntryPoint, ExportsKind, ModuleIdx,
-  OutputFormat, StmtInfo, StmtInfoMeta, WrapKind,
+  EntryPoint, ExportsKind, ModuleIdx, OutputFormat, StmtInfo, StmtInfoMeta, WrapKind,
+  dynamic_import_usage::DynamicImportExportsUsage,
 };
 use rustc_hash::FxHashMap;
 
@@ -55,6 +55,7 @@ impl LinkStage<'_> {
             #[cfg(debug_assertions)]
             debug_label: None,
             meta: StmtInfoMeta::default(),
+            ..Default::default()
           };
           ecma_module.stmt_infos.add_stmt_info(stmt_info);
         });
@@ -99,6 +100,7 @@ impl LinkStage<'_> {
             #[cfg(debug_assertions)]
             debug_label: None,
             meta: StmtInfoMeta::default(),
+            ..Default::default()
           };
           ecma_module.stmt_infos.replace_namespace_stmt_info(namespace_stmt_info);
         }

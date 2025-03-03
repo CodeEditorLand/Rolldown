@@ -1,12 +1,12 @@
 use oxc::{
   ast::{
+    AstBuilder, NONE, VisitMut,
     ast::{Argument, Expression, ImportOrExportKind, PropertyKind, Statement},
-    AstBuilder, VisitMut, NONE,
   },
-  span::{Span, SPAN},
+  span::{SPAN, Span},
   syntax::number::NumberBase,
 };
-use parse_pattern::{parse_pattern, DynamicImportPattern, DynamicImportRequest};
+use parse_pattern::{DynamicImportPattern, DynamicImportRequest, parse_pattern};
 use rolldown_plugin::{
   HookLoadArgs, HookLoadOutput, HookLoadReturn, HookResolveIdArgs, HookResolveIdOutput,
   HookResolveIdReturn, HookTransformAstArgs, HookTransformAstReturn, Plugin, PluginContext,
@@ -33,7 +33,10 @@ impl Plugin for DynamicImportVarsPlugin {
     args: &HookResolveIdArgs<'_>,
   ) -> HookResolveIdReturn {
     if args.specifier == DYNAMIC_IMPORT_HELPER {
-      Ok(Some(HookResolveIdOutput { id: DYNAMIC_IMPORT_HELPER.to_string(), ..Default::default() }))
+      Ok(Some(HookResolveIdOutput {
+        id: arcstr::literal!(DYNAMIC_IMPORT_HELPER),
+        ..Default::default()
+      }))
     } else {
       Ok(None)
     }

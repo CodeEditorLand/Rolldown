@@ -19,12 +19,7 @@ typedmap = { workspace = true, features = ["dashmap"] }
 
 [features]
 default = ["serde"]
-inner = []
-serde = ["dep:serde", "oxc_index/serde"]
-
-[lib]
-doctest = false
-path = "Source/lib.rs"
+serde   = ["dep:serde", "oxc_index/serde"]
 
 [lints]
 workspace = true

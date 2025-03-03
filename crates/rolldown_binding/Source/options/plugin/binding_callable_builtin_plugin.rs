@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use napi::{bindgen_prelude::FromNapiValue, Either};
+use napi::{Either, bindgen_prelude::FromNapiValue};
 use napi_derive::napi;
-use rolldown_common::{side_effects, WatcherChangeKind};
+use rolldown_common::{WatcherChangeKind, side_effects};
 use rolldown_plugin::{
   CustomField, HookLoadArgs, HookLoadOutput, HookResolveIdArgs, HookResolveIdOutput,
 };
@@ -114,7 +114,7 @@ pub struct BindingHookJsResolveIdOutput {
 impl From<HookResolveIdOutput> for BindingHookJsResolveIdOutput {
   fn from(value: HookResolveIdOutput) -> Self {
     Self {
-      id: value.id,
+      id: value.id.to_string(),
       external: value.external,
       side_effects: get_side_effects_binding(value.side_effects),
     }

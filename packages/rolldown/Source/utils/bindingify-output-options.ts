@@ -3,6 +3,7 @@ import { transformRenderedChunk } from './transform-rendered-chunk'
 import type { BindingOutputOptions } from '../binding'
 import type { OutputOptions } from '../options/output-options'
 import { transformAssetSource } from './asset-source'
+import { SourcemapIgnoreListOption } from '../types/misc'
 
 export function bindingifyOutputOptions(
   outputOptions: OutputOptions,
@@ -13,6 +14,7 @@ export function bindingifyOutputOptions(
     exports,
     hashCharacters,
     sourcemap,
+    sourcemapDebugIds,
     sourcemapIgnoreList,
     sourcemapPathTransform,
     name,
@@ -39,6 +41,7 @@ export function bindingifyOutputOptions(
     exports,
     hashCharacters,
     sourcemap: bindingifySourcemap(sourcemap),
+    sourcemapDebugIds,
     sourcemapIgnoreList: bindingifySourcemapIgnoreList(sourcemapIgnoreList),
     sourcemapPathTransform,
     banner: bindingifyAddon(banner),
@@ -125,9 +128,9 @@ function bindingifySourcemap(
   }
 }
 
-function bindingifySourcemapIgnoreList(
+export function bindingifySourcemapIgnoreList(
   sourcemapIgnoreList: OutputOptions['sourcemapIgnoreList'],
-): BindingOutputOptions['sourcemapIgnoreList'] {
+): SourcemapIgnoreListOption {
   return typeof sourcemapIgnoreList === 'function'
     ? sourcemapIgnoreList
     : sourcemapIgnoreList === false

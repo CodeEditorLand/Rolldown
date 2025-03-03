@@ -1,23 +1,17 @@
+use std::{borrow::Cow, collections::BTreeMap, path::Path, sync::Arc};
+
 use arcstr::ArcStr;
 use rolldown_common::{EmittedAsset, Output, OutputAsset, OutputChunk};
 use rolldown_plugin::{HookNoopReturn, Plugin, PluginContext};
 use rolldown_utils::rustc_hash::FxHashSetExt;
 use rustc_hash::FxHashSet;
 use serde::Serialize;
-use std::{
-  borrow::Cow,
-  collections::BTreeMap,
-  path::Path,
-  sync::{Arc, LazyLock},
-};
 
 #[derive(Debug)]
 pub struct ManifestPlugin {
   pub config: ManifestPluginConfig,
+  pub entry_css_asset_file_names: FxHashSet<String>,
 }
-
-// TODO: Link this with assets plugin
-static CSS_ENTRIES_MAP: LazyLock<FxHashSet<String>> = LazyLock::new(FxHashSet::default);
 
 #[derive(Debug, Default)]
 pub struct ManifestPluginConfig {
@@ -39,14 +33,17 @@ impl Plugin for ManifestPlugin {
     // Use BTreeMap to make the result sorted
     let mut manifest = BTreeMap::default();
 
-    let entry_css_reference_ids: &FxHashSet<String> = &CSS_ENTRIES_MAP;
+    let entry_css_reference_ids: &FxHashSet<String> = &self.entry_css_asset_file_names;
     let mut entry_css_asset_file_names = FxHashSet::with_capacity(entry_css_reference_ids.len());
     for reference_id in entry_css_reference_ids {
-      if let Ok(file_name) = ctx.get_file_name(reference_id.as_str()) {
-        entry_css_asset_file_names.insert(file_name);
-      } else {
-        // The asset was generated as part of a different output option.
-        // It was already handled during the previous run of this plugin.
+      match ctx.get_file_name(reference_id.as_str()) {
+        Ok(file_name) => {
+          entry_css_asset_file_names.insert(file_name);
+        }
+        _ => {
+          // The asset was generated as part of a different output option.
+          // It was already handled during the previous run of this plugin.
+        }
       }
     }
 
@@ -105,7 +102,7 @@ impl Plugin for ManifestPlugin {
         file_name: Some(self.config.out_path.as_str().into()),
         name: None,
         original_file_name: None,
-        source: (serde_json::to_string_pretty(&manifest).unwrap()).into(),
+        source: (serde_json::to_string_pretty(&manifest)?).into(),
       })
       .await?;
     // }
@@ -182,20 +179,23 @@ impl ManifestPlugin {
 }
 
 fn get_chunk_original_file_name(chunk: &OutputChunk, root: &str) -> String {
-  if let Some(facade_module_id) = &chunk.facade_module_id {
-    let name = facade_module_id.relative_path(root);
-    let name_str = name.to_string_lossy().to_string();
-    // TODO: Support System format
-    // if format == 'system' && !chunk.name.as_str().contains("-legacy") {
-    //   name_str = if let Some(ext) = name.extension() {
-    //     let end = name_str.len() - ext.len() - 1;
-    //     format!("{}-legacy.{}", &name_str[0..end], ext.to_string_lossy())
-    //   } else {
-    //     format!("{name_str}-legacy")
-    //   }
-    // }
-    name_str.replace('\0', "")
-  } else {
-    format!("_{}", Path::new(chunk.filename.as_str()).file_name().unwrap().to_string_lossy())
+  match &chunk.facade_module_id {
+    Some(facade_module_id) => {
+      let name = facade_module_id.relative_path(root);
+      let name_str = name.to_string_lossy().to_string();
+      // TODO: Support System format
+      // if format == 'system' && !chunk.name.as_str().contains("-legacy") {
+      //   name_str = if let Some(ext) = name.extension() {
+      //     let end = name_str.len() - ext.len() - 1;
+      //     format!("{}-legacy.{}", &name_str[0..end], ext.to_string_lossy())
+      //   } else {
+      //     format!("{name_str}-legacy")
+      //   }
+      // }
+      name_str.replace('\0', "")
+    }
+    _ => {
+      format!("_{}", Path::new(chunk.filename.as_str()).file_name().unwrap().to_string_lossy())
+    }
   }
 }

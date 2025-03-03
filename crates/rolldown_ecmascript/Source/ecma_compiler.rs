@@ -4,20 +4,20 @@ use arcstr::ArcStr;
 use itertools::Either;
 use oxc::{
   allocator::Allocator,
-  ast::{ast::Program, AstBuilder},
+  ast::{AstBuilder, ast::Program},
   codegen::{CodeGenerator, Codegen, CodegenOptions, CodegenReturn, LegalComment},
   mangler::Mangler,
   minifier::{CompressOptions, Compressor, MinifierOptions, MinifierReturn},
   parser::{ParseOptions, Parser},
   semantic::SemanticBuilder,
-  span::{SourceType, SPAN},
+  span::{SPAN, SourceType},
 };
 use oxc_sourcemap::SourceMap;
 use rolldown_error::{BuildDiagnostic, BuildResult, Severity};
 
 use crate::ecma_ast::{
-  program_cell::{ProgramCell, ProgramCellDependent, ProgramCellOwner},
   EcmaAst,
+  program_cell::{ProgramCell, ProgramCellDependent, ProgramCellOwner},
 };
 pub struct EcmaCompiler;
 
@@ -116,7 +116,8 @@ impl EcmaCompiler {
     codegen_options: CodegenOptions,
   ) -> (String, Option<SourceMap>) {
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, source_text, SourceType::default()).parse().program;
+    let program =
+      Parser::new(&allocator, source_text, SourceType::default().with_jsx(true)).parse().program;
     let program = allocator.alloc(program);
     let ret = Self::minify_impl(minifier_options, run_compress, &allocator, program);
     let ret = Codegen::new()

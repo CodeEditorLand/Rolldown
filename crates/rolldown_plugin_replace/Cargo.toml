@@ -1,6 +1,7 @@
 [dependencies]
-regex = { workspace = true }
-regress = { workspace = true }
+oxc             = { workspace = true }
+regex           = { workspace = true }
+regress         = { workspace = true }
 rolldown_plugin = { path = "../rolldown_plugin" }
 rustc-hash = { workspace = true }
 string_wizard = { workspace = true }

@@ -194,11 +194,7 @@ impl NormalModule {
   // , we need to consider to stimulate the Node.js ESM behavior for maximum compatibility.
   pub fn interop(&self, importee: &NormalModule) -> Option<Interop> {
     if matches!(importee.ecma_view.exports_kind, ExportsKind::CommonJs) {
-      if self.ecma_view.def_format.is_esm() {
-        Some(Interop::Node)
-      } else {
-        Some(Interop::Babel)
-      }
+      if self.ecma_view.def_format.is_esm() { Some(Interop::Node) } else { Some(Interop::Babel) }
     } else {
       None
     }
@@ -281,6 +277,7 @@ impl NormalModule {
       stmt_idx: None,
       declared_symbols: vec![esm_namespace_ref_derived_from_module_exports],
       referenced_symbols: vec![wrap_ref.into(), runtime_module.resolve_symbol("__toESM").into()],
+      force_tree_shaking: true,
       #[cfg(debug_assertions)]
       debug_label: Some("esm_namespace_ref_derived_from_module_exports".to_string()),
       ..Default::default()
@@ -316,6 +313,7 @@ impl NormalModule {
       referenced_symbols: vec![wrap_ref.into(), runtime_module.resolve_symbol("__toESM").into()],
       #[cfg(debug_assertions)]
       debug_label: Some("esm_namespace_ref_derived_from_module_exports node".to_string()),
+      force_tree_shaking: true,
       ..Default::default()
     });
 

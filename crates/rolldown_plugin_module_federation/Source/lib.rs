@@ -9,8 +9,8 @@ use manifest::generate_manifest;
 pub use option::{Manifest, ModuleFederationPluginOption, Remote, Shared};
 use oxc::{
   ast::{
+    AstBuilder, NONE, VisitMut,
     ast::{ImportOrExportKind, Statement},
-    AstBuilder, VisitMut, NONE,
   },
   span::SPAN,
 };
@@ -19,8 +19,8 @@ use rolldown_plugin::{HookResolveIdReturn, Plugin};
 use rolldown_utils::{concat_string, dashmap::FxDashMap};
 use rustc_hash::FxHashSet;
 use utils::{
-  detect_remote_module_type, generate_remote_module_is_cjs_placeholder, get_remote_module_prefix,
-  ResolvedRemoteModule,
+  ResolvedRemoteModule, detect_remote_module_type, generate_remote_module_is_cjs_placeholder,
+  get_remote_module_prefix,
 };
 
 const REMOTE_ENTRY: &str = "mf:remote-entry.js";
@@ -279,14 +279,14 @@ impl Plugin for ModuleFederationPlugin {
       || args.specifier.starts_with(INIT_SHARED_MODULE_PREFIX)
     {
       return Ok(Some(rolldown_plugin::HookResolveIdOutput {
-        id: args.specifier.to_string(),
+        id: args.specifier.into(),
         ..Default::default()
       }));
     }
     if args.specifier == "@module-federation/runtime" {
       let resolve_id = ctx.resolve(args.specifier, None, None).await??;
       return Ok(Some(rolldown_plugin::HookResolveIdOutput {
-        id: resolve_id.id.to_string(),
+        id: resolve_id.id,
         ..Default::default()
       }));
     }
@@ -294,7 +294,7 @@ impl Plugin for ModuleFederationPlugin {
       let resolve_id =
         ctx.resolve(&args.specifier[SHARED_MODULE_PREFIX.len()..], None, None).await??;
       return Ok(Some(rolldown_plugin::HookResolveIdOutput {
-        id: resolve_id.id.to_string(),
+        id: resolve_id.id,
         ..Default::default()
       }));
     }

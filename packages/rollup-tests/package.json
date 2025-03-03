@@ -1,46 +1,26 @@
 {
-	"name": "@codeeditorland/tests",
-	"version": "0.0.1",
-	"private": false,
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "Source 🖋️ Open 👐🏻",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
-	"scripts": {
-		"prepublishOnly": "Build 'Source/**/*.ts'",
-		"test--update": "mocha --jobs 1 --file ./src/intercept/update-test-status.js test/test.js"
-	},
-	"dependencies": {
-		"@codeeditorland/transform": "0.48.2",
-		"fixturify": "^3.0.0",
-		"fs-extra": "^11.2.0",
-		"rolldown": "workspace:*",
-		"source-map-support": "^0.5.21"
-	},
-	"devDependencies": {
-		"@playform/build": "0.2.1",
-		"@types/node": "22.13.0",
-		"buble": "^0.20.0",
-		"source-map": "^0.7.4",
-		"terser": "^5.31.1"
-	},
-	"publishConfig": {
-		"access": "public"
-	}
+  "name": "rollup-tests",
+  "private": true,
+  "scripts": {
+    "test": "mocha --file ./src/intercept/check.js test/test.js",
+    "test--update": "mocha --jobs 1 --file ./src/intercept/update-test-status.js test/test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "fixturify": "^3.0.0",
+    "fs-extra": "^11.2.0",
+    "mocha": "^11.0.0",
+    "rolldown": "workspace:*",
+    "source-map-support": "^0.5.21",
+    "oxc-transform": "0.53.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "10.0.10",
+    "@types/node": "22.13.8",
+    "source-map": "^0.7.4",
+    "buble": "^0.20.0",
+    "terser": "^5.31.1"
+  }
 }

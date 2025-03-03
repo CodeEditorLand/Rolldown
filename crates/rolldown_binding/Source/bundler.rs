@@ -13,7 +13,7 @@ use crate::{
     try_init_custom_trace_subscriber,
   },
 };
-use napi::{tokio::sync::Mutex, Env};
+use napi::{Env, tokio::sync::Mutex};
 use napi_derive::napi;
 use rolldown::Bundler as NativeBundler;
 use rolldown_error::{BuildDiagnostic, BuildResult, DiagnosticOptions};
@@ -207,6 +207,8 @@ impl Bundler {
                 message: warning
                   .to_diagnostic_with(&DiagnosticOptions { cwd: self.cwd.clone() })
                   .to_color_string(),
+                id: warning.id(),
+                exporter: warning.exporter(),
               },
             )
               .into(),

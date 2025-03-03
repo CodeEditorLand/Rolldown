@@ -48,6 +48,7 @@ indexmap           = { workspace = true, features = ["serde"] }
 infer              = { workspace = true }
 memchr             = { workspace = true }
 mime               = { workspace = true }
+nom                = { workspace = true }
 oxc                = { workspace = true }
 oxc_index          = { workspace = true }
 phf                = { workspace = true }

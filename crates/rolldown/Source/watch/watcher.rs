@@ -1,5 +1,5 @@
 use arcstr::ArcStr;
-use notify::{event::ModifyKind, Config, RecommendedWatcher, Watcher as NotifyWatcher};
+use notify::{Config, RecommendedWatcher, Watcher as NotifyWatcher, event::ModifyKind};
 use rolldown_common::{
   BundleEvent, NotifyOption, WatcherChangeData, WatcherChangeKind, WatcherEvent,
 };
@@ -9,9 +9,9 @@ use std::{
   ops::Deref,
   path::Path,
   sync::{
-    atomic::{AtomicBool, Ordering},
-    mpsc::{channel, Receiver, Sender},
     Arc,
+    atomic::{AtomicBool, Ordering},
+    mpsc::{Receiver, Sender, channel},
   },
   time::Duration,
 };
@@ -186,7 +186,8 @@ impl WatcherImpl {
 
     let _ = self.run(&[]).await;
     let future = async move {
-      while let Ok(msg) = self.exec_rx.lock().await.recv() {
+      let exec_rx = self.exec_rx.lock().await;
+      while let Ok(msg) = exec_rx.recv() {
         match msg {
           ExecChannelMsg::Exec => {
             tokio::time::sleep(Duration::from_millis(u64::from(build_delay))).await;

@@ -1,10 +1,10 @@
 use crate::{
-  types::{custom_field::CustomField, hook_resolve_id_skipped::HookResolveIdSkipped},
   HookResolveIdArgs, PluginDriver,
+  types::{custom_field::CustomField, hook_resolve_id_skipped::HookResolveIdSkipped},
 };
 use rolldown_common::{
-  is_existing_node_builtin_modules, ImportKind, ModuleDefFormat, ResolvedId,
-  SharedNormalizedBundlerOptions,
+  ImportKind, ModuleDefFormat, ResolvedId, SharedNormalizedBundlerOptions,
+  is_existing_node_builtin_modules,
 };
 use rolldown_resolver::{ResolveError, Resolver};
 use std::{path::Path, sync::Arc};
@@ -34,7 +34,7 @@ pub async fn resolve_id_check_external(
   if let Some(is_external) = bundle_options.external.as_ref() {
     if is_external(request, importer, false).await? {
       return Ok(Ok(ResolvedId {
-        id: request.to_string().into(),
+        id: request.into(),
         ignored: false,
         module_def_format: ModuleDefFormat::Unknown,
         is_external: true,
@@ -75,7 +75,7 @@ pub async fn resolve_id_check_external(
         if let Some(is_external) = bundle_options.external.as_ref() {
           if is_external(request, importer, true).await? {
             return Ok(Ok(ResolvedId {
-              id: request.to_string().into(),
+              id: request.into(),
               ignored: false,
               module_def_format: ModuleDefFormat::Unknown,
               is_external: true,
@@ -118,9 +118,9 @@ pub async fn resolve_id_with_plugins(
       .await?
     {
       return Ok(Ok(ResolvedId {
-        module_def_format: ModuleDefFormat::from_path(&r.id),
+        module_def_format: ModuleDefFormat::from_path(r.id.as_str()),
         ignored: false,
-        id: r.id.into(),
+        id: r.id,
         is_external: matches!(r.external, Some(true)),
         package_json: None,
         side_effects: r.side_effects,
@@ -143,9 +143,9 @@ pub async fn resolve_id_with_plugins(
     .await?
   {
     return Ok(Ok(ResolvedId {
-      module_def_format: ModuleDefFormat::from_path(&r.id),
+      module_def_format: ModuleDefFormat::from_path(r.id.as_str()),
       ignored: false,
-      id: r.id.into(),
+      id: r.id,
       is_external: matches!(r.external, Some(true)),
       package_json: None,
       side_effects: r.side_effects,
@@ -156,7 +156,7 @@ pub async fn resolve_id_with_plugins(
   // Auto external http url or data url
   if is_http_url(request) || is_data_url(request) {
     return Ok(Ok(ResolvedId {
-      id: request.to_string().into(),
+      id: request.into(),
       module_def_format: ModuleDefFormat::Unknown,
       ignored: false,
       is_external: true,
@@ -187,7 +187,7 @@ fn resolve_id(
         // we needs to use `is_runtime_module` to get the original specifier
         is_external_without_side_effects: is_existing_node_builtin_modules(&resolved),
         id: if resolved.starts_with("node:") && !is_runtime_module {
-          resolved[5..].to_string().into()
+          resolved[5..].into()
         } else {
           resolved.into()
         },
