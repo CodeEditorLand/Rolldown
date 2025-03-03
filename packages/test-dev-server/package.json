@@ -1,28 +1,6 @@
 {
 	"name": "@codeeditorland/test-dev-server",
-	"version": "0.0.1",
-	"private": false,
 	"description": "A implementation of a dev server for demonstrating",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "Source 🖋️ Open 👐🏻",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
 	"exports": {
 		".": {
 			"default": "./dist/index.js",
@@ -46,8 +24,5 @@
 		"@playform/build": "0.2.1",
 		"@types/connect": "3.4.38",
 		"@types/serve-static": "1.15.7"
-	},
-	"publishConfig": {
-		"access": "public"
 	}
 }

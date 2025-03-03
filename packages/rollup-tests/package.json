@@ -1,26 +1,19 @@
 {
-  "name": "rollup-tests",
-  "private": true,
-  "scripts": {
-    "test": "mocha --file ./src/intercept/check.js test/test.js",
-    "test--update": "mocha --jobs 1 --file ./src/intercept/update-test-status.js test/test.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
-  "dependencies": {
-    "fixturify": "^3.0.0",
-    "fs-extra": "^11.2.0",
-    "mocha": "^11.0.0",
-    "rolldown": "workspace:*",
-    "source-map-support": "^0.5.21",
-    "oxc-transform": "0.53.0"
-  },
-  "devDependencies": {
-    "@types/mocha": "10.0.10",
-    "@types/node": "22.13.8",
-    "source-map": "^0.7.4",
-    "buble": "^0.20.0",
-    "terser": "^5.31.1"
-  }
+	"name": "rollup-tests",
+	"scripts": {
+		"test--update": "mocha --jobs 1 --file ./src/intercept/update-test-status.js test/test.js"
+	},
+	"dependencies": {
+		"fixturify": "^3.0.0",
+		"fs-extra": "^11.2.0",
+		"oxc-transform": "0.53.0",
+		"rolldown": "workspace:*",
+		"source-map-support": "^0.5.21"
+	},
+	"devDependencies": {
+		"@types/node": "22.13.8",
+		"buble": "^0.20.0",
+		"source-map": "^0.7.4",
+		"terser": "^5.31.1"
+	}
 }
