@@ -6,11 +6,11 @@
 		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
 	"dependencies": {
-		"@module-federation/runtime": "^0.8.8"
+		"@module-federation/runtime": "0.10.0"
 	},
 	"devDependencies": {
 		"@playform/build": "0.2.1",
-		"http-server": "^14.0.1",
+		"http-server": "14.1.1",
 		"rolldown": "workspace:*"
 	}
 }
