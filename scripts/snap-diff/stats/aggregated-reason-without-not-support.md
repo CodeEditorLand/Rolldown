@@ -93,11 +93,6 @@
 ## different async module impl
 
 - crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_one_fork
-
-## sub optimal for pure call with spread
-
-- crates/rolldown/tests/esbuild/dce/pure_calls_with_spread
-
 ## side effects detector not align
 
 - crates/rolldown/tests/esbuild/dce/remove_unused_no_side_effects_tagged_templates

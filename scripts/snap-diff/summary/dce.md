@@ -53,13 +53,7 @@ diff
 diff
 
 ## [package_json_side_effects_false_one_fork](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_false_one_fork/diff.md)
-
-diff
-
-## [pure_calls_with_spread](../../../crates/rolldown/tests/esbuild/dce/pure_calls_with_spread/diff.md)
-
-diff
-
+  diff
 ## [remove_unused_no_side_effects_tagged_templates](../../../crates/rolldown/tests/esbuild/dce/remove_unused_no_side_effects_tagged_templates/diff.md)
 
 diff
@@ -147,7 +141,7 @@ diff
 ## [package_json_side_effects_true_keep_es6](../../../crates/rolldown/tests/esbuild/dce/package_json_side_effects_true_keep_es6)
 
 ## [preserve_directives_minify_pass_through](../../../crates/rolldown/tests/esbuild/dce/preserve_directives_minify_pass_through)
-
+## [pure_calls_with_spread](../../../crates/rolldown/tests/esbuild/dce/pure_calls_with_spread)
 ## [remove_unused_import_meta](../../../crates/rolldown/tests/esbuild/dce/remove_unused_import_meta)
 
 ## [remove_unused_imports](../../../crates/rolldown/tests/esbuild/dce/remove_unused_imports)

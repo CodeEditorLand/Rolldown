@@ -2,14 +2,17 @@ import * as v from 'valibot'
 import { colors } from '../cli/colors'
 import { toJsonSchema } from '@valibot/to-json-schema'
 import type { PreRenderedChunk } from '../binding'
-import type { RolldownPluginOption } from '../plugin'
+import type {
+  RolldownOutputPluginOption,
+  RolldownPluginOption,
+} from '../plugin'
 import type { ObjectSchema } from '../types/schema'
 import type { RenderedChunk } from '../types/rolldown-output'
-import type { TreeshakingOptions } from '../types/module-side-effects'
 import type {
   SourcemapIgnoreListOption,
   SourcemapPathTransformOption,
 } from '../types/misc'
+import { PreRenderedAsset } from '../options/output-options'
 
 const StringOrRegExpSchema = v.union([v.string(), v.instance(RegExp)])
 
@@ -86,7 +89,13 @@ const JsxOptionsSchema = v.strictObject({
     ),
   ),
   mode: v.pipe(
-    v.optional(v.union([v.literal('classic'), v.literal('automatic')])),
+    v.optional(
+      v.union([
+        v.literal('classic'),
+        v.literal('automatic'),
+        v.literal('preserve'),
+      ]),
+    ),
     v.description('Jsx transformation mode'),
   ),
   refresh: v.pipe(
@@ -96,7 +105,11 @@ const JsxOptionsSchema = v.strictObject({
 })
 
 const WatchOptionsSchema = v.strictObject({
-  chokidar: v.optional(v.any()),
+  chokidar: v.optional(
+    v.never(
+      `The "watch.chokidar" option is deprecated, please use "watch.notify" instead of it`,
+    ),
+  ),
   exclude: v.optional(
     v.union([StringOrRegExpSchema, v.array(StringOrRegExpSchema)]),
   ),
@@ -247,13 +260,17 @@ const InputOptionsSchema = v.strictObject({
     ),
   ),
   profilerNames: v.optional(v.boolean()),
-  jsx: v.optional(JsxOptionsSchema),
+  jsx: v.optional(v.union([v.boolean(), JsxOptionsSchema])),
   watch: v.optional(v.union([WatchOptionsSchema, v.literal(false)])),
   dropLabels: v.pipe(
     v.optional(v.array(v.string())),
     v.description('Remove labeled statements with these label names'),
   ),
   checks: v.optional(ChecksOptionsSchema),
+  keepNames: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Keep function/class name'),
+  ),
 })
 
 const InputCliOverrideSchema = v.strictObject({
@@ -271,6 +288,7 @@ const InputCliOverrideSchema = v.strictObject({
     v.optional(v.boolean()),
     v.description('enable treeshaking'),
   ),
+  jsx: v.pipe(v.optional(JsxOptionsSchema), v.description('enable jsx')),
 })
 
 const InputCliOptionsSchema = v.omit(
@@ -335,6 +353,20 @@ const ChunkFileNamesSchema = v.union([
     v.args(v.tuple([v.custom<PreRenderedChunk>(() => true)])),
     v.returns(v.string()),
   ),
+])
+
+const AssetFileNamesSchema = v.union([
+  v.string(),
+  v.pipe(
+    v.function(),
+    v.args(v.tuple([v.custom<PreRenderedAsset>(() => true)])),
+    v.returns(v.string()),
+  ),
+])
+
+const SanitizeFileNameSchema = v.union([
+  v.boolean(),
+  v.pipe(v.function(), v.args(v.tuple([v.string()])), v.returns(v.string())),
 ])
 
 const GlobalsFunctionSchema = v.pipe(
@@ -426,14 +458,12 @@ const OutputOptionsSchema = v.strictObject({
     ),
   ),
   esModule: v.optional(v.union([v.boolean(), v.literal('if-default-prop')])),
-  assetFileNames: v.pipe(
-    v.optional(v.string()),
-    v.description('Name pattern for asset files'),
-  ),
+  assetFileNames: v.optional(AssetFileNamesSchema),
   entryFileNames: v.optional(ChunkFileNamesSchema),
   chunkFileNames: v.optional(ChunkFileNamesSchema),
   cssEntryFileNames: v.optional(ChunkFileNamesSchema),
   cssChunkFileNames: v.optional(ChunkFileNamesSchema),
+  sanitizeFileName: v.optional(SanitizeFileNameSchema),
   minify: v.pipe(
     v.optional(v.union([v.boolean(), MinifyOptionsSchema])),
     v.description('Minify the bundled file'),
@@ -467,6 +497,7 @@ const OutputOptionsSchema = v.strictObject({
     v.optional(v.enum(ESTarget)),
     v.description('The JavaScript target environment'),
   ),
+  plugins: v.optional(v.custom<RolldownOutputPluginOption>(() => true)),
 })
 
 const getAddonDescription = (
@@ -478,6 +509,10 @@ const getAddonDescription = (
 
 const OutputCliOverrideSchema = v.strictObject({
   // Reject all functions in CLI
+  assetFileNames: v.pipe(
+    v.optional(v.string()),
+    v.description('Name pattern for asset files'),
+  ),
   entryFileNames: v.pipe(
     v.optional(v.string()),
     v.description('Name pattern for emitted entry chunks'),
@@ -493,6 +528,10 @@ const OutputCliOverrideSchema = v.strictObject({
   cssChunkFileNames: v.pipe(
     v.optional(v.string()),
     v.description('Name pattern for emitted css secondary chunks'),
+  ),
+  sanitizeFileName: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Sanitize file name'),
   ),
   banner: v.pipe(
     v.optional(v.string()),
@@ -551,7 +590,7 @@ const OutputCliOptionsSchema = v.omit(
     ...OutputOptionsSchema.entries,
     ...OutputCliOverrideSchema.entries,
   }),
-  ['sourcemapIgnoreList', 'sourcemapPathTransform'],
+  ['sourcemapIgnoreList', 'sourcemapPathTransform', 'plugins'],
 )
 
 /// --- CliSchema ---
@@ -575,10 +614,6 @@ const CliOptionsSchema = v.strictObject({
   ...OutputCliOptionsSchema.entries,
 })
 
-export function validateTreeShakingOptions(options: TreeshakingOptions): void {
-  v.parse(TreeshakingOptionsSchema, options)
-}
-
 export function validateCliOptions<T>(options: T): [T, string[]?] {
   let parsed = v.safeParse(CliOptionsSchema, options)
 
@@ -588,6 +623,57 @@ export function validateCliOptions<T>(options: T): [T, string[]?] {
       ?.map((issue) => issue.path?.join(', '))
       .filter((v) => v !== undefined),
   ]
+}
+
+type HelperMsgRecord = Record<string, { ignored?: boolean; msg?: string }>
+
+const inputHelperMsgRecord: HelperMsgRecord = {
+  output: { ignored: true }, // Ignore the output key
+}
+const outputHelperMsgRecord: HelperMsgRecord = {}
+
+export function validateOption<T>(key: 'input' | 'output', options: T): void {
+  if (process.env.ROLLDOWN_OPTIONS_VALIDATION === 'loose') return
+
+  let parsed = v.safeParse(
+    key === 'input' ? InputOptionsSchema : OutputOptionsSchema,
+    options,
+  )
+
+  if (!parsed.success) {
+    const errors = parsed.issues
+      .map((issue) => {
+        const issuePaths = issue.path!.map((path) => path.key)
+        let issueMsg = issue.message
+        // For issue in union type, ref https://valibot.dev/guides/unions/
+        // - the received is not matched with the all the sub typing
+        // - one sub typing is matched, but it is has issue, we need to find the matched sub issue
+        if (issue.type === 'union') {
+          const subIssue = issue.issues?.find(
+            (i) => !(i.type !== issue.received && i.input === issue.input),
+          )
+          if (subIssue) {
+            if (subIssue.path) {
+              issuePaths.push(subIssue.path.map((path) => path.key))
+            }
+            issueMsg = subIssue.message
+          }
+        }
+        const stringPath = issuePaths.join('.')
+        const helper =
+          key === 'input'
+            ? inputHelperMsgRecord[stringPath]
+            : outputHelperMsgRecord[stringPath]
+        if (helper && helper.ignored) {
+          return ''
+        }
+        return `- For the "${stringPath}". ${issueMsg}. ${helper ? helper.msg : ''}`
+      })
+      .filter(Boolean)
+    if (errors.length) {
+      throw new Error(`Failed validate ${key} options.\n` + errors.join('\n'))
+    }
+  }
 }
 
 export function getInputCliKeys(): string[] {

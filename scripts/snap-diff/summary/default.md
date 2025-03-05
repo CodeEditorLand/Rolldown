@@ -33,9 +33,9 @@ missing
 missing
 
 ## [define_import_meta](../../../crates/rolldown/tests/esbuild/default/define_import_meta/diff.md)
-
-diff
-
+  diff
+## [define_this](../../../crates/rolldown/tests/esbuild/default/define_this/diff.md)
+  diff
 ## entry_names_no_slash_after_dir
 
 missing
@@ -293,9 +293,6 @@ diff
 ## [define_optional_chain](../../../crates/rolldown/tests/esbuild/default/define_optional_chain)
 
 ## [define_optional_chain_panic_issue3551](../../../crates/rolldown/tests/esbuild/default/define_optional_chain_panic_issue3551)
-
-## [define_this](../../../crates/rolldown/tests/esbuild/default/define_this)
-
 ## [duplicate_property_warning](../../../crates/rolldown/tests/esbuild/default/duplicate_property_warning)
 
 ## [dynamic_import_with_expression_cjs](../../../crates/rolldown/tests/esbuild/default/dynamic_import_with_expression_cjs)
