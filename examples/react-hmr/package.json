@@ -1,5 +1,27 @@
 {
 	"name": "react-hmr",
+	"version": "0.0.1",
+	"private": false,
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "Source 🖋️ Open 👐🏻",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
+	},
+	"type": "module",
 	"scripts": {
 		"dev": "serve",
 		"prepublishOnly": "Build 'Source/**/*.ts'"
@@ -9,5 +31,8 @@
 		"@codeeditorland/test-dev-server": "workspace:*",
 		"@playform/build": "0.2.1",
 		"rolldown": "workspace:*"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

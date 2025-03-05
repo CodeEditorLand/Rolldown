@@ -1,5 +1,27 @@
 {
 	"name": "@codeeditorland/docs",
+	"version": "0.0.1",
+	"private": false,
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "Source 🖋️ Open 👐🏻",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
+	},
+	"type": "module",
 	"scripts": {
 		"build": "vitepress build",
 		"dev": "vitepress dev",
@@ -13,5 +35,8 @@
 		"vitepress": "1.6.3",
 		"vitepress-plugin-group-icons": "1.3.6",
 		"zx": "8.4.0"
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }
