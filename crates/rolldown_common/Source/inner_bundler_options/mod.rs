@@ -170,6 +170,12 @@ pub struct BundlerOptions {
     schemars(with = "Option<FxHashMap<String, String>>")
   )]
   pub jsx: Option<Jsx>,
+  #[cfg_attr(
+    feature = "deserialize_bundler_options",
+    serde(default, skip_deserializing),
+    schemars(skip)
+  )]
+  pub transform: Option<oxc::transformer::TransformOptions>,
   pub watch: Option<WatchOption>,
   pub comments: Option<Comments>,
   pub target: Option<ESTarget>,
@@ -263,6 +269,8 @@ fn deserialize_treeshake<'de, D>(deserializer: D) -> Result<TreeshakeOptions, D:
 where
   D: Deserializer<'de>,
 {
+  use rustc_hash::FxHashSet;
+
   let value = Option::<Value>::deserialize(deserializer)?;
   match value {
     Some(Value::Bool(false)) => Ok(TreeshakeOptions::Boolean(false)),
@@ -270,6 +278,8 @@ where
       Ok(TreeshakeOptions::Option(types::treeshake::InnerOptions {
         module_side_effects: types::treeshake::ModuleSideEffects::Boolean(true),
         annotations: Some(true),
+        manual_pure_functions: None,
+        unknown_global_side_effects: None,
       }))
     }
     Some(Value::Object(obj)) => {
@@ -287,9 +297,33 @@ where
           _ => Err(serde::de::Error::custom("annotations should be a `true` or `false`")),
         },
       )?;
+      let unknown_global_side_effects = obj.get("unknown_global_side_effects").map_or_else(
+        || Ok(Some(true)),
+        |v| match v {
+          Value::Bool(b) => Ok(Some(*b)),
+          _ => Err(serde::de::Error::custom(
+            "unknown_global_side_effects should be a `true` or `false`",
+          )),
+        },
+      )?;
+      let manual_pure_functions = obj.get("manualPureFunctions").map_or_else(
+        || Ok(FxHashSet::default()),
+        |v| match v {
+          Value::Array(v) => Ok(
+            v.iter()
+              .map(|item| {
+                item.as_str().expect("manualPureFunctions should be a `Vec<String>`").to_string()
+              })
+              .collect::<FxHashSet<_>>(),
+          ),
+          _ => Err(serde::de::Error::custom("manualPureFunctions should be a `Vec<String>`")),
+        },
+      )?;
       Ok(TreeshakeOptions::Option(types::treeshake::InnerOptions {
         module_side_effects,
         annotations,
+        manual_pure_functions: Some(manual_pure_functions),
+        unknown_global_side_effects,
       }))
     }
     _ => Err(serde::de::Error::custom("treeshake should be a boolean or an object")),

@@ -41,11 +41,8 @@ version = "0.1.0"
 [package.edition]
 workspace = true
 
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true
+[[bin]]
+doctest = false
+name    = "run-fixture"
+path    = "./bin/run_fixture.rs"
+test    = false

@@ -176,16 +176,16 @@ pub fn normalize_options(mut raw_options: crate::BundlerOptions) -> NormalizeOpt
         .unwrap_or_default()
     },
   );
-
   let target = raw_options.target.unwrap_or_default();
-  let base_transform_options = TransformOptions::from(ESTarget::from(target));
+  let transform_options =
+    raw_options.transform.unwrap_or_else(|| TransformOptions::from(ESTarget::from(target)));
   let normalized = NormalizedBundlerOptions {
     input: raw_options.input.unwrap_or_default(),
     cwd: raw_options
       .cwd
       .unwrap_or_else(|| std::env::current_dir().expect("Failed to get current dir")),
     external: raw_options.external,
-    treeshake: raw_options.treeshake,
+    treeshake: raw_options.treeshake.into_normalized_options(),
     platform,
     name: raw_options.name,
     entry_filenames: raw_options.entry_filenames.unwrap_or_else(|| "[name].js".to_string().into()),
@@ -240,7 +240,7 @@ pub fn normalize_options(mut raw_options: crate::BundlerOptions) -> NormalizeOpt
     keep_names: raw_options.keep_names.unwrap_or_default(),
     polyfill_require: raw_options.polyfill_require.unwrap_or(true),
     defer_sync_scan_data: raw_options.defer_sync_scan_data,
-    base_transform_options,
+    transform_options,
   };
 
   NormalizeOptionsReturn { options: normalized, resolve_options: raw_resolve, warnings }

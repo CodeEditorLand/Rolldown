@@ -706,7 +706,23 @@
             "null"
           ]
         },
+        "manualPureFunctions": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
         "moduleSideEffects": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "unknownGlobalSideEffects": {
           "type": [
             "boolean",
             "null"

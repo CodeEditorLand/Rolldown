@@ -5,7 +5,10 @@ import type {
   Plugin,
   ResolvedId,
 } from './index'
-import { MinimalPluginContext } from '../plugin/minimal-plugin-context'
+import {
+  MinimalPluginContext,
+  MinimalPluginContextImpl,
+} from '../plugin/minimal-plugin-context'
 import { AssetSource, bindingAssetSource } from '../utils/asset-source'
 import { unimplemented } from '../utils/misc'
 import { ModuleInfo } from '../types/module-info'
@@ -19,6 +22,7 @@ import { logCycleLoading } from '../log/logs'
 import { OutputOptions } from '../options/output-options'
 import { parseAst } from '../parse-ast-index'
 import { Program } from '@oxc-project/types'
+import type { Extends, TypeAssert } from '../types/assert'
 
 export interface EmittedAsset {
   type: 'asset'
@@ -50,7 +54,26 @@ export interface PrivatePluginContextResolveOptions
 
 export type GetModuleInfo = (moduleId: string) => ModuleInfo | null
 
-export class PluginContext extends MinimalPluginContext {
+export interface PluginContext extends MinimalPluginContext {
+  emitFile(file: EmittedFile): string
+  getFileName(referenceId: string): string
+  getModuleIds(): IterableIterator<string>
+  getModuleInfo: GetModuleInfo
+  addWatchFile(id: string): void
+  load(
+    options: { id: string; resolveDependencies?: boolean } & Partial<
+      PartialNull<ModuleOptions>
+    >,
+  ): Promise<ModuleInfo>
+  parse(input: string, options?: ParserOptions | undefined | null): Program
+  resolve(
+    source: string,
+    importer?: string,
+    options?: PluginContextResolveOptions,
+  ): Promise<ResolvedId | null>
+}
+
+export class PluginContextImpl extends MinimalPluginContextImpl {
   getModuleInfo: GetModuleInfo
   constructor(
     private outputOptions: OutputOptions,
@@ -143,7 +166,7 @@ export class PluginContext extends MinimalPluginContext {
     return { ...res, ...info }
   }
 
-  public emitFile = (file: EmittedFile): string => {
+  public emitFile: PluginContext['emitFile'] = (file): string => {
     // @ts-expect-error
     if (file.type === 'prebuilt-chunk') {
       return unimplemented('PluginContext.emitFile with type prebuilt-chunk')
@@ -196,4 +219,10 @@ export class PluginContext extends MinimalPluginContext {
   ): Program {
     return parseAst(input, options)
   }
+}
+
+function _assert() {
+  // adding implements to class disallows extending PluginContext by declaration merging
+  // instead check that PluginContextImpl is assignable to PluginContext here
+  type _ = TypeAssert<Extends<PluginContextImpl, PluginContext>>
 }

@@ -1,53 +1,32 @@
 {
-	"name": "@codeeditorland/test-dev-server",
-	"version": "0.0.1",
-	"private": false,
-	"description": "A implementation of a dev server for demonstrating",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "Source 🖋️ Open 👐🏻",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
-	"exports": {
-		".": {
-			"default": "./dist/index.js",
-			"types": "./dist/index.d.ts"
-		}
-	},
-	"bin": {
-		"serve": "./bin/cli.js"
-	},
-	"scripts": {
-		"build": "tsc -b",
-		"build:watch": "tsc -b --watch",
-		"prepublishOnly": "Build 'Source/**/*.ts'"
-	},
-	"dependencies": {
-		"connect": "3.7.0",
-		"rolldown": "workspace:*",
-		"serve-static": "1.16.2"
-	},
-	"devDependencies": {
-		"@playform/build": "0.2.1",
-		"@types/connect": "3.4.38",
-		"@types/serve-static": "1.15.7"
-	},
-	"publishConfig": {
-		"access": "public"
-	}
+  "name": "@rolldown/test-dev-server",
+  "version": "0.0.0",
+  "description": "A implementation of a dev server for demonstrating",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "serve": "./bin/cli.js"
+  },
+  "exports": {
+    ".": {
+      "default": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "build:watch": "tsc -b --watch"
+  },
+  "dependencies": {
+    "@types/ws": "^8.18.0",
+    "chokidar": "^4.0.3",
+    "connect": "^3.7.0",
+    "rolldown": "workspace:*",
+    "serve-static": "^1.16.2",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/connect": "^3.4.38",
+    "@types/serve-static": "^1.15.7"
+  }
 }

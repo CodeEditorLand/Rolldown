@@ -9,7 +9,6 @@ import type { RolldownPlugin } from '../plugin'
 import type { InputOptions } from '../options/input-options'
 import type { OutputOptions } from '../options/output-options'
 import type {
-  BindingWatchOption,
   BindingInputOptions,
   BindingInjectImportNamed,
   BindingInjectImportNamespace,
@@ -75,6 +74,7 @@ export function bindingifyInputOptions(
     },
     profilerNames: inputOptions?.profilerNames,
     jsx: bindingifyJsx(inputOptions.jsx),
+    transform: inputOptions.transform,
     watch: bindingifyWatch(inputOptions.watch),
     dropLabels: inputOptions.dropLabels,
     keepNames: inputOptions.keepNames,
@@ -219,37 +219,44 @@ function bindingifyInput(
     return input.map((src) => ({ import: src }))
   }
 
-  return Object.entries(input).map((value) => {
-    return { name: value[0], import: value[1] }
+  return Object.entries(input).map(([name, import_path]) => {
+    return { name, import: import_path }
   })
 }
 
 // The `automatic` is most user usages, so it is different rollup's default value `false`
 function bindingifyJsx(input: InputOptions['jsx']): BindingInputOptions['jsx'] {
-  if (input === false) {
-    return { type: 'Disable' }
-  }
-  if (input) {
-    if (input.mode === 'preserve') {
+  switch (input) {
+    case false:
+      return { type: 'Disable' }
+    case 'react':
+      return { type: 'React' }
+    case 'react-jsx':
+      return { type: 'ReactJsx' }
+    case 'preserve':
       return { type: 'Preserve' }
-    }
-    const mode = input.mode ?? 'automatic'
-    return {
-      type: 'Enable',
-      field0: {
-        runtime: mode,
-        importSource:
-          mode === 'classic'
-            ? input.importSource
-            : mode === 'automatic'
-              ? input.jsxImportSource
-              : undefined,
-        pragma: input.factory,
-        pragmaFrag: input.fragment,
-        development: input.development,
-        refresh: input.refresh,
-      },
-    }
+    case undefined:
+      return undefined
+  }
+  if (input.mode === 'preserve') {
+    return { type: 'Preserve' }
+  }
+  const mode = input.mode ?? 'automatic'
+  return {
+    type: 'Enable',
+    field0: {
+      runtime: mode,
+      importSource:
+        mode === 'classic'
+          ? input.importSource
+          : mode === 'automatic'
+            ? input.jsxImportSource
+            : undefined,
+      pragma: input.factory,
+      pragmaFrag: input.fragment,
+      development: input.development,
+      refresh: input.refresh,
+    },
   }
 }
 
@@ -262,7 +269,7 @@ function bindingifyWatch(
       skipWrite: watch.skipWrite,
       include: normalizedStringOrRegex(watch.include),
       exclude: normalizedStringOrRegex(watch.exclude),
-    } as BindingWatchOption
+    }
   }
 }
 
@@ -272,14 +279,18 @@ function bindingifyTreeshakeOptions(
   if (config === false) {
     return undefined
   }
+
   if (config === true || config === undefined) {
     return {
       moduleSideEffects: true,
-      annotations: true,
     }
   }
+
   let normalizedConfig: BindingInputOptions['treeshake'] = {
     moduleSideEffects: true,
+    annotations: config.annotations,
+    manualPureFunctions: config.manualPureFunctions,
+    unknownGlobalSideEffects: config.unknownGlobalSideEffects,
   }
   if (config.moduleSideEffects === undefined) {
     normalizedConfig.moduleSideEffects = true
@@ -292,6 +303,5 @@ function bindingifyTreeshakeOptions(
     normalizedConfig.moduleSideEffects = config.moduleSideEffects
   }
 
-  normalizedConfig.annotations = config.annotations ?? true
   return normalizedConfig
 }

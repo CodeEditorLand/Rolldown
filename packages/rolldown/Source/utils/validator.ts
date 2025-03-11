@@ -104,6 +104,50 @@ const JsxOptionsSchema = v.strictObject({
   ),
 })
 
+const HelperModeSchema = v.union([v.literal('Runtime'), v.literal('External')])
+
+const DecoratorOptionSchema = v.object({
+  legacy: v.optional(v.boolean()),
+  emitDecoratorMetadata: v.optional(v.boolean()),
+})
+
+const HelpersSchema = v.object({
+  mode: v.optional(HelperModeSchema),
+})
+
+const RewriteImportExtensionsSchema = v.union([
+  v.literal('rewrite'),
+  v.literal('remove'),
+  v.boolean(),
+])
+const TypescriptSchema = v.object({
+  jsxPragma: v.optional(v.string()),
+  jsxPragmaFrag: v.optional(v.string()),
+  onlyRemoveTypeImports: v.optional(v.boolean()),
+  allowNamespaces: v.optional(v.boolean()),
+  allowDeclareFields: v.optional(v.boolean()),
+  declaration: v.optional(
+    v.object({
+      stripInternal: v.optional(v.boolean()),
+      sourcemap: v.optional(v.boolean()),
+    }),
+  ),
+  rewriteImportExtensions: v.optional(RewriteImportExtensionsSchema),
+})
+const AssumptionsSchema = v.object({
+  ignoreFunctionLength: v.optional(v.boolean()),
+  noDocumentAll: v.optional(v.boolean()),
+  objectRestNoSymbols: v.optional(v.boolean()),
+  pureGetters: v.optional(v.boolean()),
+  setPublicClassFields: v.optional(v.boolean()),
+})
+const TransformOptionsSchema = v.object({
+  assumptions: v.optional(AssumptionsSchema),
+  typescript: v.optional(TypescriptSchema),
+  helpers: v.optional(HelpersSchema),
+  decorators: v.optional(DecoratorOptionSchema),
+})
+
 const WatchOptionsSchema = v.strictObject({
   chokidar: v.optional(
     v.never(
@@ -167,9 +211,14 @@ const ResolveOptionsSchema = v.strictObject({
   tsconfigFilename: v.optional(v.string()),
 })
 
+// TODO: moduleSideEffects
 const TreeshakingOptionsSchema = v.union([
   v.boolean(),
-  v.looseObject({ annotations: v.optional(v.boolean()) }),
+  v.looseObject({
+    annotations: v.optional(v.boolean()),
+    manualPureFunctions: v.optional(v.array(v.string())),
+    unknownGlobalSideEffects: v.optional(v.boolean()),
+  }),
 ])
 
 const OnLogSchema = v.pipe(
@@ -260,7 +309,16 @@ const InputOptionsSchema = v.strictObject({
     ),
   ),
   profilerNames: v.optional(v.boolean()),
-  jsx: v.optional(v.union([v.boolean(), JsxOptionsSchema])),
+  jsx: v.optional(
+    v.union([
+      v.boolean(),
+      JsxOptionsSchema,
+      v.string('react'),
+      v.string('react-jsx'),
+      v.string('preserve'),
+    ]),
+  ),
+  transform: v.optional(TransformOptionsSchema),
   watch: v.optional(v.union([WatchOptionsSchema, v.literal(false)])),
   dropLabels: v.pipe(
     v.optional(v.array(v.string())),
@@ -465,7 +523,9 @@ const OutputOptionsSchema = v.strictObject({
   cssChunkFileNames: v.optional(ChunkFileNamesSchema),
   sanitizeFileName: v.optional(SanitizeFileNameSchema),
   minify: v.pipe(
-    v.optional(v.union([v.boolean(), MinifyOptionsSchema])),
+    v.optional(
+      v.union([v.boolean(), v.string('dce-only'), MinifyOptionsSchema]),
+    ),
     v.description('Minify the bundled file'),
   ),
   name: v.pipe(

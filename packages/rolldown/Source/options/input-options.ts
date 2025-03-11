@@ -8,8 +8,23 @@ import type {
 } from '../log/logging'
 import type { NullValue, StringOrRegExp } from '../types/utils'
 import type { TreeshakingOptions } from '../types/module-side-effects'
+import { TransformOptions } from '../binding'
 
 export type InputOption = string | string[] | Record<string, string>
+
+// Omit those key that are part of rolldown option
+// Note: `target` should be omit either because it is also used in `minifier`
+type OxcTransformOption = Omit<
+  TransformOptions,
+  | 'sourceType'
+  | 'lang'
+  | 'cwd'
+  | 'sourcemap'
+  | 'jsx'
+  | 'define'
+  | 'inject'
+  | 'target'
+>
 
 export type ExternalOption =
   | StringOrRegExp
@@ -198,13 +213,15 @@ export interface InputOptions {
   inject?: Record<string, string | [string, string]>
   profilerNames?: boolean
   /**
-   * The `false` is disabled jsx parser, it will give you a syntax error if you use jsx syntax
-   * The `mode: preserve` is disabled jsx transformer, it perverse original jsx syntax in the output.
-   * The `mode: classic` is enabled jsx `classic` transformer.
-   * The `mode: automatic` is enabled jsx `automatic` transformer.
-   * @default mode = 'automatic'
+   * - `false` disables the JSX parser, resulting in a syntax error if JSX syntax is used.
+   * - `"preserve"` disables the JSX transformer, preserving the original JSX syntax in the output.
+   * - `"react"` enables the `classic` JSX transformer.
+   * - `"react-jsx"` enables the `automatic` JSX transformer.
+   *
+   * @default mode = "automatic"
    */
-  jsx?: false | JsxOptions
+  jsx?: false | 'react' | 'react-jsx' | 'preserve' | JsxOptions
+  transform?: OxcTransformOption
   watch?: WatchOptions | false
   dropLabels?: string[]
   keepNames?: boolean

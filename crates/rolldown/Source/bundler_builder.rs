@@ -63,19 +63,28 @@ impl BundlerBuilder {
     };
     let ts_config = resolver.resolve_tsconfig(&options.cwd.join(tsconfig_filename))?;
     if let Some(ref jsx_factory) = ts_config.compiler_options.jsx_factory {
-      options.base_transform_options.jsx.pragma = Some(jsx_factory.clone());
+      options.transform_options.jsx.pragma = Some(jsx_factory.clone());
     }
 
     if let Some(ref jsx_fragment_factory) = ts_config.compiler_options.jsx_fragment_factory {
-      options.base_transform_options.jsx.pragma_frag = Some(jsx_fragment_factory.clone());
+      options.transform_options.jsx.pragma_frag = Some(jsx_fragment_factory.clone());
     }
 
     if let Some(ref jsx_import_source) = ts_config.compiler_options.jsx_import_source {
-      options.base_transform_options.jsx.import_source = Some(jsx_import_source.clone());
+      options.transform_options.jsx.import_source = Some(jsx_import_source.clone());
     }
 
     if let Some(ref experimental_decorator) = ts_config.compiler_options.experimental_decorators {
-      options.base_transform_options.decorator.legacy = *experimental_decorator;
+      options.transform_options.decorator.legacy = *experimental_decorator;
+    }
+
+    // FIXME:
+    // if user set `transform.typescript.only_remove_type_imports` to false in `rolldown.config.js`, but also set `verbatim_module_syntax` to true in `tsconfig.json`
+    // We will override the value either, but actually `rolldown.config.js` should have higher priority.
+    // This due to the type of `only_remove_type_imports` is `bool` we don't know if the `false` is set
+    // by user or by default value.
+    if let Some(ref verbatim_module_syntax) = ts_config.compiler_options.verbatim_module_syntax {
+      options.transform_options.typescript.only_remove_type_imports = *verbatim_module_syntax;
     }
 
     Ok(())
