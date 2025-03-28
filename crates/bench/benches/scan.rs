@@ -27,17 +27,17 @@ fn criterion_benchmark(c:&mut Criterion) {
 	.flatten()
 	.collect::<Vec<_>>();
 
-	group.sample_size(20);
-	items.into_iter().for_each(|item| {
-		group.bench_function(format!("scan@{}", item.name), move |b| {
-			b.iter(|| {
-				tokio::runtime::Runtime::new().unwrap().block_on(async {
-					let mut rolldown_bundler = rolldown::Bundler::new((item.options)());
-					let _output = rolldown_bundler.scan().await.expect("should not failed in scan");
-				})
-			});
-		});
-	});
+  group.sample_size(20);
+  items.into_iter().for_each(|item| {
+    group.bench_function(format!("scan@{}", item.name), move |b| {
+      b.iter(|| {
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+          let mut rolldown_bundler = rolldown::Bundler::new((item.options)());
+          let _output = rolldown_bundler.scan(vec![]).await.expect("should not failed in scan");
+        })
+      });
+    });
+  });
 }
 
 criterion_group!(benches, criterion_benchmark);

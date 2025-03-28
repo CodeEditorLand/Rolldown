@@ -1,15 +1,15 @@
 pub mod external_module;
 pub mod normal_module;
 
+use arcstr::ArcStr;
 use oxc_index::IndexVec;
 use rolldown_std_utils::OptionExt;
 
 use crate::{
-  AstScopeIdx, EcmaAstIdx, ExternalModule, ImportRecordIdx, ModuleIdx, NormalModule,
-  ResolvedImportRecord,
+  EcmaAstIdx, ExternalModule, ImportRecordIdx, ModuleIdx, NormalModule, ResolvedImportRecord,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Module {
   Normal(Box<NormalModule>),
   External(Box<ExternalModule>),
@@ -33,7 +33,14 @@ impl Module {
   pub fn id(&self) -> &str {
     match self {
       Module::Normal(v) => &v.id,
-      Module::External(v) => &v.name,
+      Module::External(v) => &v.id,
+    }
+  }
+
+  pub fn id_clone(&self) -> &ArcStr {
+    match self {
+      Module::Normal(v) => v.id.resource_id(),
+      Module::External(v) => &v.id,
     }
   }
 
@@ -111,13 +118,6 @@ impl Module {
     match self {
       Module::Normal(v) => v.ecma_ast_idx = Some(idx),
       Module::External(_) => panic!("set_ecma_ast_idx should be called on EcmaModule"),
-    }
-  }
-
-  pub fn set_ast_scope_idx(&mut self, idx: AstScopeIdx) {
-    match self {
-      Module::Normal(v) => v.ast_scope_idx = Some(idx),
-      Module::External(_) => panic!("set_ast_scope_idx should be called on EcmaModule"),
     }
   }
 

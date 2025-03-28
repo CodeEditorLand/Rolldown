@@ -38,15 +38,14 @@ impl Plugin for ImportGlobPlugin {
     Cow::Borrowed("builtin:import-glob-plugin")
   }
 
-  fn transform_ast(
+  async fn transform_ast(
     &self,
     _ctx: &PluginContext,
-    mut args: HookTransformAstArgs,
+    mut args: HookTransformAstArgs<'_>,
   ) -> HookTransformAstReturn {
     args.ast.program.with_mut(|fields| {
       let ast_builder = AstBuilder::new(fields.allocator);
-      let normalized_path = args.cwd.join(args.id);
-      let normalized_id = normalized_path.to_slash_lossy();
+      let normalized_id = args.id.to_slash_lossy();
       let root = self.config.root.as_ref().map(PathBuf::from);
       let mut visitor = GlobImportVisit {
         root: root.as_ref().unwrap_or(args.cwd),

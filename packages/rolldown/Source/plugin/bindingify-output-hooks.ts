@@ -36,6 +36,7 @@ export function bindingifyRenderStart(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         new NormalizedOutputOptionsImpl(
           opts,
@@ -58,7 +59,7 @@ export function bindingifyRenderChunk(
   const { handler, meta } = normalizeHook(hook)
 
   return {
-    plugin: async (ctx, code, chunk, opts) => {
+    plugin: async (ctx, code, chunk, opts, chunks) => {
       const ret = await handler.call(
         new PluginContextImpl(
           args.outputOptions,
@@ -67,6 +68,7 @@ export function bindingifyRenderChunk(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         code,
         transformRenderedChunk(chunk),
@@ -75,6 +77,14 @@ export function bindingifyRenderChunk(
           args.outputOptions,
           args.normalizedOutputPlugins,
         ),
+        {
+          chunks: Object.fromEntries(
+            Object.entries(chunks).map(([key, value]) => [
+              key,
+              transformRenderedChunk(value),
+            ]),
+          ),
+        },
       )
 
       if (ret == null) {
@@ -117,6 +127,7 @@ export function bindingifyAugmentChunkHash(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         transformRenderedChunk(chunk),
       )
@@ -144,6 +155,7 @@ export function bindingifyRenderError(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         normalizeErrors(err),
       )
@@ -176,6 +188,7 @@ export function bindingifyGenerateBundle(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         new NormalizedOutputOptionsImpl(
           opts,
@@ -215,6 +228,7 @@ export function bindingifyWriteBundle(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         new NormalizedOutputOptionsImpl(
           opts,
@@ -248,6 +262,7 @@ export function bindingifyCloseBundle(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
       )
     },
@@ -278,6 +293,7 @@ export function bindingifyBanner(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         transformRenderedChunk(chunk),
       )
@@ -310,6 +326,7 @@ export function bindingifyFooter(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         transformRenderedChunk(chunk),
       )
@@ -342,6 +359,7 @@ export function bindingifyIntro(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         transformRenderedChunk(chunk),
       )
@@ -374,6 +392,7 @@ export function bindingifyOutro(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         transformRenderedChunk(chunk),
       )

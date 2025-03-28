@@ -1,4 +1,7 @@
-use oxc::{mangler::MangleOptions, minifier::CompressOptions};
+use oxc::{
+  mangler::{MangleOptions, MangleOptionsKeepNames},
+  minifier::{CompressOptions, CompressOptionsKeepNames},
+};
 #[cfg(feature = "deserialize_bundler_options")]
 use schemars::JsonSchema;
 #[cfg(feature = "deserialize_bundler_options")]
@@ -87,16 +90,19 @@ impl MinifyOptionsObject {
     &self,
     option: &SharedNormalizedBundlerOptions,
   ) -> oxc::minifier::MinifierOptions {
+    let keep_names = option.keep_names;
     oxc::minifier::MinifierOptions {
       mangle: self.mangle.then_some(MangleOptions {
         // IIFE need to preserve top level names
         top_level: !matches!(option.format, OutputFormat::Iife),
+        keep_names: MangleOptionsKeepNames { function: keep_names, class: keep_names },
         debug: false,
       }),
       compress: Some(CompressOptions {
         target: option.target.into(),
         drop_debugger: false,
         drop_console: false,
+        keep_names: CompressOptionsKeepNames { function: keep_names, class: keep_names },
       })
       .filter(|_| self.compress),
     }

@@ -2,10 +2,10 @@ use rolldown_utils::indexmap::FxIndexMap;
 use rustc_hash::FxHashMap;
 use std::{fmt::Debug, path::PathBuf};
 use types::advanced_chunks_options::AdvancedChunksOptions;
-use types::checks_options::ChecksOptions;
 use types::comments::Comments;
 use types::inject_import::InjectImport;
 use types::jsx::Jsx;
+use types::make_absolute_externals_relative::MakeAbsoluteExternalsRelative;
 use types::minify_options::RawMinifyOptions;
 use types::output_option::{AssetFilenamesOutputOption, GlobalsOutputOption};
 use types::sanitize_filename::SanitizeFilename;
@@ -28,7 +28,7 @@ use self::types::{
   platform::Platform, resolve_options::ResolveOptions, source_map_type::SourceMapType,
   sourcemap_path_transform::SourceMapPathTransform,
 };
-use crate::{ChunkFilenamesOutputOption, ModuleType, SourceMapIgnoreList};
+use crate::{ChecksOptions, ChunkFilenamesOutputOption, ModuleType, SourceMapIgnoreList};
 
 pub mod types;
 
@@ -187,6 +187,7 @@ pub struct BundlerOptions {
     schemars(skip)
   )]
   pub defer_sync_scan_data: Option<DeferSyncScanDataOption>,
+  pub make_absolute_externals_relative: Option<MakeAbsoluteExternalsRelative>,
 }
 
 impl BundlerOptions {

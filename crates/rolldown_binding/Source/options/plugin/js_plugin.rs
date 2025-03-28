@@ -2,6 +2,7 @@ use crate::types::{
   binding_module_info::BindingModuleInfo,
   binding_normalized_options::BindingNormalizedOptions,
   binding_outputs::{to_js_diagnostic, update_outputs},
+  binding_rendered_chunk::BindingRenderedChunk,
   js_callback::MaybeAsyncJsCallbackExt,
 };
 use anyhow::Ok;
@@ -10,13 +11,7 @@ use rolldown::ModuleType;
 use rolldown_common::NormalModule;
 use rolldown_plugin::{__inner::SharedPluginable, Plugin, typedmap::TypedMapKey};
 use rolldown_utils::pattern_filter::{self, FilterResult};
-use std::{
-  borrow::Cow,
-  ops::Deref,
-  path::{Path, PathBuf},
-  sync::Arc,
-};
-use sugar_path::SugarPath;
+use std::{borrow::Cow, ops::Deref, path::Path, sync::Arc};
 
 use super::{
   BindingPluginOptions,
@@ -92,14 +87,11 @@ impl Plugin for JsPlugin {
     let Some(cb) = &self.resolve_id else { return Ok(None) };
 
     if let Some(resolve_id_filter) = &self.inner.resolve_id_filter {
-      let stabilized_path = Path::new(args.specifier).relative(ctx.cwd());
-      let normalized_id = stabilized_path.to_string_lossy();
-
       let matched = pattern_filter::filter(
         resolve_id_filter.exclude.as_deref(),
         resolve_id_filter.include.as_deref(),
         args.specifier,
-        &normalized_id,
+        ctx.cwd().to_string_lossy().as_ref(),
       )
       .inner();
 
@@ -166,14 +158,11 @@ impl Plugin for JsPlugin {
     let Some(cb) = &self.load else { return Ok(None) };
 
     if let Some(load_filter) = &self.load_filter {
-      let stabilized_path = Path::new(args.id).relative(ctx.cwd());
-      let normalized_id = stabilized_path.to_string_lossy();
-
       let matched = pattern_filter::filter(
         load_filter.exclude.as_deref(),
         load_filter.include.as_deref(),
         args.id,
-        &normalized_id,
+        ctx.cwd().to_string_lossy().as_ref(),
       )
       .inner();
 
@@ -296,14 +285,16 @@ impl Plugin for JsPlugin {
   async fn banner(
     &self,
     ctx: &rolldown_plugin::PluginContext,
-    args: &rolldown_plugin::HookAddonArgs<'_>,
+    args: &rolldown_plugin::HookAddonArgs,
   ) -> rolldown_plugin::HookInjectionOutputReturn {
     match &self.banner {
       Some(cb) => Ok(
-        cb.await_call((ctx.clone().into(), args.chunk.clone().into()).into())
-          .await?
-          .map(TryInto::try_into)
-          .transpose()?,
+        cb.await_call(
+          (ctx.clone().into(), BindingRenderedChunk::new(Arc::clone(&args.chunk))).into(),
+        )
+        .await?
+        .map(TryInto::try_into)
+        .transpose()?,
       ),
       _ => Ok(None),
     }
@@ -316,14 +307,16 @@ impl Plugin for JsPlugin {
   async fn intro(
     &self,
     ctx: &rolldown_plugin::PluginContext,
-    args: &rolldown_plugin::HookAddonArgs<'_>,
+    args: &rolldown_plugin::HookAddonArgs,
   ) -> rolldown_plugin::HookInjectionOutputReturn {
     match &self.intro {
       Some(cb) => Ok(
-        cb.await_call((ctx.clone().into(), args.chunk.clone().into()).into())
-          .await?
-          .map(TryInto::try_into)
-          .transpose()?,
+        cb.await_call(
+          (ctx.clone().into(), BindingRenderedChunk::new(Arc::clone(&args.chunk))).into(),
+        )
+        .await?
+        .map(TryInto::try_into)
+        .transpose()?,
       ),
       _ => Ok(None),
     }
@@ -336,14 +329,16 @@ impl Plugin for JsPlugin {
   async fn outro(
     &self,
     ctx: &rolldown_plugin::PluginContext,
-    args: &rolldown_plugin::HookAddonArgs<'_>,
+    args: &rolldown_plugin::HookAddonArgs,
   ) -> rolldown_plugin::HookInjectionOutputReturn {
     match &self.outro {
       Some(cb) => Ok(
-        cb.await_call((ctx.clone().into(), args.chunk.clone().into()).into())
-          .await?
-          .map(TryInto::try_into)
-          .transpose()?,
+        cb.await_call(
+          (ctx.clone().into(), BindingRenderedChunk::new(Arc::clone(&args.chunk))).into(),
+        )
+        .await?
+        .map(TryInto::try_into)
+        .transpose()?,
       ),
       _ => Ok(None),
     }
@@ -356,14 +351,16 @@ impl Plugin for JsPlugin {
   async fn footer(
     &self,
     ctx: &rolldown_plugin::PluginContext,
-    args: &rolldown_plugin::HookAddonArgs<'_>,
+    args: &rolldown_plugin::HookAddonArgs,
   ) -> rolldown_plugin::HookInjectionOutputReturn {
     match &self.footer {
       Some(cb) => Ok(
-        cb.await_call((ctx.clone().into(), args.chunk.clone().into()).into())
-          .await?
-          .map(TryInto::try_into)
-          .transpose()?,
+        cb.await_call(
+          (ctx.clone().into(), BindingRenderedChunk::new(Arc::clone(&args.chunk))).into(),
+        )
+        .await?
+        .map(TryInto::try_into)
+        .transpose()?,
       ),
       _ => Ok(None),
     }
@@ -384,8 +381,15 @@ impl Plugin for JsPlugin {
           (
             ctx.clone().into(),
             args.code.to_string(),
-            args.chunk.clone().into(),
+            BindingRenderedChunk::new(Arc::clone(&args.chunk)),
             BindingNormalizedOptions::new(Arc::clone(args.options)),
+            args
+              .chunks
+              .iter()
+              .map(|(filename, chunk)| {
+                (filename.to_string(), BindingRenderedChunk::new(Arc::clone(chunk)))
+              })
+              .collect(),
           )
             .into(),
         )
@@ -404,10 +408,12 @@ impl Plugin for JsPlugin {
   async fn augment_chunk_hash(
     &self,
     ctx: &rolldown_plugin::PluginContext,
-    chunk: &rolldown_common::RollupRenderedChunk,
+    chunk: Arc<rolldown_common::RollupRenderedChunk>,
   ) -> rolldown_plugin::HookAugmentChunkHashReturn {
     match &self.augment_chunk_hash {
-      Some(cb) => Ok(cb.await_call((ctx.clone().into(), chunk.clone().into()).into()).await?),
+      Some(cb) => {
+        Ok(cb.await_call((ctx.clone().into(), BindingRenderedChunk::new(chunk)).into()).await?)
+      }
       _ => Ok(None),
     }
   }
@@ -547,7 +553,7 @@ impl Plugin for JsPlugin {
 fn filter_transform(
   transform_filter: Option<&BindingTransformHookFilter>,
   id: &str,
-  cwd: &PathBuf,
+  cwd: &Path,
   module_type: &ModuleType,
   code: &str,
 ) -> anyhow::Result<bool> {
@@ -565,14 +571,11 @@ fn filter_transform(
   };
 
   if let Some(ref id_filter) = transform_filter.id {
-    let stabilized_path = Path::new(id).relative(cwd);
-    let normalized_id = stabilized_path.to_string_lossy();
-
     let id_res = pattern_filter::filter(
       id_filter.exclude.as_deref(),
       id_filter.include.as_deref(),
       id,
-      &normalized_id,
+      cwd.to_string_lossy().as_ref(),
     );
 
     // it matched by `exclude` or `include`, early return
@@ -599,4 +602,101 @@ fn filter_transform(
   }
 
   Ok(fallback_ret)
+}
+
+#[cfg(test)]
+mod tests {
+  use rolldown_utils::pattern_filter::StringOrRegex;
+
+  use crate::options::plugin::types::{
+    binding_hook_filter::BindingGeneralHookFilter, binding_js_or_regex::BindingStringOrRegex,
+  };
+
+  use super::*;
+
+  #[test]
+  fn test_filter() {
+    #[derive(Debug)]
+    struct InputFilter {
+      exclude: Option<Vec<StringOrRegex>>,
+      include: Option<Vec<StringOrRegex>>,
+    }
+    /// id, code, expected
+    type TestCase<'a> = (&'a str, &'a str, bool);
+    struct TestCases<'a> {
+      input_id_filter: Option<InputFilter>,
+      input_code_filter: Option<InputFilter>,
+      cases: Vec<TestCase<'a>>,
+    }
+
+    #[expect(clippy::unnecessary_wraps)]
+    fn string_filter(value: &str) -> Option<Vec<StringOrRegex>> {
+      Some(vec![StringOrRegex::new(value.to_string(), &None).unwrap()])
+    }
+
+    let cases = [
+      TestCases {
+        input_id_filter: Some(InputFilter { exclude: None, include: string_filter("*.js") }),
+        input_code_filter: None,
+        cases: vec![("foo.js", "foo", true), ("foo.ts", "foo", false)],
+      },
+      TestCases {
+        input_id_filter: None,
+        input_code_filter: Some(InputFilter {
+          exclude: None,
+          include: string_filter("import.meta"),
+        }),
+        cases: vec![("foo.js", "import.meta", true), ("foo.js", "import_meta", false)],
+      },
+      TestCases {
+        input_id_filter: Some(InputFilter { exclude: string_filter("*.js"), include: None }),
+        input_code_filter: Some(InputFilter {
+          exclude: None,
+          include: string_filter("import.meta"),
+        }),
+        cases: vec![
+          ("foo.js", "import.meta", false),
+          ("foo.js", "import_meta", false),
+          ("foo.ts", "import.meta", true),
+          ("foo.ts", "import_meta", false),
+        ],
+      },
+      TestCases {
+        input_id_filter: Some(InputFilter {
+          exclude: string_filter("*.js"),
+          include: string_filter("foo.ts"),
+        }),
+        input_code_filter: Some(InputFilter {
+          exclude: None,
+          include: string_filter("import.meta"),
+        }),
+        cases: vec![
+          ("foo.js", "import.meta", false),
+          ("foo.js", "import_meta", false),
+          ("foo.ts", "import.meta", true),
+          ("foo.ts", "import_meta", true),
+        ],
+      },
+    ];
+
+    let cwd = std::env::current_dir().unwrap();
+    for test_case in cases {
+      let filter = BindingTransformHookFilter {
+        id: test_case.input_id_filter.map(|f| BindingGeneralHookFilter {
+          include: f.include.map(|f| f.into_iter().map(BindingStringOrRegex::new).collect()),
+          exclude: f.exclude.map(|f| f.into_iter().map(BindingStringOrRegex::new).collect()),
+        }),
+        code: test_case.input_code_filter.map(|f| BindingGeneralHookFilter {
+          include: f.include.map(|f| f.into_iter().map(BindingStringOrRegex::new).collect()),
+          exclude: f.exclude.map(|f| f.into_iter().map(BindingStringOrRegex::new).collect()),
+        }),
+        module_type: None,
+      };
+
+      for (id, code, expected) in test_case.cases {
+        let result = filter_transform(Some(&filter), id, &cwd, &ModuleType::Js, code);
+        assert_eq!(result.unwrap(), expected, "filter: {filter:?}, id: {id}, code: {code}",);
+      }
+    }
+  }
 }

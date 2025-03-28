@@ -6,7 +6,7 @@ use crate::{
 #[cfg_attr(target_family = "wasm", allow(unused))]
 use crate::{
   options::plugin::JsPlugin,
-  types::{binding_rendered_chunk::RenderedChunk, js_callback::MaybeAsyncJsCallbackExt},
+  types::{binding_rendered_chunk::BindingRenderedChunk, js_callback::MaybeAsyncJsCallbackExt},
 };
 use napi::bindgen_prelude::{Either, FnArgs};
 use oxc::transformer::TransformOptions;
@@ -39,10 +39,9 @@ fn normalize_addon_option(
   addon_option.map(move |value| {
     AddonOutputOption::Fn(Arc::new(move |chunk| {
       let fn_js = Arc::clone(&value);
-      let chunk = chunk.clone();
       Box::pin(async move {
         fn_js
-          .await_call(FnArgs { data: (RenderedChunk::from(chunk),) })
+          .await_call(FnArgs { data: (BindingRenderedChunk::new(chunk),) })
           .await
           .map_err(anyhow::Error::from)
       })
@@ -330,6 +329,9 @@ pub fn normalize_binding_options(
     polyfill_require: output_options.polyfill_require,
     defer_sync_scan_data: get_defer_sync_scan_data,
     transform,
+    make_absolute_externals_relative: input_options
+      .make_absolute_externals_relative
+      .map(Into::into),
   };
 
   #[cfg(not(target_family = "wasm"))]

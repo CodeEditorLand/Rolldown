@@ -1,11 +1,11 @@
 use napi::bindgen_prelude::{Either, FnArgs};
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug};
 
 use crate::types::{
   binding_module_info::BindingModuleInfo,
   binding_normalized_options::BindingNormalizedOptions,
   binding_outputs::{BindingError, BindingOutputs, JsChangedOutputs},
-  binding_rendered_chunk::RenderedChunk,
+  binding_rendered_chunk::BindingRenderedChunk,
   js_callback::MaybeAsyncJsCallback,
 };
 
@@ -104,21 +104,28 @@ pub struct BindingPluginOptions {
   pub build_end_meta: Option<BindingPluginHookMeta>,
 
   #[napi(
-    ts_type = "(ctx: BindingPluginContext, code: string, chunk: RenderedChunk, opts: BindingNormalizedOptions) => MaybePromise<VoidNullable<BindingHookRenderChunkOutput>>"
+    ts_type = "(ctx: BindingPluginContext, code: string, chunk: BindingRenderedChunk, opts: BindingNormalizedOptions, chunks: Record<string, BindingRenderedChunk>) => MaybePromise<VoidNullable<BindingHookRenderChunkOutput>>"
   )]
   pub render_chunk: Option<
     MaybeAsyncJsCallback<
-      FnArgs<(BindingPluginContext, String, RenderedChunk, BindingNormalizedOptions)>,
+      FnArgs<(
+        BindingPluginContext,
+        String,
+        BindingRenderedChunk,
+        BindingNormalizedOptions,
+        HashMap<String, BindingRenderedChunk>,
+      )>,
       Option<BindingHookRenderChunkOutput>,
     >,
   >,
   pub render_chunk_meta: Option<BindingPluginHookMeta>,
 
   #[napi(
-    ts_type = "(ctx: BindingPluginContext, chunk: RenderedChunk) => MaybePromise<void | string>"
+    ts_type = "(ctx: BindingPluginContext, chunk: BindingRenderedChunk) => MaybePromise<void | string>"
   )]
-  pub augment_chunk_hash:
-    Option<MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, RenderedChunk)>, Option<String>>>,
+  pub augment_chunk_hash: Option<
+    MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, BindingRenderedChunk)>, Option<String>>,
+  >,
   pub augment_chunk_hash_meta: Option<BindingPluginHookMeta>,
 
   #[napi(ts_type = "(ctx: BindingPluginContext, opts: BindingNormalizedOptions) => void")]
@@ -172,24 +179,28 @@ pub struct BindingPluginOptions {
   pub close_watcher: Option<MaybeAsyncJsCallback<FnArgs<(BindingPluginContext,)>, ()>>,
   pub close_watcher_meta: Option<BindingPluginHookMeta>,
 
-  #[napi(ts_type = "(ctx: BindingPluginContext, chunk: RenderedChunk) => void")]
-  pub banner:
-    Option<MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, RenderedChunk)>, Option<String>>>,
+  #[napi(ts_type = "(ctx: BindingPluginContext, chunk: BindingRenderedChunk) => void")]
+  pub banner: Option<
+    MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, BindingRenderedChunk)>, Option<String>>,
+  >,
   pub banner_meta: Option<BindingPluginHookMeta>,
 
-  #[napi(ts_type = "(ctx: BindingPluginContext, chunk: RenderedChunk) => void")]
-  pub footer:
-    Option<MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, RenderedChunk)>, Option<String>>>,
+  #[napi(ts_type = "(ctx: BindingPluginContext, chunk: BindingRenderedChunk) => void")]
+  pub footer: Option<
+    MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, BindingRenderedChunk)>, Option<String>>,
+  >,
   pub footer_meta: Option<BindingPluginHookMeta>,
 
-  #[napi(ts_type = "(ctx: BindingPluginContext, chunk: RenderedChunk) => void")]
-  pub intro:
-    Option<MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, RenderedChunk)>, Option<String>>>,
+  #[napi(ts_type = "(ctx: BindingPluginContext, chunk: BindingRenderedChunk) => void")]
+  pub intro: Option<
+    MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, BindingRenderedChunk)>, Option<String>>,
+  >,
   pub intro_meta: Option<BindingPluginHookMeta>,
 
-  #[napi(ts_type = "(ctx: BindingPluginContext, chunk: RenderedChunk) => void")]
-  pub outro:
-    Option<MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, RenderedChunk)>, Option<String>>>,
+  #[napi(ts_type = "(ctx: BindingPluginContext, chunk: BindingRenderedChunk) => void")]
+  pub outro: Option<
+    MaybeAsyncJsCallback<FnArgs<(BindingPluginContext, BindingRenderedChunk)>, Option<String>>,
+  >,
   pub outro_meta: Option<BindingPluginHookMeta>,
 }
 

@@ -23,7 +23,7 @@ use crate::{
     hook_resolve_id_skipped::HookResolveIdSkipped,
     plugin_context_resolve_options::PluginContextResolveOptions, plugin_idx::PluginIdx,
   },
-  utils::resolve_id_with_plugins::resolve_id_check_external,
+  utils::resolve_id_check_external::resolve_id_check_external,
 };
 
 #[derive(Debug, Clone)]
@@ -99,9 +99,11 @@ impl PluginContextImpl {
     &self,
     specifier: &str,
     side_effects: Option<HookSideEffects>,
-    load_callback_fn: Box<LoadCallbackFn>,
+    load_callback_fn: Option<Box<LoadCallbackFn>>,
   ) -> anyhow::Result<()> {
-    self.context_load_modules.insert(specifier.into(), LoadCallback(Box::new(load_callback_fn)));
+    if let Some(load_callback_fn) = load_callback_fn {
+      self.context_load_modules.insert(specifier.into(), LoadCallback(load_callback_fn));
+    }
     self
       .tx
       .lock()
@@ -114,7 +116,8 @@ impl PluginContextImpl {
         id: specifier.into(),
         ignored: false,
         module_def_format: ModuleDefFormat::Unknown,
-        is_external: false,
+        external: false.into(),
+        normalize_external_id: None,
         package_json: None,
         side_effects,
         is_external_without_side_effects: false,

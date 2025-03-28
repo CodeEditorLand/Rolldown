@@ -8,6 +8,7 @@ use super::types::{
   binding_emitted_asset::BindingEmittedAsset, binding_emitted_chunk::BindingEmittedChunk,
   binding_hook_side_effects::BindingHookSideEffects,
   binding_plugin_context_resolve_options::BindingPluginContextResolveOptions,
+  binding_resolved_external::BindingResolvedExternal,
 };
 
 use crate::{
@@ -39,12 +40,12 @@ impl BindingPluginContext {
       .load(
         &specifier,
         side_effects.map(Into::into),
-        Box::new(move || {
+        Some(Box::new(move || {
           let load_callback_fn = Arc::clone(&load_callback_fn);
           Box::pin(
             async move { load_callback_fn.invoke_async(()).await.map_err(anyhow::Error::from) },
           )
-        }),
+        })),
       )
       .await
       .map_err(|program_err| napi_error::load_error(&specifier, program_err))
@@ -69,7 +70,7 @@ impl BindingPluginContext {
       .ok();
     Ok(ret.map(|info| BindingPluginContextResolvedId {
       id: info.id.to_string(),
-      external: info.is_external,
+      external: info.external.into(),
     }))
   }
 
@@ -119,5 +120,5 @@ impl From<PluginContext> for BindingPluginContext {
 #[napi(object)]
 pub struct BindingPluginContextResolvedId {
   pub id: String,
-  pub external: bool,
+  pub external: BindingResolvedExternal,
 }

@@ -77,10 +77,10 @@ pub trait Pluginable: Any + Debug + Send + Sync + 'static {
 
   fn call_transform_meta(&self) -> Option<PluginHookMeta>;
 
-  fn call_transform_ast(
+  async fn call_transform_ast(
     &self,
     _ctx: &PluginContext,
-    args: HookTransformAstArgs,
+    args: HookTransformAstArgs<'_>,
   ) -> HookTransformAstReturn;
 
   fn call_transform_ast_meta(&self) -> Option<PluginHookMeta>;
@@ -155,7 +155,7 @@ pub trait Pluginable: Any + Debug + Send + Sync + 'static {
   async fn call_augment_chunk_hash(
     &self,
     _ctx: &PluginContext,
-    _chunk: &RollupRenderedChunk,
+    _chunk: Arc<RollupRenderedChunk>,
   ) -> HookAugmentChunkHashReturn;
 
   fn call_augment_chunk_hash_meta(&self) -> Option<PluginHookMeta>;
@@ -373,7 +373,7 @@ impl<T: Plugin> Pluginable for T {
   async fn call_augment_chunk_hash(
     &self,
     ctx: &PluginContext,
-    chunk: &RollupRenderedChunk,
+    chunk: Arc<RollupRenderedChunk>,
   ) -> HookAugmentChunkHashReturn {
     Plugin::augment_chunk_hash(self, ctx, chunk).await
   }
@@ -447,12 +447,12 @@ impl<T: Plugin> Pluginable for T {
     Plugin::close_watcher_meta(self)
   }
 
-  fn call_transform_ast(
+  async fn call_transform_ast(
     &self,
     ctx: &PluginContext,
-    args: HookTransformAstArgs,
+    args: HookTransformAstArgs<'_>,
   ) -> HookTransformAstReturn {
-    Plugin::transform_ast(self, ctx, args)
+    Plugin::transform_ast(self, ctx, args).await
   }
 
   fn call_transform_ast_meta(&self) -> Option<PluginHookMeta> {

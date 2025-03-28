@@ -54,10 +54,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
       // But we don't care about them in this method. This method is only used to check if a `IdentifierReference` from user code is a global variable.
       return false;
     };
-    self.scope.is_unresolved(
-      reference_id,
-      self.ctx.symbol_db.this_method_should_be_removed_get_symbol_table(self.ctx.id),
-    )
+    self.scope.is_unresolved(reference_id)
   }
 
   pub fn canonical_name_for(&self, symbol: SymbolRef) -> &'me Rstr {
@@ -92,10 +89,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     };
 
     let reference_id = ident_ref.reference_id.get()?;
-    let symbol_id = self.scope.symbol_id_for(
-      reference_id,
-      self.ctx.symbol_db.this_method_should_be_removed_get_symbol_table(self.ctx.id),
-    )?;
+    let symbol_id = self.scope.symbol_id_for(reference_id)?;
     if !self.namespace_alias_symbol_id.contains(&symbol_id) {
       return None;
     }
@@ -319,7 +313,8 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
             let Some(Module::External(module)) = m else {
               return vec![];
             };
-            let importee_name = &module.name;
+            let importer_chunk = &self.ctx.chunk_graph.chunk_table[self.ctx.chunk_id];
+            let importee_name = &module.get_import_path(importer_chunk);
             vec![
               // Insert `import * as ns from 'ext'`external module in esm format
               self.snippet.import_star_stmt(importee_name, importee_namespace_name),
@@ -635,12 +630,12 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
   fn get_conflicted_info(
     &self,
     id: &BindingIdentifier<'ast>,
-  ) -> Option<(SymbolId, &str, &rolldown_rstr::Rstr)> {
+  ) -> Option<(&str, &rolldown_rstr::Rstr)> {
     let symbol_id = id.symbol_id.get()?;
     let symbol_ref: SymbolRef = (self.ctx.id, symbol_id).into();
     let original_name = symbol_ref.name(self.ctx.symbol_db);
     let canonical_name = self.canonical_name_for(symbol_ref);
-    (original_name != canonical_name.as_str()).then_some((symbol_id, original_name, canonical_name))
+    (original_name != canonical_name.as_str()).then_some((original_name, canonical_name))
   }
 
   /// rewrite toplevel `class ClassName {}` to `var ClassName = class {}`
@@ -650,7 +645,8 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
   ) -> Option<ast::Declaration<'ast>> {
     let scope_id = class.scope_id.get()?;
 
-    if self.scope.get_parent_id(scope_id) != Some(self.scope.root_scope_id()) {
+    if self.scope.scoping().scope_parent_id(scope_id) != Some(self.scope.scoping().root_scope_id())
+    {
       return None;
     };
 
@@ -689,11 +685,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     &self,
     call_expr: &mut ast::CallExpression<'ast>,
   ) -> Option<Expression<'ast>> {
-    if call_expr.is_global_require_call(
-      self.scope,
-      self.ctx.symbol_db.this_method_should_be_removed_get_symbol_table(self.ctx.id),
-    ) && !call_expr.span.is_unspanned()
-    {
+    if call_expr.is_global_require_call(self.scope) && !call_expr.span.is_unspanned() {
       //  `require` calls that can't be recognized by rolldown are ignored in scanning, so they were not stored in `NormalModule#imports`.
       //  we just keep these `require` calls as it is
       if let Some(rec_id) = self.ctx.module.imports.get(&call_expr.span).copied() {
@@ -732,9 +724,11 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
                       ),
                       ast::Expression::StaticMemberExpression(
                         ast::StaticMemberExpression {
-                          object: self
-                            .snippet
-                            .call_expr_with_arg_expr(to_commonjs_ref_name, ns_name),
+                          object: self.snippet.call_expr_with_arg_expr(
+                            to_commonjs_ref_name,
+                            ns_name,
+                            false,
+                          ),
                           property: self.snippet.id_name("default", SPAN),
                           ..TakeIn::dummy(self.alloc)
                         }
@@ -795,11 +789,12 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
           Module::External(importee) => {
             let request_path =
               call_expr.arguments.get_mut(0).expect("require should have an argument");
-
+            let importer_chunk = &self.ctx.chunk_graph.chunk_table[self.ctx.chunk_id];
             // Rewrite `require('xxx')` to `require('fs')`, if there is an alias that maps 'xxx' to 'fs'
-            *request_path = ast::Argument::StringLiteral(
-              self.snippet.alloc_string_literal(&importee.name, request_path.span()),
-            );
+            *request_path = ast::Argument::StringLiteral(self.snippet.alloc_string_literal(
+              &importee.get_import_path(importer_chunk),
+              request_path.span(),
+            ));
             None
           }
         };
@@ -813,10 +808,22 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     &self,
     import_expr: &ImportExpression<'ast>,
   ) -> Option<Expression<'ast>> {
+    let rec_id = self.ctx.module.imports.get(&import_expr.span)?;
+    let rec = &self.ctx.module.import_records[*rec_id];
+    let importee_id = rec.resolved_module;
+
+    if rec.meta.contains(ImportRecordMeta::DEAD_DYNAMIC_IMPORT) {
+      return Some(
+        self.snippet.promise_resolve_then_call_expr(
+          SPAN,
+          self
+            .snippet
+            .builder
+            .vec1(self.snippet.return_stmt(self.snippet.object_freeze_dynamic_import_polyfill())),
+        ),
+      );
+    }
     if self.ctx.options.inline_dynamic_imports {
-      let rec_id = self.ctx.module.imports.get(&import_expr.span)?;
-      let rec = &self.ctx.module.import_records[*rec_id];
-      let importee_id = rec.resolved_module;
       match &self.ctx.modules[importee_id] {
         Module::Normal(importee) => {
           let importee_linking_info = &self.ctx.linking_infos[importee_id];
@@ -1111,17 +1118,12 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     if !self.ctx.options.keep_names {
       return None;
     }
-    let (_, original_name, _) = self.get_conflicted_info(name_binding_id.as_ref()?)?;
-    let (symbol_id, _, canonical_name) = self.get_conflicted_info(symbol_binding_id.as_ref()?)?;
+    let (original_name, _) = self.get_conflicted_info(name_binding_id.as_ref()?)?;
+    let (_, canonical_name) = self.get_conflicted_info(symbol_binding_id.as_ref()?)?;
     let original_name: Rstr = original_name.into();
     let new_name = canonical_name.clone();
     let insert_position = self.ctx.cur_stmt_index + 1;
-    self.ctx.keep_name_statement_to_insert.push((
-      insert_position,
-      symbol_id,
-      original_name,
-      new_name,
-    ));
+    self.ctx.keep_name_statement_to_insert.push((insert_position, original_name, new_name));
     None
   }
 
@@ -1132,7 +1134,7 @@ impl<'me, 'ast> ScopeHoistingFinalizer<'me, 'ast> {
     if !self.ctx.options.keep_names {
       return None;
     }
-    let (_, original_name, _) = self.get_conflicted_info(id.as_ref()?)?;
+    let (original_name, _) = self.get_conflicted_info(id.as_ref()?)?;
     let original_name: Rstr = original_name.into();
     Some(self.snippet.static_block_keep_name_helper(&original_name))
   }

@@ -7,7 +7,9 @@ pub struct InvalidDefineConfig {
 }
 
 impl BuildEvent for InvalidDefineConfig {
-	fn kind(&self) -> crate::event_kind::EventKind { EventKind::InvalidDefineConfig }
+  fn kind(&self) -> crate::event_kind::EventKind {
+    EventKind::InvalidDefineConfigError
+  }
 
 	fn message(&self, _opts:&DiagnosticOptions) -> String { self.message.clone() }
 }

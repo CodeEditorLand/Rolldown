@@ -23,6 +23,7 @@ import { OutputOptions } from '../options/output-options'
 import { parseAst } from '../parse-ast-index'
 import { Program } from '@oxc-project/types'
 import type { Extends, TypeAssert } from '../types/assert'
+import { transformResolvedExternal } from '../utils/resolved-external'
 
 export interface EmittedAsset {
   type: 'asset'
@@ -82,9 +83,10 @@ export class PluginContextImpl extends MinimalPluginContextImpl {
     private data: PluginContextData,
     private onLog: LogHandler,
     logLevel: LogLevelOption,
+    watchMode: boolean,
     private currentLoadingModule?: string,
   ) {
-    super(onLog, logLevel, plugin.name!)
+    super(onLog, logLevel, plugin.name!, watchMode)
     this.getModuleInfo = (id: string) => this.data.getModuleInfo(id, context)
   }
 
@@ -163,7 +165,11 @@ export class PluginContextImpl extends MinimalPluginContextImpl {
 
     if (res == null) return null
     const info = this.data.getModuleOption(res.id) || ({} as ModuleOptions)
-    return { ...res, ...info }
+    return {
+      ...res,
+      external: transformResolvedExternal(res.external),
+      ...info,
+    }
   }
 
   public emitFile: PluginContext['emitFile'] = (file): string => {

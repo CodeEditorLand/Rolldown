@@ -1,6 +1,7 @@
 use std::{ops::Deref, path::Path};
 
 use futures::future::try_join_all;
+use oxc::ast::CommentKind;
 use oxc_index::{IndexVec, index_vec};
 use rolldown_common::{
   Asset, EmittedChunkInfo, InstantiationKind, ModuleRenderArgs, ModuleRenderOutput, Output,
@@ -81,8 +82,9 @@ impl GenerateStage<'_> {
                 map,
                 &mut output_assets,
                 &file_dir,
-                rendered_chunk.filename.as_str(),
-                rendered_chunk.debug_id,
+                filename.as_str(),
+                ecma_meta.debug_id,
+                /*is_css*/ false,
               )
               .await?;
           }
@@ -91,20 +93,20 @@ impl GenerateStage<'_> {
             if matches!(self.options.sourcemap, Some(SourceMapType::Inline) | None) {
               None
             } else {
-              Some(concat_string!(rendered_chunk.filename, ".map"))
+              Some(concat_string!(filename, ".map"))
             };
           output.push(Output::Chunk(Box::new(OutputChunk {
-            name: rendered_chunk.name,
-            filename: rendered_chunk.filename,
+            name: rendered_chunk.name.clone(),
+            filename: filename.clone(),
             code,
             is_entry: rendered_chunk.is_entry,
             is_dynamic_entry: rendered_chunk.is_dynamic_entry,
-            facade_module_id: rendered_chunk.facade_module_id,
-            modules: rendered_chunk.modules,
-            exports: rendered_chunk.exports,
-            module_ids: rendered_chunk.module_ids,
-            imports: rendered_chunk.imports,
-            dynamic_imports: rendered_chunk.dynamic_imports,
+            facade_module_id: rendered_chunk.facade_module_id.clone(),
+            modules: rendered_chunk.modules.clone(),
+            exports: rendered_chunk.exports.clone(),
+            module_ids: rendered_chunk.module_ids.clone(),
+            imports: ecma_meta.imports,
+            dynamic_imports: ecma_meta.dynamic_imports,
             map,
             sourcemap_filename,
             preliminary_filename: preliminary_filename.to_string(),
@@ -121,6 +123,7 @@ impl GenerateStage<'_> {
                 &file_dir,
                 css_meta.filename.as_str(),
                 css_meta.debug_id,
+                /*is_css*/ true,
               )
               .await?;
           }
@@ -291,6 +294,7 @@ impl GenerateStage<'_> {
     chunk_to_codegen_ret
   }
 
+  #[allow(clippy::too_many_arguments)]
   async fn process_code_and_sourcemap(
     &self,
     code: &mut String,
@@ -299,7 +303,9 @@ impl GenerateStage<'_> {
     file_dir: &Path,
     filename: &str,
     debug_id: u128,
+    is_css: bool,
   ) -> BuildResult<()> {
+    let source_map_link_comment_kind = if is_css { CommentKind::Block } else { CommentKind::Line };
     let file_base_name = Path::new(filename).file_name().expect("should have file name");
     map.set_file(file_base_name.to_string_lossy().as_ref());
 
@@ -331,8 +337,15 @@ impl GenerateStage<'_> {
     if self.options.sourcemap_debug_ids && self.options.sourcemap.is_some() {
       let debug_id_str = uuid_v4_string_from_u128(debug_id);
       map.set_debug_id(&debug_id_str);
-      code.push_str("\n//# debugId=");
-      code.push_str(debug_id_str.as_str());
+
+      process_sourcemap_related_reference(
+        code,
+        |source| {
+          source.push_str("# debugId=");
+          source.push_str(debug_id_str.as_str());
+        },
+        source_map_link_comment_kind,
+      );
     }
 
     // Normalize the windows path at final.
@@ -350,24 +363,55 @@ impl GenerateStage<'_> {
             names: vec![],
           })));
           if matches!(sourcemap, SourceMapType::File) {
-            code.push_str("\n//# sourceMappingURL=");
-            code.push_str(
-              &Path::new(&map_filename)
-                .file_name()
-                .expect("should have filename")
-                .to_string_lossy(),
+            process_sourcemap_related_reference(
+              code,
+              |source| {
+                source.push_str("# sourceMappingURL=");
+                source.push_str(
+                  &Path::new(&map_filename)
+                    .file_name()
+                    .expect("should have filename")
+                    .to_string_lossy(),
+                );
+              },
+              source_map_link_comment_kind,
             );
           }
         }
         SourceMapType::Inline => {
           let data_url = map.to_data_url();
-          code.push_str("\n//# sourceMappingURL=");
-          code.push_str(&data_url);
+          process_sourcemap_related_reference(
+            code,
+            |source| {
+              source.push_str("# sourceMappingURL=");
+              source.push_str(&data_url);
+            },
+            source_map_link_comment_kind,
+          );
         }
       }
     }
 
     Ok(())
+  }
+}
+
+fn process_sourcemap_related_reference(
+  source: &mut String,
+  mut reference_body_processor: impl FnMut(&mut String),
+  comment_kind: CommentKind,
+) {
+  source.push('\n');
+  match comment_kind {
+    CommentKind::Line => {
+      source.push_str("//");
+      reference_body_processor(source);
+    }
+    CommentKind::Block => {
+      source.push_str("/*");
+      reference_body_processor(source);
+      source.push_str("*/");
+    }
   }
 }
 

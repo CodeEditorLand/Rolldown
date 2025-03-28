@@ -17,7 +17,6 @@ use rolldown_common::{
 };
 use rolldown_error::{BuildDiagnostic, BuildResult, ResultExt};
 use rolldown_utils::{dashmap::FxDashSet, pattern_filter};
-use sugar_path::SugarPath;
 use tokio::sync::Mutex;
 
 pub struct WatcherTask {
@@ -58,11 +57,9 @@ impl WatcherTask {
     self.emitter.emit(WatcherEvent::Event(BundleEvent::BundleStart))?;
 
     bundler.plugin_driver.clear();
-    for file in changed_files {
-      bundler.cache.invalidate(file);
-    }
+
     let result = {
-      let result = bundler.scan().await;
+      let result = bundler.scan(changed_files.to_owned()).await;
       // FIXME(hyf0): probably should have a more official API/better way to get watch files
       self.watch_files(&bundler.plugin_driver.watch_files, &bundler.options).await?;
       match result {
@@ -122,31 +119,28 @@ impl WatcherTask {
         continue;
       }
       let path = Path::new(file.as_str());
-      if path.exists() {
-        let normalized_path = path.relative(&options.cwd);
-        let normalized_id = normalized_path.to_string_lossy();
-        if pattern_filter::filter(
+      if path.exists()
+        && pattern_filter::filter(
           options.watch.exclude.as_deref(),
           options.watch.include.as_deref(),
           file.as_str(),
-          &normalized_id,
+          options.cwd.to_string_lossy().as_ref(),
         )
         .inner()
-        {
-          self.watch_files.insert(file.clone());
-          // we should skip the file that is already watched, here here some reasons:
-          // - The watching files has a ms level overhead.
-          // - Watching the same files multiple times will cost more overhead.
-          // TODO: tracking https://github.com/notify-rs/notify/issues/653
-          if self.notify_watch_files.contains(file.as_str()) {
-            continue;
-          }
-          let path = Path::new(file.as_str());
-          if path.exists() {
-            tracing::debug!(name= "notify watch ", path = ?path);
-            notify_watcher.watch(path, RecursiveMode::Recursive).map_err_to_unhandleable()?;
-            self.notify_watch_files.insert(file.clone());
-          }
+      {
+        self.watch_files.insert(file.clone());
+        // we should skip the file that is already watched, here here some reasons:
+        // - The watching files has a ms level overhead.
+        // - Watching the same files multiple times will cost more overhead.
+        // TODO: tracking https://github.com/notify-rs/notify/issues/653
+        if self.notify_watch_files.contains(file.as_str()) {
+          continue;
+        }
+        let path = Path::new(file.as_str());
+        if path.exists() {
+          tracing::debug!(name= "notify watch ", path = ?path);
+          notify_watcher.watch(path, RecursiveMode::Recursive).map_err_to_unhandleable()?;
+          self.notify_watch_files.insert(file.clone());
         }
       }
     }

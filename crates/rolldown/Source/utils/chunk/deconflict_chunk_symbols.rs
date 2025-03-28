@@ -51,9 +51,14 @@ pub fn deconflict_chunk_symbols(
     .copied()
     .filter_map(|id| link_output.module_table.modules[id].as_normal())
     .flat_map(|m| {
-      let ast_scope =
-        &link_output.ast_scope_table[m.ast_scope_idx.expect("ast_scope_idx should be set")];
-      ast_scope.root_unresolved_references().keys().map(Cow::Borrowed)
+      link_output.symbol_db[m.idx]
+        .as_ref()
+        .unwrap()
+        .ast_scopes
+        .scoping()
+        .root_unresolved_references()
+        .keys()
+        .map(Cow::Borrowed)
     })
     .for_each(|name| {
       // global names should be reserved
@@ -95,9 +100,18 @@ pub fn deconflict_chunk_symbols(
   if matches!(format, OutputFormat::Esm) {
     chunk.imports_from_external_modules.iter().for_each(|(module, _)| {
       let db = link_output.symbol_db.local_db(*module);
-      db.classic_data.iter_enumerated().skip(1).for_each(|(symbol, _)| {
-        renamer.add_symbol_in_root_scope((*module, symbol).into());
+      db.classic_data.iter_enumerated().for_each(|(symbol, _)| {
+        let symbol_ref = (*module, symbol).into();
+        if link_output.used_symbol_refs.contains(&symbol_ref) {
+          renamer.add_symbol_in_root_scope(symbol_ref);
+        }
       });
+      for symbol_id in db.ast_scopes.facade_symbol_classic_data().keys() {
+        let symbol_ref = (*module, *symbol_id).into();
+        if link_output.used_symbol_refs.contains(&symbol_ref) {
+          renamer.add_symbol_in_root_scope(symbol_ref);
+        }
+      }
     });
   }
 
@@ -120,11 +134,7 @@ pub fn deconflict_chunk_symbols(
     });
 
   // rename non-top-level names
-  renamer.rename_non_root_symbol(
-    &chunk.modules,
-    &link_output.module_table.modules,
-    &link_output.ast_scope_table,
-  );
+  renamer.rename_non_root_symbol(&chunk.modules, link_output);
 
   (chunk.canonical_names, chunk.canonical_name_by_token) = renamer.into_canonical_names();
 }

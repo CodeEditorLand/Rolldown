@@ -1,18 +1,16 @@
 use std::ops::{Deref, DerefMut};
 
-use oxc::semantic::SymbolId;
-use oxc::semantic::{NodeId, ScopeId, SymbolFlags, SymbolTable};
-use oxc::span::SPAN;
-use oxc_index::IndexVec;
+use oxc::semantic::{ScopeId, Scoping, SymbolId};
+use oxc_index::{Idx, IndexVec};
 use rolldown_rstr::Rstr;
 use rolldown_std_utils::OptionExt;
 use rustc_hash::FxHashMap;
 
-use crate::{ChunkIdx, ModuleIdx, SymbolRef};
+use crate::{AstScopes, ChunkIdx, ModuleIdx, SymbolRef};
 
 use super::namespace_alias::NamespaceAlias;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SymbolRefDataClassic {
   /// For case `import {a} from 'foo.cjs';console.log(a)`, the symbol `a` reference to `module.exports.a` of `foo.cjs`.
   /// So we will transform the code into `console.log(foo_ns.a)`. `foo_ns` is the namespace symbol of `foo.cjs and `a` is the property name.
@@ -25,7 +23,7 @@ pub struct SymbolRefDataClassic {
 }
 
 bitflags::bitflags! {
-  #[derive(Debug, Default)]
+  #[derive(Debug, Default, Clone, Copy)]
   pub struct SymbolRefFlags: u8 {
     const IS_NOT_REASSIGNED = 1;
     /// If this symbol is declared by `const`. Eg. `const a = 1;`
@@ -33,44 +31,50 @@ bitflags::bitflags! {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SymbolRefDbForModule {
   owner_idx: ModuleIdx,
   root_scope_id: ScopeId,
-  pub(crate) symbol_table: SymbolTable,
+  pub ast_scopes: AstScopes,
   // Only some symbols would be cared about, so we use a hashmap to store the flags.
   pub flags: FxHashMap<SymbolId, SymbolRefFlags>,
   pub classic_data: IndexVec<SymbolId, SymbolRefDataClassic>,
 }
 
+impl Default for SymbolRefDbForModule {
+  fn default() -> Self {
+    Self {
+      owner_idx: ModuleIdx::new(0),
+      root_scope_id: ScopeId::new(0),
+      ast_scopes: AstScopes::new(Scoping::default()),
+      flags: FxHashMap::default(),
+      classic_data: IndexVec::default(),
+    }
+  }
+}
+
 impl SymbolRefDbForModule {
-  pub fn new(symbol_table: SymbolTable, owner_idx: ModuleIdx, top_level_scope_id: ScopeId) -> Self {
+  pub fn new(scoping: Scoping, owner_idx: ModuleIdx, top_level_scope_id: ScopeId) -> Self {
     Self {
       owner_idx,
       root_scope_id: top_level_scope_id,
-      classic_data: symbol_table
-        .names()
-        .map(|_name| SymbolRefDataClassic { link: None, chunk_id: None, namespace_alias: None })
-        .collect(),
-      symbol_table,
+      classic_data: IndexVec::from_vec(vec![
+        SymbolRefDataClassic {
+          link: None,
+          chunk_id: None,
+          namespace_alias: None,
+        };
+        scoping.symbols_len()
+      ]),
+
+      ast_scopes: AstScopes::new(scoping),
       flags: FxHashMap::default(),
     }
   }
 
-  // The `facade` means the symbol is actually not exist in the AST.
+  /// The `facade` means the symbol is actually not exist in the AST.
   pub fn create_facade_root_symbol_ref(&mut self, name: &str) -> SymbolRef {
-    self.classic_data.push(SymbolRefDataClassic {
-      link: None,
-      chunk_id: None,
-      namespace_alias: None,
-    });
-    let symbol_id = self.symbol_table.create_symbol(
-      SPAN,
-      name,
-      SymbolFlags::empty(),
-      self.root_scope_id,
-      NodeId::DUMMY,
-    );
+    let symbol_id = self.ast_scopes.create_facade_root_symbol_ref(name);
 
     SymbolRef::from((self.owner_idx, symbol_id))
   }
@@ -81,26 +85,61 @@ impl SymbolRefDbForModule {
   pub fn create_symbol(&mut self) {
     panic!("Use `create_facade_root_symbol_ref` instead");
   }
+
+  /// # Panics
+  /// - If the symbol is not declared in the module.
+  pub fn get_classic_data(&self, symbol_id: SymbolId) -> &SymbolRefDataClassic {
+    if symbol_id.index() < self.ast_scopes.real_symbol_length() {
+      return &self.classic_data[symbol_id];
+    }
+    self
+      .ast_scopes
+      .facade_scoping
+      .facade_symbol_classic_data
+      .get(&symbol_id)
+      .unwrap_or_else(|| panic!("No symbol found for {:?} -> {symbol_id:?}", self.owner_idx))
+  }
+
+  pub fn get_classic_data_mut(&mut self, symbol_id: SymbolId) -> &mut SymbolRefDataClassic {
+    if symbol_id.index() < self.ast_scopes.real_symbol_length() {
+      return &mut self.classic_data[symbol_id];
+    }
+    self.ast_scopes.facade_scoping.facade_symbol_classic_data.get_mut(&symbol_id).unwrap()
+  }
 }
 
 impl Deref for SymbolRefDbForModule {
-  type Target = SymbolTable;
+  type Target = AstScopes;
 
   fn deref(&self) -> &Self::Target {
-    &self.symbol_table
+    &self.ast_scopes
   }
 }
 
 impl DerefMut for SymbolRefDbForModule {
   fn deref_mut(&mut self) -> &mut Self::Target {
-    &mut self.symbol_table
+    &mut self.ast_scopes
   }
 }
 
 // Information about symbols for all modules
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct SymbolRefDb {
-  pub(crate) inner: IndexVec<ModuleIdx, Option<SymbolRefDbForModule>>,
+  inner: IndexVec<ModuleIdx, Option<SymbolRefDbForModule>>,
+}
+
+impl std::ops::Index<ModuleIdx> for SymbolRefDb {
+  type Output = Option<SymbolRefDbForModule>;
+
+  fn index(&self, index: ModuleIdx) -> &Self::Output {
+    self.inner.index(index)
+  }
+}
+
+impl std::ops::IndexMut<ModuleIdx> for SymbolRefDb {
+  fn index_mut(&mut self, index: ModuleIdx) -> &mut Self::Output {
+    self.inner.index_mut(index)
+  }
 }
 
 impl SymbolRefDb {
@@ -148,11 +187,11 @@ impl SymbolRefDb {
   }
 
   pub fn get(&self, refer: SymbolRef) -> &SymbolRefDataClassic {
-    &self.inner[refer.owner].unpack_ref().classic_data[refer.symbol]
+    self.inner[refer.owner].unpack_ref().get_classic_data(refer.symbol)
   }
 
   pub fn get_mut(&mut self, refer: SymbolRef) -> &mut SymbolRefDataClassic {
-    &mut self.inner[refer.owner].unpack_ref_mut().classic_data[refer.symbol]
+    self.inner[refer.owner].unpack_ref_mut().get_classic_data_mut(refer.symbol)
   }
 
   /// https://en.wikipedia.org/wiki/Disjoint-set_data_structure
@@ -179,11 +218,7 @@ impl SymbolRefDb {
 
   pub fn is_declared_in_root_scope(&self, refer: SymbolRef) -> bool {
     let local_db = self.inner[refer.owner].unpack_ref();
-    local_db.get_scope_id(refer.symbol) == local_db.root_scope_id
-  }
-
-  pub fn this_method_should_be_removed_get_symbol_table(&self, owner: ModuleIdx) -> &SymbolTable {
-    self.inner[owner].unpack_ref()
+    local_db.ast_scopes.symbol_scope_id(refer.symbol) == local_db.root_scope_id
   }
 }
 

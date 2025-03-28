@@ -6,13 +6,13 @@ use std::sync::Arc;
 
 use arcstr::ArcStr;
 use oxc::transformer::{InjectGlobalVariablesConfig, JsxOptions, TransformOptions};
+use rolldown_error::EventKindSwitcher;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::advanced_chunks_options::AdvancedChunksOptions;
-use super::checks_options::ChecksOptions;
 use super::comments::Comments;
 use super::experimental_options::ExperimentalOptions;
-use super::jsx::Jsx;
+use super::jsx::NormalizedJsxOptions;
 use super::minify_options::MinifyOptions;
 use super::output_option::{AssetFilenamesOutputOption, ChunkFilenamesOutputOption};
 use super::sanitize_filename::SanitizeFilename;
@@ -26,7 +26,8 @@ use super::{
 };
 use crate::{
   DeferSyncScanDataOption, EmittedAsset, EsModuleFlag, FilenameTemplate, GlobalsOutputOption,
-  HashCharacters, InjectImport, InputItem, ModuleType, RollupPreRenderedAsset,
+  HashCharacters, InjectImport, InputItem, MakeAbsoluteExternalsRelative, ModuleType,
+  RollupPreRenderedAsset,
 };
 
 #[allow(clippy::struct_excessive_bools)] // Using raw booleans is more clear in this case
@@ -78,9 +79,9 @@ pub struct NormalizedBundlerOptions {
   pub external_live_bindings: bool,
   pub inline_dynamic_imports: bool,
   pub advanced_chunks: Option<AdvancedChunksOptions>,
-  pub checks: ChecksOptions,
+  pub checks: EventKindSwitcher,
   pub profiler_names: bool,
-  pub jsx: Jsx,
+  pub jsx: NormalizedJsxOptions,
   pub watch: WatchOption,
   pub comments: Comments,
   pub drop_labels: FxHashSet<String>,
@@ -88,6 +89,7 @@ pub struct NormalizedBundlerOptions {
   pub polyfill_require: bool,
   pub defer_sync_scan_data: Option<DeferSyncScanDataOption>,
   pub transform_options: TransformOptions,
+  pub make_absolute_externals_relative: MakeAbsoluteExternalsRelative,
 }
 
 // This is only used for testing
@@ -137,7 +139,6 @@ impl Default for NormalizedBundlerOptions {
       advanced_chunks: Default::default(),
       checks: Default::default(),
       profiler_names: Default::default(),
-      jsx: Default::default(),
       watch: Default::default(),
       comments: Comments::None,
       drop_labels: Default::default(),
@@ -145,6 +146,8 @@ impl Default for NormalizedBundlerOptions {
       polyfill_require: Default::default(),
       defer_sync_scan_data: Default::default(),
       transform_options: Default::default(),
+      make_absolute_externals_relative: Default::default(),
+      jsx: Default::default(),
     }
   }
 }

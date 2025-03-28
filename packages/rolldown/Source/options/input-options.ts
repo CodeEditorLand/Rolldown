@@ -9,6 +9,7 @@ import type {
 import type { NullValue, StringOrRegExp } from '../types/utils'
 import type { TreeshakingOptions } from '../types/module-side-effects'
 import { TransformOptions } from '../binding'
+import type { ChecksOptions } from './generated/checks-options'
 
 export type InputOption = string | string[] | Record<string, string>
 
@@ -71,13 +72,7 @@ export interface WatchOptions {
   exclude?: StringOrRegExp | StringOrRegExp[]
 }
 
-export interface ChecksOptions {
-  /**
-   * Whether to emit warnings when detecting circular dependencies.
-   * @default false
-   */
-  circularDependency?: boolean
-}
+export type MakeAbsoluteExternalsRelative = boolean | 'ifRelativeSource'
 
 export interface InputOptions {
   input?: InputOption
@@ -226,6 +221,7 @@ export interface InputOptions {
   dropLabels?: string[]
   keepNames?: boolean
   checks?: ChecksOptions
+  makeAbsoluteExternalsRelative?: MakeAbsoluteExternalsRelative
 }
 
 interface OverwriteInputOptionsForCli {

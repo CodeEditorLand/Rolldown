@@ -180,7 +180,8 @@ impl From<ResolveReturn> for ResolvedId {
       id: resolved_return.path,
       ignored: false,
       module_def_format: resolved_return.module_def_format,
-      is_external: false,
+      external: false.into(),
+      normalize_external_id: None,
       package_json: resolved_return.package_json,
       side_effects: None,
       is_external_without_side_effects: false,
@@ -239,12 +240,12 @@ impl<F: FileSystem + Default> Resolver<F> {
 
     resolution.map(|info| {
       let package_json = info.package_json().map(|p| self.cached_package_json(p));
-      let module_type = infer_module_def_format(&info);
-      build_resolve_ret(
-        info.full_path().to_str().expect("Should be valid utf8").to_string(),
-        module_type,
+      let module_def_format = infer_module_def_format(&info);
+      ResolveReturn {
+        path: info.full_path().to_str().expect("Should be valid utf8").into(),
+        module_def_format,
         package_json,
-      )
+      }
     })
   }
 
@@ -298,14 +299,6 @@ fn infer_module_def_format<F: FileSystem + Default>(
     };
   }
   ModuleDefFormat::Unknown
-}
-
-fn build_resolve_ret(
-  path: String,
-  module_type: ModuleDefFormat,
-  package_json: Option<Arc<PackageJson>>,
-) -> ResolveReturn {
-  ResolveReturn { path: path.into(), module_def_format: module_type, package_json }
 }
 
 // Support esbuild's `rewrittenFileExtensions` feature. https://github.com/evanw/esbuild/blob/a08f30db4a475472aa09cd89e2279a822266f6c7/internal/resolver/resolver.go#L1622-L1644

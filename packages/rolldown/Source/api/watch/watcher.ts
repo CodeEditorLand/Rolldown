@@ -1,4 +1,4 @@
-import { BindingWatcher } from '../../binding'
+import { BindingWatcher, shutdownAsyncRuntime } from '../../binding'
 import { LOG_LEVEL_WARN } from '../../log/logging'
 import { logMultiplyNotifyOption } from '../../log/logs'
 import { WatchOptions } from '../../options/watch-options'
@@ -39,6 +39,7 @@ export class Watcher {
       await stop?.()
     }
     await this.inner.close()
+    shutdownAsyncRuntime()
   }
 
   start(): void {
@@ -58,8 +59,8 @@ export async function createWatcher(
     options
       .map((option) =>
         arraify(option.output || {}).map(async (output) => {
-          const inputOptions = await PluginDriver.callOptionsHook(option)
-          return createBundlerOptions(inputOptions, output)
+          const inputOptions = await PluginDriver.callOptionsHook(option, true)
+          return createBundlerOptions(inputOptions, output, true)
         }),
       )
       .flat(),

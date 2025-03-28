@@ -52,7 +52,7 @@ update-esbuild-diff *args="":
     pnpm --filter=scripts esbuild-snap-diff {{ args }}
 
 # run tests for both Rust and Node.js
-test: test-rust test-node
+test: test-rust test-node update-generated-code
 
 # run all tests and update snapshot
 test-update:
@@ -61,6 +61,9 @@ test-update:
 
 test-rust:
     cargo test --workspace --exclude rolldown_binding
+
+update-generated-code:
+    cargo run --bin generator 
 
 # Supported presets: all, rolldown, rollup
 test-node preset="all" *args="": _build-native-debug
@@ -132,6 +135,10 @@ _build-native-debug:
 # This command is used to build the js side code only.
 build-js-glue:
     pnpm run --filter rolldown build-js-glue
+
+# This will build the package `@rolldown/wasi`.
+build-wasi mode="debug":
+    pnpm run --filter "@rolldown/wasi" build:{{ mode }}
 
 run *args:
     pnpm rolldown {{ args }}

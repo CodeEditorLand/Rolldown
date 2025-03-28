@@ -8,6 +8,7 @@ use rolldown_plugin_alias::{Alias, AliasPlugin};
 use rolldown_plugin_build_import_analysis::BuildImportAnalysisPlugin;
 use rolldown_plugin_dynamic_import_vars::DynamicImportVarsPlugin;
 use rolldown_plugin_import_glob::{ImportGlobPlugin, ImportGlobPluginConfig};
+use rolldown_plugin_isolated_declaration::IsolatedDeclarationPlugin;
 use rolldown_plugin_json::{JsonPlugin, JsonPluginStringify};
 use rolldown_plugin_load_fallback::LoadFallbackPlugin;
 use rolldown_plugin_manifest::{ManifestPlugin, ManifestPluginConfig};
@@ -428,7 +429,27 @@ impl TryFrom<BindingBuiltinPlugin> for Arc<dyn Pluginable> {
         };
         Arc::new(ModuleFederationPlugin::new(config.into()))
       }
+      BindingBuiltinPluginName::IsolatedDeclaration => {
+        let plugin = if let Some(options) = plugin.options {
+          BindingIsolatedDeclarationPluginConfig::from_unknown(options)?.into()
+        } else {
+          IsolatedDeclarationPlugin::default()
+        };
+        Arc::new(plugin)
+      }
     })
+  }
+}
+
+#[napi_derive::napi(object)]
+#[derive(Debug, Default)]
+pub struct BindingIsolatedDeclarationPluginConfig {
+  pub strip_internal: Option<bool>,
+}
+
+impl From<BindingIsolatedDeclarationPluginConfig> for IsolatedDeclarationPlugin {
+  fn from(value: BindingIsolatedDeclarationPluginConfig) -> Self {
+    IsolatedDeclarationPlugin { strip_internal: value.strip_internal.unwrap_or_default() }
   }
 }
 

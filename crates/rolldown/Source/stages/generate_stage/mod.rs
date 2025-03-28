@@ -1,4 +1,4 @@
-use std::collections::hash_map::Entry;
+use std::{collections::hash_map::Entry, sync::Arc};
 
 use arcstr::ArcStr;
 use futures::future::try_join_all;
@@ -97,8 +97,7 @@ impl<'a> GenerateStage<'a> {
         let Module::Normal(module) = &self.link_output.module_table.modules[*owner] else {
           return;
         };
-        let ast_scope_idx = module.ecma_view.ast_scope_idx.expect("scope idx should be set");
-        let ast_scope = &self.link_output.ast_scope_table[ast_scope_idx];
+        let ast_scope = &self.link_output.symbol_db[module.idx].as_ref().unwrap().ast_scopes;
         let chunk_id = chunk_graph.module_to_chunk[module.idx].unwrap();
         let chunk = &chunk_graph.chunk_table[chunk_id];
         let linking_info = &self.link_output.metas[module.idx];
@@ -329,7 +328,7 @@ impl<'a> GenerateStage<'a> {
           return;
         };
         let asset_filename: ArcStr = preliminary.as_str().into();
-        module.ecma_view.mutations.push(Box::new(ImportMetaRolldownAssetReplacer {
+        module.ecma_view.mutations.push(Arc::new(ImportMetaRolldownAssetReplacer {
           asset_filename: asset_filename.clone(),
         }));
         module_idx_to_filenames.insert(module_idx, asset_filename);
@@ -340,12 +339,14 @@ impl<'a> GenerateStage<'a> {
         if let Some(css_view) =
           module.as_normal_mut().and_then(|normal_module| normal_module.css_view.as_mut())
         {
-          for (idx, record) in css_view.import_records.iter_enumerated() {
+          for (idx, record) in
+            css_view.import_records.iter_enumerated().filter(|(_idx, rec)| !rec.is_dummy())
+          {
             if let Some(asset_filename) = module_idx_to_filenames.get(&record.resolved_module) {
               let span = css_view.record_idx_to_span[idx];
               css_view
                 .mutations
-                .push(Box::new(CssAssetNameReplacer { span, asset_name: asset_filename.clone() }));
+                .push(Arc::new(CssAssetNameReplacer { span, asset_name: asset_filename.clone() }));
             }
           }
         }

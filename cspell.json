@@ -69,6 +69,7 @@
     "browserslist",
     "canonicalize",
     "cdylib",
+    "choco",
     "citty",
     "clippy",
     "codegen",
@@ -212,6 +213,7 @@
     "vitepress",
     "wasi",
     "WASI",
+    "webcontainer",
     "webp",
     "Xiangjun",
     "Yinan",
@@ -224,7 +226,11 @@
     "minifiers",
     "esmodule",
     "mapref",
-    "ropey"
+    "ropey",
+    "krate",
+    "prettyplease",
+    "unparse",
+    "commondir"
   ],
   "ignoreWords": ["Jeqs", "Gwetwem", "bpwli", "mxrh"]
 }

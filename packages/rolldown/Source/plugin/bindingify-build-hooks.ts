@@ -37,6 +37,7 @@ import {
 import type { BindingifyPluginArgs } from './bindingify-plugin'
 import { NormalizedInputOptionsImpl } from '../options/normalized-input-options'
 import { normalizeErrors } from '../utils/error'
+import { bindingResolvedExternal } from '../utils/resolved-external'
 
 export function bindingifyBuildStart(
   args: BindingifyPluginArgs,
@@ -57,6 +58,7 @@ export function bindingifyBuildStart(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         new NormalizedInputOptionsImpl(opts, args.onLog),
       )
@@ -83,6 +85,7 @@ export function bindingifyBuildEnd(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         err ? normalizeErrors(err) : undefined,
       )
@@ -127,6 +130,7 @@ export function bindingifyResolveId(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         specifier,
         importer ?? undefined,
@@ -138,12 +142,14 @@ export function bindingifyResolveId(
       if (ret === false) {
         return {
           id: specifier,
-          external: true,
+          external: bindingResolvedExternal(true),
+          normalizeExternalId: true,
         }
       }
       if (typeof ret === 'string') {
         return {
           id: ret,
+          normalizeExternalId: true,
         }
       }
 
@@ -156,7 +162,8 @@ export function bindingifyResolveId(
 
       return {
         id: ret.id,
-        external: ret.external,
+        external: bindingResolvedExternal(ret.external),
+        normalizeExternalId: false,
         sideEffects: bindingifySideEffects(exist.moduleSideEffects),
       }
     },
@@ -184,6 +191,7 @@ export function bindingifyResolveDynamicImport(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         specifier,
         importer ?? undefined,
@@ -194,7 +202,7 @@ export function bindingifyResolveDynamicImport(
       if (ret === false) {
         return {
           id: specifier,
-          external: true,
+          external: bindingResolvedExternal(true),
         }
       }
       if (typeof ret === 'string') {
@@ -205,7 +213,7 @@ export function bindingifyResolveDynamicImport(
 
       const result: BindingHookResolveIdOutput = {
         id: ret.id,
-        external: ret.external,
+        external: bindingResolvedExternal(ret.external),
       }
 
       if (ret.moduleSideEffects !== null) {
@@ -249,6 +257,7 @@ export function bindingifyTransform(
           code,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         code,
         id,
@@ -305,6 +314,7 @@ export function bindingifyLoad(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
           id,
         ),
         id,
@@ -380,6 +390,7 @@ export function bindingifyModuleParsed(
           args.pluginContextData,
           args.onLog,
           args.logLevel,
+          args.watchMode,
         ),
         transformModuleInfo(
           moduleInfo,

@@ -25,6 +25,7 @@ export function bindingifyInputOptions(
   normalizedOutputPlugins: RolldownPlugin[],
   onLog: LogHandler,
   logLevel: LogLevelOption,
+  watchMode: boolean,
 ): BindingInputOptions {
   const pluginContextData = new PluginContextData()
 
@@ -43,6 +44,7 @@ export function bindingifyInputOptions(
       normalizedOutputPlugins,
       onLog,
       logLevel,
+      watchMode,
     )
   })
 
@@ -91,6 +93,9 @@ export function bindingifyInputOptions(
       })
       return ret
     },
+    makeAbsoluteExternalsRelative: bindingifyMakeAbsoluteExternalsRelative(
+      inputOptions.makeAbsoluteExternalsRelative,
+    ),
   }
 }
 
@@ -304,4 +309,15 @@ function bindingifyTreeshakeOptions(
   }
 
   return normalizedConfig
+}
+
+function bindingifyMakeAbsoluteExternalsRelative(
+  makeAbsoluteExternalsRelative: InputOptions['makeAbsoluteExternalsRelative'],
+): BindingInputOptions['makeAbsoluteExternalsRelative'] {
+  if (makeAbsoluteExternalsRelative === 'ifRelativeSource') {
+    return { type: 'IfRelativeSource' }
+  }
+  if (typeof makeAbsoluteExternalsRelative === 'boolean') {
+    return { type: 'Bool', field0: makeAbsoluteExternalsRelative }
+  }
 }

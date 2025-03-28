@@ -2,7 +2,7 @@ use crate::{AstScopes, ModuleIdx, SymbolRef};
 use oxc::{semantic::SymbolId, span::CompactStr as CompactString};
 use rustc_hash::FxHashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RuntimeModuleBrief {
   id: ModuleIdx,
   name_to_symbol: FxHashMap<CompactString, SymbolId>,
@@ -13,7 +13,8 @@ impl RuntimeModuleBrief {
     Self {
       id,
       name_to_symbol: scope
-        .get_bindings(scope.root_scope_id())
+        .scoping()
+        .get_bindings(scope.scoping().root_scope_id())
         .into_iter()
         .map(|(name, &symbol_id)| (CompactString::new(name), symbol_id))
         .collect(),
@@ -28,6 +29,10 @@ impl RuntimeModuleBrief {
     let symbol_id =
       self.name_to_symbol.get(name).unwrap_or_else(|| panic!("Failed to resolve symbol: {name}"));
     (self.id, *symbol_id).into()
+  }
+
+  pub fn dummy() -> Self {
+    Self { id: ModuleIdx::new(0), name_to_symbol: FxHashMap::default() }
   }
 }
 

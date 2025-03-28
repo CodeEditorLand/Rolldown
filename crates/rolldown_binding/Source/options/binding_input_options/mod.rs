@@ -1,14 +1,15 @@
-mod binding_checks_options;
 mod binding_defer_sync_scan_data;
 mod binding_experimental_options;
 pub mod binding_inject_import;
 mod binding_input_item;
 mod binding_jsx;
+mod binding_make_absolute_externals_relative;
 mod binding_resolve_options;
 mod binding_treeshake;
 mod binding_watch_option;
 
 use binding_defer_sync_scan_data::BindingDeferSyncScanDataOption;
+use binding_make_absolute_externals_relative::BindingMakeAbsoluteExternalsRelative;
 use derive_more::Debug;
 use napi::bindgen_prelude::FnArgs;
 use napi_derive::napi;
@@ -22,6 +23,7 @@ use binding_resolve_options::BindingResolveOptions;
 use binding_watch_option::BindingWatchOption;
 
 use super::plugin::BindingPluginOrParallelJsPluginPlaceholder;
+use crate::generated::binding_checks_options;
 use crate::types::{
   binding_log::BindingLog, binding_log_level::BindingLogLevel, js_callback::JsCallback,
 };
@@ -92,4 +94,5 @@ pub struct BindingInputOptions {
   #[debug(skip)]
   #[napi(ts_type = "undefined | (() => BindingDeferSyncScanData[])")]
   pub defer_sync_scan_data: Option<BindingDeferSyncScanDataOption>,
+  pub make_absolute_externals_relative: Option<BindingMakeAbsoluteExternalsRelative>,
 }

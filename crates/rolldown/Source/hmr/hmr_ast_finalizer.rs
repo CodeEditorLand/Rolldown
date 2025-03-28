@@ -2,34 +2,57 @@ use oxc::{
   allocator::Allocator,
   ast::ast::{self, ExportDefaultDeclarationKind},
   ast_visit::{VisitMut, walk_mut},
-  semantic::SymbolId,
-  span::{Atom, GetSpan},
+  semantic::{Scoping, SymbolId},
+  span::Atom,
 };
-use rolldown_common::{IndexModules, Module, NormalModule};
+use rolldown_common::{IndexModules, Module, ModuleIdx, NormalModule};
 use rolldown_ecmascript_utils::{
-  AstSnippet, BindingIdentifierExt, BindingPatternExt, ExpressionExt, quote_stmt,
+  AstSnippet, BindingIdentifierExt, BindingPatternExt, ExpressionExt, quote_stmt, quote_stmts,
 };
 use rustc_hash::FxHashMap;
 
-#[expect(unused)]
 pub struct HmrAstFinalizer<'me, 'ast> {
   // Outside input
   pub alloc: &'ast Allocator,
   pub snippet: AstSnippet<'ast>,
-  pub symbols: &'me oxc::semantic::SymbolTable,
-  pub scopes: &'me oxc::semantic::ScopeTree,
+  pub scoping: &'me Scoping,
   pub modules: &'me IndexModules,
   pub module: &'me NormalModule,
-  pub import_binding: FxHashMap<SymbolId, String>,
+  pub affected_module_idx_to_init_fn_name: &'me FxHashMap<ModuleIdx, String>,
   //Internal state
+  pub import_binding: FxHashMap<SymbolId, String>,
   pub exports: FxHashMap<Atom<'ast>, Atom<'ast>>,
+  pub dependencies: FxIndexSet<ModuleIdx>,
 }
 
 use oxc::{allocator::IntoIn, ast::NONE, span::SPAN};
 use rolldown_ecmascript_utils::TakeIn;
-use rolldown_utils::ecmascript::is_validate_identifier_name;
+use rolldown_utils::{ecmascript::is_validate_identifier_name, indexmap::FxIndexSet};
 
 impl<'ast> HmrAstFinalizer<'_, 'ast> {
+  pub fn generate_hmr_header(&self) -> Vec<ast::Statement<'ast>> {
+    let mut ret = vec![];
+
+    // `import.meta.hot = __rolldown_runtime__.createModuleHotContext(moduleId);`
+    ret.push(self.generate_stmt_of_init_module_hot_context());
+
+    ret.extend(self.generate_runtime_module_register_for_hmr());
+
+    ret
+  }
+
+  pub fn generate_stmt_of_init_module_hot_context(&self) -> ast::Statement<'ast> {
+    // import.meta.hot = __rolldown_runtime__.createModuleHotContext(moduleId);
+    let stmt = quote_stmt(
+      self.alloc,
+      &format!(
+        "import.meta.hot = __rolldown_runtime__.createModuleHotContext({:?});",
+        self.module.stable_id
+      ),
+    );
+    stmt
+  }
+
   pub fn generate_runtime_module_register_for_hmr(&self) -> Vec<ast::Statement<'ast>> {
     let mut ret = vec![];
 
@@ -108,8 +131,88 @@ impl<'ast> HmrAstFinalizer<'_, 'ast> {
 impl<'ast> VisitMut<'ast> for HmrAstFinalizer<'_, 'ast> {
   fn visit_program(&mut self, it: &mut ast::Program<'ast>) {
     walk_mut::walk_program(self, it);
+    // Move the original program body to a try catch block to unlock the ability to be error-tolerant
+    let mut try_block =
+      self.snippet.builder.alloc_block_statement(SPAN, self.snippet.builder.vec());
 
-    it.body.splice(0..0, self.generate_runtime_module_register_for_hmr());
+    let dependencies_init_fns = self
+      .dependencies
+      .iter()
+      .filter_map(|dep| self.affected_module_idx_to_init_fn_name.get(dep))
+      .map(|fn_name| format!("{fn_name}();"))
+      .collect::<Vec<_>>()
+      .join("\n");
+
+    let dependencies_init_fn_stmts = quote_stmts(self.alloc, dependencies_init_fns.as_str());
+
+    let dev_runtime_head = self.generate_hmr_header();
+
+    try_block
+      .body
+      .reserve_exact(dev_runtime_head.len() + it.body.len() + dependencies_init_fn_stmts.len());
+    try_block.body.extend(dev_runtime_head);
+    try_block.body.extend(dependencies_init_fn_stmts);
+    try_block.body.extend(it.body.take_in(self.alloc));
+
+    let final_block = self.snippet.builder.alloc_block_statement(SPAN, self.snippet.builder.vec());
+
+    let try_stmt =
+      self.snippet.builder.alloc_try_statement(SPAN, try_block, NONE, Some(final_block));
+
+    let init_fn_name = &self.affected_module_idx_to_init_fn_name[&self.module.idx];
+
+    // function () { [user code] }
+    let user_code_wrapper =
+      ast::Expression::FunctionExpression(self.snippet.builder.alloc_function(
+        SPAN,
+        ast::FunctionType::FunctionExpression,
+        None,
+        false,
+        false,
+        false,
+        NONE,
+        NONE,
+        self.snippet.builder.formal_parameters(
+          SPAN,
+          ast::FormalParameterKind::Signature,
+          self.snippet.builder.vec_with_capacity(2),
+          NONE,
+        ),
+        NONE,
+        Some(self.snippet.builder.function_body(
+          SPAN,
+          self.snippet.builder.vec(),
+          self.snippet.builder.vec1(ast::Statement::TryStatement(try_stmt)),
+        )),
+      ));
+
+    // var init_foo = __rolldown__runtime.createEsmInitializer(function () { [user code] })
+    let var_decl = self.snippet.builder.alloc_variable_declaration(
+      SPAN,
+      ast::VariableDeclarationKind::Var,
+      self.snippet.builder.vec1(self.snippet.builder.variable_declarator(
+        SPAN,
+        ast::VariableDeclarationKind::Var,
+        self.snippet.builder.binding_pattern(
+          ast::BindingPatternKind::BindingIdentifier(
+            self.snippet.builder.alloc_binding_identifier(SPAN, init_fn_name),
+          ),
+          NONE,
+          false,
+        ),
+        Some(ast::Expression::CallExpression(self.snippet.builder.alloc_call_expression(
+          SPAN,
+          self.snippet.id_ref_expr("__rolldown_runtime__.createEsmInitializer", SPAN),
+          NONE,
+          self.snippet.builder.vec1(ast::Argument::from(user_code_wrapper)),
+          false,
+        ))),
+        false,
+      )),
+      false,
+    );
+
+    it.body.push(ast::Statement::VariableDeclaration(var_decl));
   }
 
   fn visit_statement(&mut self, node: &mut ast::Statement<'ast>) {
@@ -127,8 +230,10 @@ impl<'ast> VisitMut<'ast> for HmrAstFinalizer<'_, 'ast> {
           // console.log(import_foo.default, import_foo.bar);
           // ```
           let rec_id = self.module.imports[&import_decl.span];
-          match &self.modules[self.module.import_records[rec_id].resolved_module] {
+          let rec = &self.module.import_records[rec_id];
+          match &self.modules[rec.resolved_module] {
             Module::Normal(importee) => {
+              self.dependencies.insert(rec.resolved_module);
               let id = &importee.stable_id;
               let binding_name = format!("import_{}", importee.repr_name);
               let stmt = quote_stmt(
@@ -260,7 +365,7 @@ impl<'ast> VisitMut<'ast> for HmrAstFinalizer<'_, 'ast> {
   fn visit_expression(&mut self, it: &mut ast::Expression<'ast>) {
     if let Some(ident) = it.as_identifier() {
       if let Some(reference_id) = ident.reference_id.get() {
-        let reference = self.symbols.get_reference(reference_id);
+        let reference = self.scoping.get_reference(reference_id);
         if let Some(symbol_id) = reference.symbol_id() {
           if let Some(binding_name) = self.import_binding.get(&symbol_id) {
             *it = self.snippet.id_ref_expr(binding_name.as_str(), ident.span);
@@ -268,9 +373,6 @@ impl<'ast> VisitMut<'ast> for HmrAstFinalizer<'_, 'ast> {
           }
         }
       }
-    }
-    if it.is_import_meta_hot() {
-      *it = self.snippet.id_ref_expr("__rolldown_runtime__.hot", it.span());
     }
 
     walk_mut::walk_expression(self, it);

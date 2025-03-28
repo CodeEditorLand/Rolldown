@@ -47,13 +47,12 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
     for (idx, stmt) in program.body.iter().enumerate() {
       self.current_stmt_info.stmt_idx = Some(idx.into());
       self.current_stmt_info.side_effect = SideEffectDetector::new(
-        &self.result.ast_scope,
+        &self.result.symbol_ref_db.ast_scopes,
         // In `NormalModule` the options is always `Some`, for `RuntimeModule` always enable annotations
         !self.options.treeshake.annotations(),
         // Use a static value instead of `options` property access to avoid function call
         // overhead
         self.options.jsx.is_jsx_preserve(),
-        &self.result.symbol_ref_db,
         self.options,
       )
       .detect_side_effect_of_stmt(stmt);
@@ -74,6 +73,13 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
       // if there exists `eval` in current module, assume all dynamic import are completely used;
       for usage in self.result.dynamic_import_rec_exports_usage.values_mut() {
         *usage = DynamicImportExportsUsage::Complete;
+      }
+    }
+
+    // Check if dynamic import record is a pure dynamic import
+    for (rec_idx, usage) in &self.result.dynamic_import_rec_exports_usage {
+      if matches!(usage, DynamicImportExportsUsage::Partial(set) if set.is_empty()) {
+        self.result.import_records[*rec_idx].meta.insert(ImportRecordMeta::PURE_DYNAMIC_IMPORT);
       }
     }
 
@@ -169,10 +175,11 @@ impl<'me, 'ast: 'me> Visit<'ast> for AstScanner<'me, 'ast> {
         request.value.as_str(),
         ImportKind::DynamicImport,
         expr.source.span(),
-        if expr.source.span().is_empty() {
-          ImportRecordMeta::IS_UNSPANNED_IMPORT
-        } else {
-          ImportRecordMeta::empty()
+        {
+          let mut meta = ImportRecordMeta::empty();
+          meta.set(ImportRecordMeta::IS_TOP_LEVEL, self.is_root_scope());
+          meta.set(ImportRecordMeta::IS_UNSPANNED_IMPORT, expr.source.span().is_empty());
+          meta
         },
       );
       self.init_dynamic_import_binding_usage_info(import_rec_idx);

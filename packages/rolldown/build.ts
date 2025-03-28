@@ -3,15 +3,16 @@ import nodePath from 'node:path'
 import fsExtra from 'fs-extra'
 import { globSync } from 'glob'
 
-import { defineConfig, OutputOptions, rolldown } from './src/index'
+import { defineConfig, OutputOptions, rolldown, type Plugin } from './src/index'
 import pkgJson from './package.json' with { type: 'json' }
 import { colors } from './src/cli/colors'
 
-const outputDir = 'dist'
+const IS_RELEASING_CI = !!process.env.RELEASING
+const IS_BUILD_WASI_PKG = !!process.env.WASI_PKG
 
-const outputDir = "dist";
-
-const IS_RELEASING_CI = !!process.env.RELEASING;
+const outputDir = IS_BUILD_WASI_PKG
+  ? nodePath.resolve(__dirname, '../wasi/dist')
+  : nodePath.resolve(__dirname, 'dist')
 
 const shared = defineConfig({
   input: {
@@ -83,8 +84,8 @@ const configs = defineConfig([
 						throw new Error("No binary files found");
 					}
 
-					const copyTo = nodePath.resolve(outputDir, "shared");
-					fsExtra.ensureDirSync(copyTo);
+          const copyTo = nodePath.resolve(outputDir)
+          fsExtra.ensureDirSync(copyTo)
 
 					if (!IS_RELEASING_CI) {
 						// Released `rolldown` package import binary via `@rolldown/binding-<platform>` packages.
@@ -94,13 +95,18 @@ const configs = defineConfig([
               // Move the binary file to dist
               wasmFiles.forEach((file) => {
                 const fileName = nodePath.basename(file)
-                console.log(
-                  colors.green('[build:done]'),
-                  'Copying',
-                  file,
-                  `to ${copyTo}`,
-                )
-                fsExtra.copyFileSync(file, nodePath.join(copyTo, fileName))
+                if (IS_BUILD_WASI_PKG && fileName.includes('debug')) {
+                  // NAPI-RS now generates a debug wasm binary no matter how and we don't want to ship it to npm.
+                  console.log(colors.yellow('[build:done]'), 'Skipping', file)
+                } else {
+                  console.log(
+                    colors.green('[build:done]'),
+                    'Copying',
+                    file,
+                    `to ${copyTo}`,
+                  )
+                  fsExtra.copyFileSync(file, nodePath.join(copyTo, fileName))
+                }
                 console.log(colors.green('[build:done]'), `Cleaning ${file}`)
                 try {
                   // GitHub windows runner emits `operation not permitted` error, most likely because of the file is still in use.
@@ -153,26 +159,7 @@ const configs = defineConfig([
           })
         },
       },
-
-      {
-        name: 'cleanup binding.js',
-        transform: {
-          filter: {
-            code: {
-              include: ['require = createRequire(__filename)'],
-            },
-          },
-          handler(code, id) {
-            if (id.endsWith('binding.js')) {
-              const ret = code.replace(
-                'require = createRequire(__filename)',
-                '',
-              )
-              return ret
-            }
-          },
-        },
-      },
+      patchBindingJs(),
     ],
   },
   {
@@ -193,6 +180,7 @@ const configs = defineConfig([
           },
         },
       },
+      patchBindingJs(),
     ],
     output: {
       dir: outputDir,
@@ -202,6 +190,38 @@ const configs = defineConfig([
     },
   },
 ])
+
+function patchBindingJs(): Plugin {
+  return {
+    name: 'patch-binding-js',
+    transform: {
+      filter: {
+        id: 'src/binding.js',
+      },
+      handler(code) {
+        return (
+          code
+            // strip off unneeded createRequire in cjs, which breaks mjs
+            .replace('require = createRequire(__filename)', '')
+            // inject binding auto download fallback for webcontainer
+            .replace(
+              '\nif (!nativeBinding) {',
+              (s) =>
+                `
+if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
+  try {
+    nativeBinding = require('./webcontainer-fallback.js');
+  } catch (err) {
+    loadErrors.push(err)
+  }
+}
+` + s,
+            )
+        )
+      },
+    },
+  }
+}
 
 ;(async () => {
   for (const config of configs) {

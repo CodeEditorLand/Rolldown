@@ -2,19 +2,19 @@ use oxc_index::IndexVec;
 #[cfg(debug_assertions)]
 use rolldown_common::common_debug_symbol_ref;
 use rolldown_common::{
-  EntryPoint, EntryPointKind, ImportKind, ModuleIdx, ModuleTable, RuntimeModuleBrief, SymbolRef,
-  SymbolRefDb, dynamic_import_usage::DynamicImportExportsUsage,
+  EntryPoint, EntryPointKind, ImportKind, ImportRecordMeta, ModuleIdx, ModuleTable,
+  RuntimeModuleBrief, SymbolRef, SymbolRefDb, dynamic_import_usage::DynamicImportExportsUsage,
 };
 use rolldown_error::BuildDiagnostic;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
   SharedOptions,
-  type_alias::{IndexAstScope, IndexEcmaAst},
+  type_alias::IndexEcmaAst,
   types::linking_metadata::{LinkingMetadata, LinkingMetadataVec},
 };
 
-use super::scan_stage::ScanStageOutput;
+use super::scan_stage::NormalizedScanStageOutput;
 
 mod bind_imports_and_exports;
 mod compute_tla;
@@ -38,7 +38,6 @@ pub struct LinkStageOutput {
   pub runtime: RuntimeModuleBrief,
   pub warnings: Vec<BuildDiagnostic>,
   pub errors: Vec<BuildDiagnostic>,
-  pub ast_scope_table: IndexAstScope,
   pub used_symbol_refs: FxHashSet<SymbolRef>,
   pub dynamic_import_exports_usage_map: FxHashMap<ModuleIdx, DynamicImportExportsUsage>,
   pub lived_entry_points: FxHashSet<ModuleIdx>,
@@ -55,14 +54,13 @@ pub struct LinkStage<'a> {
   pub warnings: Vec<BuildDiagnostic>,
   pub errors: Vec<BuildDiagnostic>,
   pub ast_table: IndexEcmaAst,
-  pub ast_scope_table: IndexAstScope,
   pub options: &'a SharedOptions,
   pub used_symbol_refs: FxHashSet<SymbolRef>,
   pub dynamic_import_exports_usage_map: FxHashMap<ModuleIdx, DynamicImportExportsUsage>,
 }
 
 impl<'a> LinkStage<'a> {
-  pub fn new(scan_stage_output: ScanStageOutput, options: &'a SharedOptions) -> Self {
+  pub fn new(scan_stage_output: NormalizedScanStageOutput, options: &'a SharedOptions) -> Self {
     Self {
       sorted_modules: Vec::new(),
       metas: scan_stage_output
@@ -90,7 +88,6 @@ impl<'a> LinkStage<'a> {
         })
         .collect::<IndexVec<ModuleIdx, _>>(),
       module_table: scan_stage_output.module_table,
-      ast_scope_table: scan_stage_output.index_ast_scope,
       entries: scan_stage_output.entry_points,
       symbols: scan_stage_output.symbol_ref_db,
       runtime: scan_stage_output.runtime,
@@ -132,12 +129,11 @@ impl<'a> LinkStage<'a> {
       ast_table: self.ast_table,
       used_symbol_refs: self.used_symbol_refs,
       dynamic_import_exports_usage_map: self.dynamic_import_exports_usage_map,
-      ast_scope_table: self.ast_scope_table,
     }
   }
 
   #[inline]
-  fn get_lived_entry(&self) -> FxHashSet<ModuleIdx> {
+  fn get_lived_entry(&mut self) -> FxHashSet<ModuleIdx> {
     self
       .entries
       .iter()
@@ -150,7 +146,37 @@ impl<'a> LinkStage<'a> {
               .as_normal()
               .expect("should be a normal module");
             let stmt_info = &module.stmt_infos[*stmt_idx];
-            stmt_info.is_included
+            let mut dead_pure_dynamic_import_record_idx = vec![];
+            let all_dead_pure_dynamic_import =
+              stmt_info.import_records.iter().all(|import_record_idx| {
+                let import_record = &module.import_records[*import_record_idx];
+                if import_record.resolved_module.is_dummy() {
+                  return true;
+                }
+                let importee_side_effects = self.module_table.modules
+                  [import_record.resolved_module]
+                  .side_effects()
+                  .has_side_effects();
+                let ret =
+                  import_record.meta.contains(ImportRecordMeta::TOP_LEVEL_PURE_DYNAMIC_IMPORT)
+                    && !importee_side_effects;
+                if ret {
+                  dead_pure_dynamic_import_record_idx.push(*import_record_idx);
+                }
+                ret
+              });
+            let lived = stmt_info.is_included && !all_dead_pure_dynamic_import;
+            if !lived {
+              // satisfy rustc borrow checker
+              let module = self.module_table.modules[*module_idx]
+                .as_normal_mut()
+                .expect("should be a normal module");
+              for ele in dead_pure_dynamic_import_record_idx {
+                let rec = &mut module.import_records[ele];
+                rec.meta.insert(ImportRecordMeta::DEAD_DYNAMIC_IMPORT);
+              }
+            }
+            lived
           });
           lived.then_some(item.id)
         }

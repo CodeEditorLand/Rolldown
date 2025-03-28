@@ -106,6 +106,19 @@ export declare class BindingPluginContext {
   addWatchFile(file: string): void
 }
 
+export declare class BindingRenderedChunk {
+  get name(): string
+  get isEntry(): boolean
+  get isDynamicEntry(): boolean
+  get facadeModuleId(): string | null
+  get moduleIds(): Array<string>
+  get exports(): Array<string>
+  get fileName(): string
+  get modules(): BindingModules
+  get imports(): Array<string>
+  get dynamicImports(): Array<string>
+}
+
 export declare class BindingRenderedModule {
   get code(): string | null
   get renderedExports(): Array<string>
@@ -156,19 +169,6 @@ export declare class ParseResult {
   get module(): EcmaScriptModule
   get comments(): Array<Comment>
   get errors(): Array<OxcError>
-}
-
-export declare class RenderedChunk {
-  get name(): string
-  get isEntry(): boolean
-  get isDynamicEntry(): boolean
-  get facadeModuleId(): string | null
-  get moduleIds(): Array<string>
-  get exports(): Array<string>
-  get fileName(): string
-  get modules(): BindingModules
-  get imports(): Array<string>
-  get dynamicImports(): Array<string>
 }
 
 export interface AliasItem {
@@ -236,7 +236,8 @@ export type BindingBuiltinPluginName =  'builtin:wasm-helper'|
 'builtin:build-import-analysis'|
 'builtin:replace'|
 'builtin:vite-resolve'|
-'builtin:module-federation';
+'builtin:module-federation'|
+'builtin:isolated-declaration';
 
 export interface BindingBundlerOptions {
   inputOptions: BindingInputOptions
@@ -246,6 +247,16 @@ export interface BindingBundlerOptions {
 
 export interface BindingChecksOptions {
   circularDependency?: boolean
+  eval?: boolean
+  missingGlobalName?: boolean
+  missingNameOptionForIifeExport?: boolean
+  mixedExport?: boolean
+  unresolvedEntry?: boolean
+  unresolvedImport?: boolean
+  filenameConflict?: boolean
+  commonJsVariableInEsm?: boolean
+  importIsUndefined?: boolean
+  configurationFieldConflict?: boolean
 }
 
 export interface BindingDeferSyncScanData {
@@ -298,7 +309,7 @@ export interface BindingHookJsResolveIdOptions {
 
 export interface BindingHookJsResolveIdOutput {
   id: string
-  external?: boolean
+  external?: BindingResolvedExternal
   sideEffects: boolean | 'no-treeshake'
 }
 
@@ -322,7 +333,8 @@ export interface BindingHookResolveIdExtraArgs {
 
 export interface BindingHookResolveIdOutput {
   id: string
-  external?: boolean
+  external?: BindingResolvedExternal
+  normalizeExternalId?: boolean
   sideEffects?: BindingHookSideEffects
 }
 
@@ -380,6 +392,11 @@ export interface BindingInputOptions {
   keepNames?: boolean
   checks?: BindingChecksOptions
   deferSyncScanData?: undefined | (() => BindingDeferSyncScanData[])
+  makeAbsoluteExternalsRelative?: BindingMakeAbsoluteExternalsRelative
+}
+
+export interface BindingIsolatedDeclarationPluginConfig {
+  stripInternal?: boolean
 }
 
 export interface BindingJsonPluginConfig {
@@ -427,6 +444,10 @@ export declare enum BindingLogLevel {
   Info = 2,
   Debug = 3
 }
+
+export type BindingMakeAbsoluteExternalsRelative =
+  | { type: 'Bool', field0: boolean }
+  | { type: 'IfRelativeSource' }
 
 export interface BindingManifestPluginConfig {
   root: string
@@ -495,20 +516,20 @@ export interface BindingOutputOptions {
   cssEntryFileNames?: string | ((chunk: PreRenderedChunk) => string)
   cssChunkFileNames?: string | ((chunk: PreRenderedChunk) => string)
   sanitizeFileName?: boolean | ((name: string) => string)
-  banner?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
+  banner?: (chunk: BindingRenderedChunk) => MaybePromise<VoidNullable<string>>
   dir?: string
   file?: string
   esModule?: boolean | 'if-default-prop'
   exports?: 'default' | 'named' | 'none' | 'auto'
   extend?: boolean
   externalLiveBindings?: boolean
-  footer?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
+  footer?: (chunk: BindingRenderedChunk) => MaybePromise<VoidNullable<string>>
   format?: 'es' | 'cjs' | 'iife' | 'umd' | 'app'
   globals?: Record<string, string> | ((name: string) => string)
   hashCharacters?: 'base64' | 'base36' | 'hex'
   inlineDynamicImports?: boolean
-  intro?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
-  outro?: (chunk: RenderedChunk) => MaybePromise<VoidNullable<string>>
+  intro?: (chunk: BindingRenderedChunk) => MaybePromise<VoidNullable<string>>
+  outro?: (chunk: BindingRenderedChunk) => MaybePromise<VoidNullable<string>>
   plugins: (BindingBuiltinPlugin | BindingPluginOptions | undefined)[]
   sourcemap?: 'file' | 'inline' | 'hidden'
   sourcemapIgnoreList?: (source: string, sourcemapPath: string) => boolean
@@ -523,7 +544,7 @@ export interface BindingOutputOptions {
 
 export interface BindingPluginContextResolvedId {
   id: string
-  external: boolean
+  external: BindingResolvedExternal
 }
 
 export interface BindingPluginContextResolveOptions {
@@ -555,9 +576,9 @@ export interface BindingPluginOptions {
   moduleParsedMeta?: BindingPluginHookMeta
   buildEnd?: (ctx: BindingPluginContext, error?: (Error | BindingError)[]) => MaybePromise<VoidNullable>
   buildEndMeta?: BindingPluginHookMeta
-  renderChunk?: (ctx: BindingPluginContext, code: string, chunk: RenderedChunk, opts: BindingNormalizedOptions) => MaybePromise<VoidNullable<BindingHookRenderChunkOutput>>
+  renderChunk?: (ctx: BindingPluginContext, code: string, chunk: BindingRenderedChunk, opts: BindingNormalizedOptions, chunks: Record<string, BindingRenderedChunk>) => MaybePromise<VoidNullable<BindingHookRenderChunkOutput>>
   renderChunkMeta?: BindingPluginHookMeta
-  augmentChunkHash?: (ctx: BindingPluginContext, chunk: RenderedChunk) => MaybePromise<void | string>
+  augmentChunkHash?: (ctx: BindingPluginContext, chunk: BindingRenderedChunk) => MaybePromise<void | string>
   augmentChunkHashMeta?: BindingPluginHookMeta
   renderStart?: (ctx: BindingPluginContext, opts: BindingNormalizedOptions) => void
   renderStartMeta?: BindingPluginHookMeta
@@ -573,13 +594,13 @@ export interface BindingPluginOptions {
   watchChangeMeta?: BindingPluginHookMeta
   closeWatcher?: (ctx: BindingPluginContext) => MaybePromise<VoidNullable>
   closeWatcherMeta?: BindingPluginHookMeta
-  banner?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void
+  banner?: (ctx: BindingPluginContext, chunk: BindingRenderedChunk) => void
   bannerMeta?: BindingPluginHookMeta
-  footer?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void
+  footer?: (ctx: BindingPluginContext, chunk: BindingRenderedChunk) => void
   footerMeta?: BindingPluginHookMeta
-  intro?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void
+  intro?: (ctx: BindingPluginContext, chunk: BindingRenderedChunk) => void
   introMeta?: BindingPluginHookMeta
-  outro?: (ctx: BindingPluginContext, chunk: RenderedChunk) => void
+  outro?: (ctx: BindingPluginContext, chunk: BindingRenderedChunk) => void
   outroMeta?: BindingPluginHookMeta
 }
 
@@ -614,6 +635,11 @@ export interface BindingReplacePluginConfig {
   objectGuards?: boolean
   sourcemap?: boolean
 }
+
+export type BindingResolvedExternal =
+  | { type: 'Bool', field0: boolean }
+  | { type: 'Absolute' }
+  | { type: 'Relative' }
 
 export interface BindingResolveOptions {
   alias?: Array<AliasItem>
@@ -1082,6 +1108,7 @@ export interface OxcError {
   message: string
   labels: Array<ErrorLabel>
   helpMessage?: string
+  codeframe?: string
 }
 
 /**
@@ -1104,11 +1131,11 @@ export interface ParserOptions {
    */
   astType?: 'js' | 'ts'
   /**
-   * Emit `ParenthesizedExpression` in AST.
+   * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
    *
    * If this option is true, parenthesized expressions are represented by
-   * (non-standard) `ParenthesizedExpression` nodes that have a single `expression` property
-   * containing the expression inside parentheses.
+   * (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` nodes that
+   * have a single `expression` property containing the expression inside parentheses.
    *
    * @default true
    */
@@ -1188,6 +1215,14 @@ export type Severity =  'Error'|
 'Warning'|
 'Advice';
 
+/**
+ * Shutdown the tokio runtime manually.
+ *
+ * This is required for the wasm target with `tokio_unstable` cfg.
+ * In the wasm runtime, the `park` threads will hang there until the tokio::Runtime is shutdown.
+ */
+export declare function shutdownAsyncRuntime(): void
+
 export interface SourceMap {
   file?: string
   mappings: string
@@ -1203,6 +1238,14 @@ export interface Span {
   start: number
   end: number
 }
+
+/**
+ * Start the async runtime manually.
+ *
+ * This is required when the async runtime is shutdown manually.
+ * Usually it's used in test.
+ */
+export declare function startAsyncRuntime(): void
 
 export interface StaticExport {
   start: number

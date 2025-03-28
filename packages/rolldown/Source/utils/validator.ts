@@ -182,8 +182,52 @@ const WatchOptionsSchema = v.strictObject({
 const ChecksOptionsSchema = v.strictObject({
   circularDependency: v.pipe(
     v.optional(v.boolean()),
+    v.description('Whether to emit warning when detecting circular dependency'),
+  ),
+  eval: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Whether to emit warning when detecting eval'),
+  ),
+  missingGlobalName: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Whether to emit warning when detecting missing global name'),
+  ),
+  missingNameOptionForIifeExport: v.pipe(
+    v.optional(v.boolean()),
     v.description(
-      'Whether to emit warnings when detecting circular dependencies',
+      'Whether to emit warning when detecting missing name option for iife export',
+    ),
+  ),
+  mixedExport: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Whether to emit warning when detecting mixed export'),
+  ),
+  unresolvedEntry: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Whether to emit warning when detecting unresolved entry'),
+  ),
+  unresolvedImport: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Whether to emit warning when detecting unresolved import'),
+  ),
+  filenameConflict: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Whether to emit warning when detecting filename conflict'),
+  ),
+  commonJsVariableInEsm: v.pipe(
+    v.optional(v.boolean()),
+    v.description(
+      'Whether to emit warning when detecting common js variable in esm',
+    ),
+  ),
+  importIsUndefined: v.pipe(
+    v.optional(v.boolean()),
+    v.description('Whether to emit warning when detecting import is undefined'),
+  ),
+  configurationFieldConflict: v.pipe(
+    v.optional(v.boolean()),
+    v.description(
+      'Whether to emit warning when detecting configuration field conflict',
     ),
   ),
 })
@@ -679,9 +723,10 @@ export function validateCliOptions<T>(options: T): [T, string[]?] {
 
   return [
     parsed.output as T,
-    parsed.issues
-      ?.map((issue) => issue.path?.join(', '))
-      .filter((v) => v !== undefined),
+    parsed.issues?.map((issue) => {
+      const option = issue.path?.map((pathItem) => pathItem.key).join(' ')
+      return `Invalid value for option ${option}: ${issue.message}`
+    }),
   ]
 }
 

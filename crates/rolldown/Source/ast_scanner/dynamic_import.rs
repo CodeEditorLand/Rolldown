@@ -23,12 +23,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       return None;
     }
 
-    let reference = self
-      .result
-      .symbol_ref_db
-      .references
-      .get(ident.reference_id())
-      .expect("should have reference");
+    let reference = self.result.symbol_ref_db.scoping().get_reference(ident.reference_id());
 
     // panic because if program reached here, means the BindingIdentifier has referenced the
     // IdentifierReference, but IdentifierReference did not saved the related `SymbolId`
@@ -78,6 +73,9 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
       AstKind::AwaitExpression(_) => {
         self.extract_init_set_from_await_expr_ancestor(import_record_idx)
       }
+      // e.g. `import('mod');`
+      // init_set is empty, importee would be included if it has side effects
+      AstKind::ExpressionStatement(_) if self.is_root_scope() => Some(FxHashSet::default()),
       _ => None,
     };
 
@@ -185,8 +183,12 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
               continue;
             }
           };
-          let is_used =
-            !self.result.symbol_ref_db.get_resolved_reference_ids(binding_symbol_id).is_empty();
+          let is_used = !self
+            .result
+            .symbol_ref_db
+            .scoping()
+            .get_resolved_reference_ids(binding_symbol_id)
+            .is_empty();
           if is_used {
             set.insert(binding_name.into());
           }
@@ -203,7 +205,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
               self
                 .dynamic_import_usage_info
                 .dynamic_import_binding_reference_id
-                .extend(self.result.symbol_ref_db.get_resolved_reference_ids(symbol_id));
+                .extend(self.result.symbol_ref_db.scoping().get_resolved_reference_ids(symbol_id));
             }
             // If the rest argument is not a BindingIdentifier, this is an unexpected case
             // because '...' must be followed by an identifier in declaration contexts.
@@ -225,7 +227,7 @@ impl<'me, 'ast: 'me> AstScanner<'me, 'ast> {
     self
       .dynamic_import_usage_info
       .dynamic_import_binding_reference_id
-      .extend(self.result.symbol_ref_db.get_resolved_reference_ids(symbol_id));
+      .extend(self.result.symbol_ref_db.scoping().get_resolved_reference_ids(symbol_id));
     Some(FxHashSet::default())
   }
 }

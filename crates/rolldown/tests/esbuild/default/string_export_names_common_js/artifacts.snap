@@ -1,0 +1,20 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## entry.js
+
+```js
+"use strict";
+
+const foo = __toESM(require("./foo"));
+
+Object.defineProperty(exports, 'all the stuff', {
+  enumerable: true,
+  get: function () {
+    return foo;
+  }
+});
+exports["some export"] = foo["some import"]
+```

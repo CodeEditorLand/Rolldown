@@ -6,8 +6,8 @@ use crate::ecmascript::ecma_view::EsmNamespaceInCjs;
 use crate::types::module_render_output::ModuleRenderOutput;
 use crate::{
   AssetView, Comments, DebugStmtInfoForTreeShaking, ExportsKind, ImportRecordIdx, ImportRecordMeta,
-  ModuleId, ModuleIdx, ModuleInfo, NormalizedBundlerOptions, RawImportRecord, RuntimeModuleBrief,
-  StmtInfo, SymbolRef, SymbolRefDb,
+  ModuleId, ModuleIdx, ModuleInfo, NormalizedBundlerOptions, RawImportRecord, ResolvedId,
+  RuntimeModuleBrief, StmtInfo, SymbolRef, SymbolRefDb,
 };
 use crate::{EcmaAstIdx, EcmaView, IndexModules, Interop, Module, ModuleType};
 use std::ops::{Deref, DerefMut};
@@ -23,7 +23,7 @@ use rolldown_utils::ecmascript::legitimize_identifier_name;
 use rustc_hash::FxHashSet;
 use string_wizard::SourceMapOptions;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NormalModule {
   pub exec_order: u32,
   pub idx: ModuleIdx,
@@ -38,6 +38,7 @@ pub struct NormalModule {
   pub ecma_view: EcmaView,
   pub css_view: Option<CssView>,
   pub asset_view: Option<AssetView>,
+  pub originative_resolved_id: ResolvedId,
 }
 
 impl NormalModule {
@@ -178,7 +179,9 @@ impl NormalModule {
     modules: &'me IndexModules,
   ) -> impl Iterator<Item = ImportRecordIdx> + 'me {
     self.ecma_view.import_records.iter_enumerated().filter_map(move |(rec_id, rec)| {
-      if !rec.meta.contains(ImportRecordMeta::IS_EXPORT_STAR) {
+      if !rec.meta.contains(ImportRecordMeta::IS_EXPORT_STAR)
+        || rec.meta.contains(ImportRecordMeta::IS_DUMMY)
+      {
         return None;
       }
       match modules[rec.resolved_module] {
