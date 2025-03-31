@@ -10,5 +10,5 @@ use serde::Deserialize;
 	serde(rename_all = "camelCase", deny_unknown_fields)
 )]
 pub struct ChecksOptions {
-	pub circular_dependency:Option<bool>,
+	pub circular_dependency: Option<bool>,
 }

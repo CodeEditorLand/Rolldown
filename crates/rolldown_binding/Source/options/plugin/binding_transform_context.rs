@@ -5,12 +5,14 @@ use super::binding_plugin_context::BindingPluginContext;
 
 #[napi]
 pub struct BindingTransformPluginContext {
-	inner:SharedTransformPluginContext,
+	inner: SharedTransformPluginContext,
 }
 
 #[napi]
 impl BindingTransformPluginContext {
-	pub fn new(inner:SharedTransformPluginContext) -> Self { Self { inner } }
+	pub fn new(inner: SharedTransformPluginContext) -> Self {
+		Self { inner }
+	}
 
 	#[napi]
 	pub fn get_combined_sourcemap(&self) -> String {
@@ -18,5 +20,7 @@ impl BindingTransformPluginContext {
 	}
 
 	#[napi]
-	pub fn inner(&self) -> BindingPluginContext { self.inner.inner.clone().into() }
+	pub fn inner(&self) -> BindingPluginContext {
+		self.inner.inner.clone().into()
+	}
 }

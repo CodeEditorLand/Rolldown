@@ -5,16 +5,16 @@ use futures::Future;
 /// parallel and wait for all of them to finish.
 #[cfg(not(target_arch = "wasm32"))]
 #[allow(clippy::unused_async)]
-pub async fn block_on_spawn_all<Iter, Out>(iter:Iter) -> Vec<Out>
+pub async fn block_on_spawn_all<Iter, Out>(iter: Iter) -> Vec<Out>
 where
 	Iter: Iterator,
 	Out: Send + 'static,
-	Iter::Item: Future<Output = Out> + Send, {
+	Iter::Item: Future<Output = Out> + Send,
+{
 	use async_scoped::TokioScope;
-	let (_ret, collections) =
-		async_scoped::Scope::scope_and_block(|scope:&mut TokioScope<'_, _>| {
-			iter.into_iter().for_each(|fut| scope.spawn(fut));
-		});
+	let (_ret, collections) = async_scoped::Scope::scope_and_block(|scope: &mut TokioScope<'_, _>| {
+		iter.into_iter().for_each(|fut| scope.spawn(fut));
+	});
 	collections.into_iter().map(Result::unwrap).collect()
 }
 
@@ -27,11 +27,12 @@ async fn _test_block_on_spawn_all_non_static_future() {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub async fn block_on_spawn_all<Iter, Out>(iter:Iter) -> Vec<Out>
+pub async fn block_on_spawn_all<Iter, Out>(iter: Iter) -> Vec<Out>
 where
 	Iter: Iterator,
 	Out: Send + 'static,
-	Iter::Item: Future<Output = Out> + Send, {
+	Iter::Item: Future<Output = Out> + Send,
+{
 	use futures::future::join_all;
 	let outs = join_all(iter).await;
 	outs

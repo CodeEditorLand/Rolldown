@@ -36,9 +36,7 @@ impl PathExt for std::path::Path {
 			// "index": Node.js use `index` as a special name for directory import.
 			// "mod": https://docs.deno.com/runtime/manual/references/contributing/style_guide#do-not-use-the-filename-indextsindexjs.
 			"index" | "mod" => {
-				if let Some(parent_dir_name) =
-					self.parent().and_then(Path::file_stem).map(OsStr::to_string_lossy)
-				{
+				if let Some(parent_dir_name) = self.parent().and_then(Path::file_stem).map(OsStr::to_string_lossy) {
 					parent_dir_name
 				} else {
 					file_name

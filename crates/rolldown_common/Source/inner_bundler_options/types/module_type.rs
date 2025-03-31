@@ -28,7 +28,7 @@ pub enum ModuleType {
 }
 
 impl ModuleType {
-	pub fn from_known_str(s:&str) -> anyhow::Result<Self> {
+	pub fn from_known_str(s: &str) -> anyhow::Result<Self> {
 		match s {
 			"js" => Ok(Self::Js),
 			"jsx" => Ok(Self::Jsx),
@@ -46,7 +46,7 @@ impl ModuleType {
 
 	/// error: method `from_str` can be confused for the standard trait method
 	/// `std::str::FromStr::from_str` to avoid conflicting with std
-	pub fn from_str_with_fallback<S:AsRef<str>>(s:S) -> Self {
+	pub fn from_str_with_fallback<S: AsRef<str>>(s: S) -> Self {
 		match s.as_ref() {
 			"js" => Self::Js,
 			"jsx" => Self::Jsx,
@@ -64,7 +64,7 @@ impl ModuleType {
 }
 
 impl Display for ModuleType {
-	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			ModuleType::Js => write!(f, "js"),
 			ModuleType::Jsx => write!(f, "jsx"),

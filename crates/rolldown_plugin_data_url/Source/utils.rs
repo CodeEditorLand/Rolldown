@@ -2,24 +2,25 @@ use std::sync::LazyLock;
 
 use regex::Regex;
 
-pub fn is_data_url(s:&str) -> bool { s.trim_start().starts_with("data:") }
-
-static DATA_URL_RE:LazyLock<Regex> = LazyLock::new(|| {
-	Regex::new("^data:([^/]+\\/[^;]+)(;charset=[^;]+)?(;base64)?,([\\s\\S]*)$").unwrap()
-});
-
-pub struct ParsedDataUrl<'a> {
-	pub mime:&'a str,
-	pub is_base64:bool,
-	pub data:&'a str,
+pub fn is_data_url(s: &str) -> bool {
+	s.trim_start().starts_with("data:")
 }
 
-pub fn parse_data_url(dataurl:&str) -> Option<ParsedDataUrl> {
+static DATA_URL_RE: LazyLock<Regex> =
+	LazyLock::new(|| Regex::new("^data:([^/]+\\/[^;]+)(;charset=[^;]+)?(;base64)?,([\\s\\S]*)$").unwrap());
+
+pub struct ParsedDataUrl<'a> {
+	pub mime: &'a str,
+	pub is_base64: bool,
+	pub data: &'a str,
+}
+
+pub fn parse_data_url(dataurl: &str) -> Option<ParsedDataUrl> {
 	let captures = DATA_URL_RE.captures(dataurl)?;
 	let mime = captures.get(1).map(|m| m.as_str())?;
 	let is_base64 = captures.get(3).is_some();
 	let data = captures.get(4).map(|m| m.as_str())?;
-	Some(ParsedDataUrl { mime:mime.trim(), is_base64, data:data.trim() })
+	Some(ParsedDataUrl { mime: mime.trim(), is_base64, data: data.trim() })
 }
 
 #[cfg(test)]

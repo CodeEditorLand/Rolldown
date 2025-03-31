@@ -28,11 +28,13 @@ impl HashCharacters {
 }
 
 impl Default for HashCharacters {
-	fn default() -> Self { Self::Base64 }
+	fn default() -> Self {
+		Self::Base64
+	}
 }
 
 impl Display for HashCharacters {
-	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			HashCharacters::Base64 => write!(f, "base64"),
 			HashCharacters::Base36 => write!(f, "base36"),

@@ -57,18 +57,18 @@
 // pub const PLUGIN_ERROR: &str = "PLUGIN_ERROR";
 // pub const SHIMMED_EXPORT: &str = "SHIMMED_EXPORT";
 // pub const SOURCEMAP_BROKEN: &str = "SOURCEMAP_BROKEN";
-pub const SOURCEMAP_ERROR:&str = "SOURCEMAP_ERROR";
+pub const SOURCEMAP_ERROR: &str = "SOURCEMAP_ERROR";
 // pub const SYNTHETIC_NAMED_EXPORTS_NEED_NAMESPACE_EXPORT: &str =
 //   "SYNTHETIC_NAMED_EXPORTS_NEED_NAMESPACE_EXPORT";
 // pub const THIS_IS_UNDEFINED: &str = "THIS_IS_UNDEFINED";
 // pub const UNEXPECTED_NAMED_IMPORT: &str = "UNEXPECTED_NAMED_IMPORT";
 // pub const UNKNOWN_OPTION: &str = "UNKNOWN_OPTION";
-pub const UNRESOLVED_ENTRY:&str = "UNRESOLVED_ENTRY";
-pub const UNRESOLVED_IMPORT:&str = "UNRESOLVED_IMPORT";
+pub const UNRESOLVED_ENTRY: &str = "UNRESOLVED_ENTRY";
+pub const UNRESOLVED_IMPORT: &str = "UNRESOLVED_IMPORT";
 // pub const UNUSED_EXTERNAL_IMPORT: &str = "UNUSED_EXTERNAL_IMPORT";
 // pub const VALIDATION_ERROR: &str = "VALIDATION_ERROR";
 
 // // Rolldown error codes
 
 // pub const PANIC: &str = "PANIC";
-pub const IO_ERROR:&str = "IO_ERROR";
+pub const IO_ERROR: &str = "IO_ERROR";

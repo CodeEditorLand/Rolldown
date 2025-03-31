@@ -2,7 +2,7 @@ use rolldown_common::ExportsKind;
 
 use crate::types::generator::GenerateContext;
 
-pub fn determine_use_strict(ctx:&GenerateContext) -> bool {
+pub fn determine_use_strict(ctx: &GenerateContext) -> bool {
 	let mut modules = ctx.renderable_ecma_modules().peekable();
 
 	if modules.peek().is_none() {

@@ -3,9 +3,9 @@
 const IGNORED_PROTOCOLS: &[&str] = &["data:", "http:", "https:"];
 
 pub fn should_ignore(glob: &str) -> bool {
-  if memchr::memchr(b'*', glob.as_bytes()).is_none() {
-    return true;
-  }
+	if memchr::memchr(b'*', glob.as_bytes()).is_none() {
+		return true;
+	}
 
-  IGNORED_PROTOCOLS.iter().any(|protocol| glob.starts_with(protocol))
+	IGNORED_PROTOCOLS.iter().any(|protocol| glob.starts_with(protocol))
 }

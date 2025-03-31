@@ -38,18 +38,20 @@ use serde::Deserialize;
 	serde(rename_all = "camelCase", deny_unknown_fields, tag = "type")
 )]
 pub enum InjectImport {
-	Named { imported:String, alias:Option<String>, from:String },
-	Namespace { alias:String, from:String },
+	Named { imported: String, alias: Option<String>, from: String },
+	Namespace { alias: String, from: String },
 }
 
 impl InjectImport {
-	pub fn named(imported:String, alias:Option<String>, from:String) -> Self {
+	pub fn named(imported: String, alias: Option<String>, from: String) -> Self {
 		Self::Named { imported, from, alias }
 	}
 
-	pub fn namespace(alias:String, from:String) -> Self { Self::Namespace { from, alias } }
+	pub fn namespace(alias: String, from: String) -> Self {
+		Self::Namespace { from, alias }
+	}
 
-	pub fn default(alias:String, from:String) -> Self {
-		Self::Named { imported:"default".to_string(), alias:Some(alias), from }
+	pub fn default(alias: String, from: String) -> Self {
+		Self::Named { imported: "default".to_string(), alias: Some(alias), from }
 	}
 }

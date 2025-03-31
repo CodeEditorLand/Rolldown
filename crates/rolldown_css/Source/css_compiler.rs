@@ -8,11 +8,10 @@ use crate::css_ast::CssAst;
 pub struct CssCompiler;
 
 impl CssCompiler {
-	pub fn parse(source:&str, filename:String) -> anyhow::Result<CssAst> {
-		let options = ParserOptions { filename:filename.clone(), ..Default::default() };
+	pub fn parse(source: &str, filename: String) -> anyhow::Result<CssAst> {
+		let options = ParserOptions { filename: filename.clone(), ..Default::default() };
 
-		let stylesheet = StyleSheet::parse(source, options.clone())
-			.map_err(lightningcss::error::Error::into_owned)?;
+		let stylesheet = StyleSheet::parse(source, options.clone()).map_err(lightningcss::error::Error::into_owned)?;
 
 		let stylesheet = StyleSheet::new(
 			stylesheet.sources,

@@ -27,8 +27,5 @@ pub use rolldown_plugin as plugin;
 pub use rolldown_resolver::ResolveOptions;
 
 pub use crate::{
-	bundler::Bundler,
-	bundler_builder::BundlerBuilder,
-	types::bundle_output::BundleOutput,
-	watcher::Watcher,
+	bundler::Bundler, bundler_builder::BundlerBuilder, types::bundle_output::BundleOutput, watcher::Watcher,
 };

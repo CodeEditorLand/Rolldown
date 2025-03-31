@@ -11,11 +11,10 @@ type CowStr<'a> = Cow<'a, str>;
 use std::borrow::Cow;
 
 pub use crate::{
-  joiner::{Joiner, JoinerOptions},
-  magic_string::{
-    MagicString, MagicStringOptions, indent::IndentOptions, replace::ReplaceOptions,
-    update::UpdateOptions,
-  },
+	joiner::{Joiner, JoinerOptions},
+	magic_string::{
+		MagicString, MagicStringOptions, indent::IndentOptions, replace::ReplaceOptions, update::UpdateOptions,
+	},
 };
 
 #[cfg(feature = "sourcemap")]
@@ -25,10 +24,6 @@ pub use crate::source_map::sourcemap_builder::Hires;
 pub use crate::{
 	joiner::{Joiner, JoinerOptions},
 	magic_string::{
-		MagicString,
-		MagicStringOptions,
-		indent::IndentOptions,
-		replace::ReplaceOptions,
-		update::UpdateOptions,
+		MagicString, MagicStringOptions, indent::IndentOptions, replace::ReplaceOptions, update::UpdateOptions,
 	},
 };

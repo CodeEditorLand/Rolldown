@@ -11,11 +11,8 @@ fn main() {
 	// unnecessary re-runs for every `cargo build`
 	println!("cargo:rerun-if-changed=build.rs");
 	let schema = schema_for!(TestConfig);
-	let scheme_path = PathBuf::from(
-		&std::env::var("CARGO_MANIFEST_DIR").expect("Should have CARGO_MANIFEST_DIR"),
-	)
-	.join("_config.schema.json");
+	let scheme_path = PathBuf::from(&std::env::var("CARGO_MANIFEST_DIR").expect("Should have CARGO_MANIFEST_DIR"))
+		.join("_config.schema.json");
 
-	fs::write(scheme_path, to_string_pretty(&schema).expect("Should be valid JSON"))
-		.expect("Failed to write schema");
+	fs::write(scheme_path, to_string_pretty(&schema).expect("Should be valid JSON")).expect("Failed to write schema");
 }

@@ -1,38 +1,44 @@
 use crate::{CowStr, MagicString};
 
 pub struct JoinerOptions {
-	pub separator:Option<String>,
+	pub separator: Option<String>,
 }
 
 #[derive(Default)]
 pub struct Joiner<'s> {
-	sources:Vec<MagicString<'s>>,
-	separator:Option<String>,
+	sources: Vec<MagicString<'s>>,
+	separator: Option<String>,
 }
 
 impl<'s> Joiner<'s> {
 	// --- public
-	pub fn new() -> Self { Self::default() }
-
-	pub fn with_options(options:JoinerOptions) -> Self {
-		Self { separator:options.separator, ..Default::default() }
+	pub fn new() -> Self {
+		Self::default()
 	}
 
-	pub fn append(&mut self, source:MagicString<'s>) -> &mut Self {
+	pub fn with_options(options: JoinerOptions) -> Self {
+		Self { separator: options.separator, ..Default::default() }
+	}
+
+	pub fn append(&mut self, source: MagicString<'s>) -> &mut Self {
 		self.sources.push(source);
 
 		self
 	}
 
-	pub fn append_raw(&mut self, raw:impl Into<CowStr<'s>>) -> &mut Self {
+	pub fn append_raw(&mut self, raw: impl Into<CowStr<'s>>) -> &mut Self {
 		self.sources.push(MagicString::new(raw));
 
 		self
 	}
 
-	pub fn len(&self) -> usize { self.fragments().map(|s| s.len()).sum() }
+	pub fn len(&self) -> usize {
+		self.fragments().map(|s| s.len()).sum()
+	}
 
-	pub fn is_empty(&self) -> bool { self.len() == 0 }
+	pub fn is_empty(&self) -> bool {
+		self.len() == 0
+	}
 
 	pub fn join(&self) -> String {
 		let mut ret = String::with_capacity(self.len());

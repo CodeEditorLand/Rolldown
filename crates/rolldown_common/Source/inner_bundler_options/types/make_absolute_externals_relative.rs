@@ -6,16 +6,16 @@ use serde::Deserialize;
 #[derive(Debug, Default, Clone)]
 #[cfg_attr(feature = "deserialize_bundler_options", derive(Deserialize, JsonSchema))]
 pub enum MakeAbsoluteExternalsRelative {
-  Bool(bool),
-  #[default]
-  IfRelativeSource,
+	Bool(bool),
+	#[default]
+	IfRelativeSource,
 }
 
 impl MakeAbsoluteExternalsRelative {
-  pub fn is_enabled(&self) -> bool {
-    match self {
-      MakeAbsoluteExternalsRelative::Bool(b) => *b,
-      MakeAbsoluteExternalsRelative::IfRelativeSource => true,
-    }
-  }
+	pub fn is_enabled(&self) -> bool {
+		match self {
+			MakeAbsoluteExternalsRelative::Bool(b) => *b,
+			MakeAbsoluteExternalsRelative::IfRelativeSource => true,
+		}
+	}
 }

@@ -16,7 +16,7 @@ pub enum Platform {
 impl TryFrom<&str> for Platform {
 	type Error = String;
 
-	fn try_from(value:&str) -> Result<Self, Self::Error> {
+	fn try_from(value: &str) -> Result<Self, Self::Error> {
 		match value {
 			"node" => Ok(Self::Node),
 			"browser" => Ok(Self::Browser),

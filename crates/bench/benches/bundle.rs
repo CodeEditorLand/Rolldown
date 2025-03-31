@@ -2,10 +2,10 @@ use bench::{DeriveOptions, derive_benchmark_items};
 use criterion::{Criterion, criterion_group, criterion_main};
 use rolldown_testing::utils::assert_bundled;
 
-fn criterion_benchmark(c:&mut Criterion) {
+fn criterion_benchmark(c: &mut Criterion) {
 	let mut group = c.benchmark_group("bundle");
 
-	let derive_options = DeriveOptions { sourcemap:true, minify:true };
+	let derive_options = DeriveOptions { sourcemap: true, minify: true };
 
 	let items = [
 		derive_benchmark_items(

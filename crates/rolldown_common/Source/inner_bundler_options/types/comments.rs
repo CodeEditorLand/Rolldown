@@ -21,7 +21,7 @@ pub enum Comments {
 }
 
 impl Display for Comments {
-	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Comments::None => write!(f, "none"),
 			Comments::Preserve => write!(f, "preserve"),

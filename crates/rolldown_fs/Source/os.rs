@@ -12,27 +12,41 @@ use crate::file_system::FileSystem;
 pub struct OsFileSystem;
 
 impl FileSystem for OsFileSystem {
-	fn remove_dir_all(&self, path:&Path) -> io::Result<()> { std::fs::remove_dir_all(path) }
+	fn remove_dir_all(&self, path: &Path) -> io::Result<()> {
+		std::fs::remove_dir_all(path)
+	}
 
-	fn create_dir_all(&self, path:&Path) -> io::Result<()> { std::fs::create_dir_all(path) }
+	fn create_dir_all(&self, path: &Path) -> io::Result<()> {
+		std::fs::create_dir_all(path)
+	}
 
-	fn write(&self, path:&Path, content:&[u8]) -> io::Result<()> { std::fs::write(path, content) }
+	fn write(&self, path: &Path, content: &[u8]) -> io::Result<()> {
+		std::fs::write(path, content)
+	}
 
-	fn exists(&self, path:&Path) -> bool { path.exists() }
+	fn exists(&self, path: &Path) -> bool {
+		path.exists()
+	}
 
-	fn read(&self, path:&Path) -> io::Result<Vec<u8>> { std::fs::read(path) }
+	fn read(&self, path: &Path) -> io::Result<Vec<u8>> {
+		std::fs::read(path)
+	}
 }
 
 impl OxcResolverFileSystem for OsFileSystem {
-	fn read_to_string(&self, path:&Path) -> io::Result<String> {
+	fn read_to_string(&self, path: &Path) -> io::Result<String> {
 		FileSystemOs::read_to_string(path)
 	}
 
-	fn metadata(&self, path:&Path) -> io::Result<FileMetadata> { FileSystemOs::metadata(path) }
+	fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
+		FileSystemOs::metadata(path)
+	}
 
-	fn symlink_metadata(&self, path:&Path) -> io::Result<FileMetadata> {
+	fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata> {
 		FileSystemOs::symlink_metadata(path)
 	}
 
-	fn read_link(&self, path:&Path) -> io::Result<PathBuf> { FileSystemOs::read_link(path) }
+	fn read_link(&self, path: &Path) -> io::Result<PathBuf> {
+		FileSystemOs::read_link(path)
+	}
 }

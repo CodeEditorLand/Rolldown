@@ -16,7 +16,7 @@ pub type FsFileMap<'a> = &'a [(&'a FsPath, &'a FsFileContent)];
 #[derive(Default, Clone)]
 pub struct MemoryFileSystem {
 	// root path
-	fs:Arc<MemoryFS>,
+	fs: Arc<MemoryFS>,
 }
 
 impl MemoryFileSystem {
@@ -24,7 +24,7 @@ impl MemoryFileSystem {
 	///
 	/// * Fails to create directory
 	/// * Fails to write file
-	pub fn new(data:FsFileMap) -> Self {
+	pub fn new(data: FsFileMap) -> Self {
 		let mut fs = Self::default();
 
 		for (path, content) in data {
@@ -34,7 +34,7 @@ impl MemoryFileSystem {
 		fs
 	}
 
-	pub fn add_file(&mut self, path:&Path, content:&str) {
+	pub fn add_file(&mut self, path: &Path, content: &str) {
 		let fs = &mut self.fs;
 		// Create all parent directories
 		for path in path.ancestors().collect::<Vec<_>>().iter().rev() {
@@ -51,19 +51,19 @@ impl MemoryFileSystem {
 }
 
 impl FileSystem for MemoryFileSystem {
-	fn remove_dir_all(&self, path:&Path) -> io::Result<()> {
+	fn remove_dir_all(&self, path: &Path) -> io::Result<()> {
 		self.fs
 			.remove_dir(&path.to_string_lossy())
 			.map_err(|err| io::Error::new(io::ErrorKind::Other, err))
 	}
 
-	fn create_dir_all(&self, path:&Path) -> io::Result<()> {
+	fn create_dir_all(&self, path: &Path) -> io::Result<()> {
 		self.fs
 			.create_dir(&path.to_string_lossy())
 			.map_err(|err| io::Error::new(io::ErrorKind::Other, err))
 	}
 
-	fn write(&self, path:&Path, content:&[u8]) -> io::Result<()> {
+	fn write(&self, path: &Path, content: &[u8]) -> io::Result<()> {
 		_ = self
 			.fs
 			.create_file(&path.to_string_lossy())
@@ -74,9 +74,11 @@ impl FileSystem for MemoryFileSystem {
 		Ok(())
 	}
 
-	fn exists(&self, path:&Path) -> bool { self.fs.exists(path.to_string_lossy().as_ref()).is_ok() }
+	fn exists(&self, path: &Path) -> bool {
+		self.fs.exists(path.to_string_lossy().as_ref()).is_ok()
+	}
 
-	fn read(&self, path:&Path) -> io::Result<Vec<u8>> {
+	fn read(&self, path: &Path) -> io::Result<Vec<u8>> {
 		let mut buf = Vec::new();
 
 		self.fs
@@ -89,7 +91,7 @@ impl FileSystem for MemoryFileSystem {
 }
 
 impl OxcResolverFileSystem for MemoryFileSystem {
-	fn read_to_string(&self, path:&Path) -> io::Result<String> {
+	fn read_to_string(&self, path: &Path) -> io::Result<String> {
 		let mut buf = String::new();
 
 		self.fs
@@ -100,7 +102,7 @@ impl OxcResolverFileSystem for MemoryFileSystem {
 		Ok(buf)
 	}
 
-	fn metadata(&self, path:&Path) -> io::Result<FileMetadata> {
+	fn metadata(&self, path: &Path) -> io::Result<FileMetadata> {
 		let metadata = self
 			.fs
 			.metadata(path.to_string_lossy().as_ref())
@@ -113,13 +115,12 @@ impl OxcResolverFileSystem for MemoryFileSystem {
 		Ok(FileMetadata::new(is_file, is_dir, false))
 	}
 
-	fn symlink_metadata(&self, path:&Path) -> io::Result<FileMetadata> {
-		self.metadata(path).map_err(|err| {
-			io::Error::new(io::ErrorKind::NotFound, format!("symlink_metadata failed: {err}"))
-		})
+	fn symlink_metadata(&self, path: &Path) -> io::Result<FileMetadata> {
+		self.metadata(path)
+			.map_err(|err| io::Error::new(io::ErrorKind::NotFound, format!("symlink_metadata failed: {err}")))
 	}
 
-	fn canonicalize(&self, _path:&Path) -> io::Result<PathBuf> {
+	fn canonicalize(&self, _path: &Path) -> io::Result<PathBuf> {
 		Err(io::Error::new(io::ErrorKind::NotFound, "not a symlink"))
 	}
 }

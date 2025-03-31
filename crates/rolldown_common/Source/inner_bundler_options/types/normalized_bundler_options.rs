@@ -20,207 +20,202 @@ use super::target::ESTarget;
 use super::treeshake::NormalizedTreeshakeOptions;
 use super::watch_option::WatchOption;
 use super::{
-  is_external::IsExternal, output_exports::OutputExports, output_format::OutputFormat,
-  output_option::AddonOutputOption, platform::Platform, source_map_type::SourceMapType,
-  sourcemap_ignore_list::SourceMapIgnoreList, sourcemap_path_transform::SourceMapPathTransform,
+	is_external::IsExternal, output_exports::OutputExports, output_format::OutputFormat,
+	output_option::AddonOutputOption, platform::Platform, source_map_type::SourceMapType,
+	sourcemap_ignore_list::SourceMapIgnoreList, sourcemap_path_transform::SourceMapPathTransform,
 };
 use crate::{
-  DeferSyncScanDataOption, EmittedAsset, EsModuleFlag, FilenameTemplate, GlobalsOutputOption,
-  HashCharacters, InjectImport, InputItem, MakeAbsoluteExternalsRelative, ModuleType,
-  RollupPreRenderedAsset,
+	DeferSyncScanDataOption, EmittedAsset, EsModuleFlag, FilenameTemplate, GlobalsOutputOption, HashCharacters,
+	InjectImport, InputItem, MakeAbsoluteExternalsRelative, ModuleType, RollupPreRenderedAsset,
 };
 
 #[allow(clippy::struct_excessive_bools)] // Using raw booleans is more clear in this case
 #[derive(Debug)]
 pub struct NormalizedBundlerOptions {
-  // --- Input
-  pub input: Vec<InputItem>,
-  pub cwd: PathBuf,
-  pub external: Option<IsExternal>,
-  /// corresponding to `false | NormalizedTreeshakeOption`
-  pub treeshake: NormalizedTreeshakeOptions,
-  pub platform: Platform,
-  pub shim_missing_exports: bool,
-  /// The key is the extension. Unlike `BundlerOptions`, the extension doesn't start with a dot.
-  pub module_types: FxHashMap<String, ModuleType>,
-  // --- Output
-  pub name: Option<String>,
-  pub css_entry_filenames: ChunkFilenamesOutputOption,
-  pub css_chunk_filenames: ChunkFilenamesOutputOption,
-  pub entry_filenames: ChunkFilenamesOutputOption,
-  pub chunk_filenames: ChunkFilenamesOutputOption,
-  pub asset_filenames: AssetFilenamesOutputOption,
-  pub sanitize_filename: SanitizeFilename,
-  // The user specified output directory config
-  pub dir: Option<String>,
-  // The rolldown resolved output directory from `dir` or `file`.
-  pub out_dir: String,
-  pub file: Option<String>,
-  pub format: OutputFormat,
-  pub exports: OutputExports,
-  pub es_module: EsModuleFlag,
-  pub hash_characters: HashCharacters,
-  pub globals: GlobalsOutputOption,
-  pub sourcemap: Option<SourceMapType>,
-  pub banner: Option<AddonOutputOption>,
-  pub footer: Option<AddonOutputOption>,
-  pub intro: Option<AddonOutputOption>,
-  pub outro: Option<AddonOutputOption>,
-  pub sourcemap_ignore_list: Option<SourceMapIgnoreList>,
-  pub sourcemap_path_transform: Option<SourceMapPathTransform>,
-  pub sourcemap_debug_ids: bool,
-  pub experimental: ExperimentalOptions,
-  pub minify: MinifyOptions,
-  pub extend: bool,
-  pub define: Vec<(/* Target to be replaced */ String, /* Replacement */ String)>,
-  pub keep_names: bool,
-  pub inject: Vec<InjectImport>,
-  pub oxc_inject_global_variables_config: InjectGlobalVariablesConfig,
-  pub external_live_bindings: bool,
-  pub inline_dynamic_imports: bool,
-  pub advanced_chunks: Option<AdvancedChunksOptions>,
-  pub checks: EventKindSwitcher,
-  pub profiler_names: bool,
-  pub jsx: NormalizedJsxOptions,
-  pub watch: WatchOption,
-  pub comments: Comments,
-  pub drop_labels: FxHashSet<String>,
-  pub target: ESTarget,
-  pub polyfill_require: bool,
-  pub defer_sync_scan_data: Option<DeferSyncScanDataOption>,
-  pub transform_options: TransformOptions,
-  pub make_absolute_externals_relative: MakeAbsoluteExternalsRelative,
+	// --- Input
+	pub input: Vec<InputItem>,
+	pub cwd: PathBuf,
+	pub external: Option<IsExternal>,
+	/// corresponding to `false | NormalizedTreeshakeOption`
+	pub treeshake: NormalizedTreeshakeOptions,
+	pub platform: Platform,
+	pub shim_missing_exports: bool,
+	/// The key is the extension. Unlike `BundlerOptions`, the extension doesn't start with a dot.
+	pub module_types: FxHashMap<String, ModuleType>,
+	// --- Output
+	pub name: Option<String>,
+	pub css_entry_filenames: ChunkFilenamesOutputOption,
+	pub css_chunk_filenames: ChunkFilenamesOutputOption,
+	pub entry_filenames: ChunkFilenamesOutputOption,
+	pub chunk_filenames: ChunkFilenamesOutputOption,
+	pub asset_filenames: AssetFilenamesOutputOption,
+	pub sanitize_filename: SanitizeFilename,
+	// The user specified output directory config
+	pub dir: Option<String>,
+	// The rolldown resolved output directory from `dir` or `file`.
+	pub out_dir: String,
+	pub file: Option<String>,
+	pub format: OutputFormat,
+	pub exports: OutputExports,
+	pub es_module: EsModuleFlag,
+	pub hash_characters: HashCharacters,
+	pub globals: GlobalsOutputOption,
+	pub sourcemap: Option<SourceMapType>,
+	pub banner: Option<AddonOutputOption>,
+	pub footer: Option<AddonOutputOption>,
+	pub intro: Option<AddonOutputOption>,
+	pub outro: Option<AddonOutputOption>,
+	pub sourcemap_ignore_list: Option<SourceMapIgnoreList>,
+	pub sourcemap_path_transform: Option<SourceMapPathTransform>,
+	pub sourcemap_debug_ids: bool,
+	pub experimental: ExperimentalOptions,
+	pub minify: MinifyOptions,
+	pub extend: bool,
+	pub define: Vec<(/* Target to be replaced */ String, /* Replacement */ String)>,
+	pub keep_names: bool,
+	pub inject: Vec<InjectImport>,
+	pub oxc_inject_global_variables_config: InjectGlobalVariablesConfig,
+	pub external_live_bindings: bool,
+	pub inline_dynamic_imports: bool,
+	pub advanced_chunks: Option<AdvancedChunksOptions>,
+	pub checks: EventKindSwitcher,
+	pub profiler_names: bool,
+	pub jsx: NormalizedJsxOptions,
+	pub watch: WatchOption,
+	pub comments: Comments,
+	pub drop_labels: FxHashSet<String>,
+	pub target: ESTarget,
+	pub polyfill_require: bool,
+	pub defer_sync_scan_data: Option<DeferSyncScanDataOption>,
+	pub transform_options: TransformOptions,
+	pub make_absolute_externals_relative: MakeAbsoluteExternalsRelative,
 }
 
 // This is only used for testing
 impl Default for NormalizedBundlerOptions {
-  #[allow(clippy::default_trait_access)]
-  fn default() -> Self {
-    Self {
-      input: Default::default(),
-      cwd: Default::default(),
-      external: Default::default(),
-      treeshake: Default::default(),
-      platform: Platform::Neutral,
-      shim_missing_exports: Default::default(),
-      module_types: Default::default(),
-      name: Default::default(),
-      css_entry_filenames: ChunkFilenamesOutputOption::String(String::new()),
-      css_chunk_filenames: ChunkFilenamesOutputOption::String(String::new()),
-      entry_filenames: ChunkFilenamesOutputOption::String(String::new()),
-      chunk_filenames: ChunkFilenamesOutputOption::String(String::new()),
-      asset_filenames: AssetFilenamesOutputOption::String(String::new()),
-      sanitize_filename: Default::default(),
-      dir: Default::default(),
-      out_dir: Default::default(),
-      file: Default::default(),
-      format: OutputFormat::Esm,
-      exports: Default::default(),
-      es_module: Default::default(),
-      hash_characters: Default::default(),
-      globals: GlobalsOutputOption::FxHashMap(FxHashMap::default()),
-      sourcemap: Default::default(),
-      banner: Default::default(),
-      footer: Default::default(),
-      intro: Default::default(),
-      outro: Default::default(),
-      sourcemap_ignore_list: Default::default(),
-      sourcemap_path_transform: Default::default(),
-      sourcemap_debug_ids: Default::default(),
-      experimental: Default::default(),
-      minify: MinifyOptions::Disabled,
-      extend: Default::default(),
-      define: Default::default(),
-      keep_names: Default::default(),
-      inject: Default::default(),
-      oxc_inject_global_variables_config: InjectGlobalVariablesConfig::new(vec![]),
-      external_live_bindings: Default::default(),
-      inline_dynamic_imports: Default::default(),
-      advanced_chunks: Default::default(),
-      checks: Default::default(),
-      profiler_names: Default::default(),
-      watch: Default::default(),
-      comments: Comments::None,
-      drop_labels: Default::default(),
-      target: Default::default(),
-      polyfill_require: Default::default(),
-      defer_sync_scan_data: Default::default(),
-      transform_options: Default::default(),
-      make_absolute_externals_relative: Default::default(),
-      jsx: Default::default(),
-    }
-  }
+	#[allow(clippy::default_trait_access)]
+	fn default() -> Self {
+		Self {
+			input: Default::default(),
+			cwd: Default::default(),
+			external: Default::default(),
+			treeshake: Default::default(),
+			platform: Platform::Neutral,
+			shim_missing_exports: Default::default(),
+			module_types: Default::default(),
+			name: Default::default(),
+			css_entry_filenames: ChunkFilenamesOutputOption::String(String::new()),
+			css_chunk_filenames: ChunkFilenamesOutputOption::String(String::new()),
+			entry_filenames: ChunkFilenamesOutputOption::String(String::new()),
+			chunk_filenames: ChunkFilenamesOutputOption::String(String::new()),
+			asset_filenames: AssetFilenamesOutputOption::String(String::new()),
+			sanitize_filename: Default::default(),
+			dir: Default::default(),
+			out_dir: Default::default(),
+			file: Default::default(),
+			format: OutputFormat::Esm,
+			exports: Default::default(),
+			es_module: Default::default(),
+			hash_characters: Default::default(),
+			globals: GlobalsOutputOption::FxHashMap(FxHashMap::default()),
+			sourcemap: Default::default(),
+			banner: Default::default(),
+			footer: Default::default(),
+			intro: Default::default(),
+			outro: Default::default(),
+			sourcemap_ignore_list: Default::default(),
+			sourcemap_path_transform: Default::default(),
+			sourcemap_debug_ids: Default::default(),
+			experimental: Default::default(),
+			minify: MinifyOptions::Disabled,
+			extend: Default::default(),
+			define: Default::default(),
+			keep_names: Default::default(),
+			inject: Default::default(),
+			oxc_inject_global_variables_config: InjectGlobalVariablesConfig::new(vec![]),
+			external_live_bindings: Default::default(),
+			inline_dynamic_imports: Default::default(),
+			advanced_chunks: Default::default(),
+			checks: Default::default(),
+			profiler_names: Default::default(),
+			watch: Default::default(),
+			comments: Comments::None,
+			drop_labels: Default::default(),
+			target: Default::default(),
+			polyfill_require: Default::default(),
+			defer_sync_scan_data: Default::default(),
+			transform_options: Default::default(),
+			make_absolute_externals_relative: Default::default(),
+			jsx: Default::default(),
+		}
+	}
 }
 
 pub type SharedNormalizedBundlerOptions = Arc<NormalizedBundlerOptions>;
 
 impl NormalizedBundlerOptions {
-  pub fn is_sourcemap_enabled(&self) -> bool {
-    self.sourcemap.is_some()
-  }
+	pub fn is_sourcemap_enabled(&self) -> bool {
+		self.sourcemap.is_some()
+	}
 
-  pub fn is_esm_format_with_node_platform(&self) -> bool {
-    matches!(self.format, OutputFormat::Esm) && matches!(self.platform, Platform::Node)
-  }
+	pub fn is_esm_format_with_node_platform(&self) -> bool {
+		matches!(self.format, OutputFormat::Esm) && matches!(self.platform, Platform::Node)
+	}
 
-  pub fn is_hmr_enabled(&self) -> bool {
-    self.experimental.hmr.unwrap_or(false)
-  }
+	pub fn is_hmr_enabled(&self) -> bool {
+		self.experimental.hmr.unwrap_or(false)
+	}
 
-  /// make sure the `polyfill_require` is only valid for `esm` format with `node` platform
-  #[inline]
-  pub fn polyfill_require_for_esm_format_with_node_platform(&self) -> bool {
-    if self.is_esm_format_with_node_platform() {
-      return self.polyfill_require;
-    }
-    true
-  }
+	/// make sure the `polyfill_require` is only valid for `esm` format with `node` platform
+	#[inline]
+	pub fn polyfill_require_for_esm_format_with_node_platform(&self) -> bool {
+		if self.is_esm_format_with_node_platform() {
+			return self.polyfill_require;
+		}
+		true
+	}
 
-  pub async fn asset_filename_template(
-    &self,
-    rollup_pre_rendered_asset: &RollupPreRenderedAsset,
-  ) -> anyhow::Result<FilenameTemplate> {
-    Ok(FilenameTemplate::new(self.asset_filenames.call(rollup_pre_rendered_asset).await?))
-  }
+	pub async fn asset_filename_template(
+		&self,
+		rollup_pre_rendered_asset: &RollupPreRenderedAsset,
+	) -> anyhow::Result<FilenameTemplate> {
+		Ok(FilenameTemplate::new(
+			self.asset_filenames.call(rollup_pre_rendered_asset).await?,
+		))
+	}
 
-  pub async fn asset_filename_with_file(
-    &self,
-    file: &EmittedAsset,
-  ) -> anyhow::Result<Option<String>> {
-    if file.file_name.is_some() {
-      return Ok(None);
-    }
-    // TODO avoid clone
-    let rollup_pre_rendered_asset = RollupPreRenderedAsset {
-      source: file.source.clone(),
-      names: file.name.clone().map_or(vec![], |name| vec![name.into()]),
-      original_file_names: file
-        .original_file_name
-        .clone()
-        .map_or(vec![], |original_file_name| vec![original_file_name.into()]),
-    };
-    let asset_filename = self.asset_filenames.call(&rollup_pre_rendered_asset).await?;
-    Ok(Some(asset_filename))
-  }
+	pub async fn asset_filename_with_file(&self, file: &EmittedAsset) -> anyhow::Result<Option<String>> {
+		if file.file_name.is_some() {
+			return Ok(None);
+		}
+		// TODO avoid clone
+		let rollup_pre_rendered_asset = RollupPreRenderedAsset {
+			source: file.source.clone(),
+			names: file.name.clone().map_or(vec![], |name| vec![name.into()]),
+			original_file_names: file
+				.original_file_name
+				.clone()
+				.map_or(vec![], |original_file_name| vec![original_file_name.into()]),
+		};
+		let asset_filename = self.asset_filenames.call(&rollup_pre_rendered_asset).await?;
+		Ok(Some(asset_filename))
+	}
 
-  pub async fn sanitize_file_name_with_file(
-    &self,
-    file: &EmittedAsset,
-  ) -> anyhow::Result<Option<ArcStr>> {
-    match file.file_name {
-      Some(_) => Ok(None),
-      None => Ok(Some(self.sanitize_filename.call(file.name_for_sanitize()).await?)),
-    }
-  }
+	pub async fn sanitize_file_name_with_file(&self, file: &EmittedAsset) -> anyhow::Result<Option<ArcStr>> {
+		match file.file_name {
+			Some(_) => Ok(None),
+			None => Ok(Some(self.sanitize_filename.call(file.name_for_sanitize()).await?)),
+		}
+	}
 
-  /// This function only merge some common fields in oxc `JsxOptions` and tsconfig.json `compilerOptions`
-  /// only replace field if it is `None` in `dest`
-  pub fn merge_jsx_options(dest: JsxOptions, src: JsxOptions) -> JsxOptions {
-    JsxOptions {
-      pragma: dest.pragma.or(src.pragma),
-      pragma_frag: dest.pragma_frag.or(src.pragma_frag),
-      import_source: dest.import_source.or(src.import_source),
-      ..dest
-    }
-  }
+	/// This function only merge some common fields in oxc `JsxOptions` and tsconfig.json `compilerOptions`
+	/// only replace field if it is `None` in `dest`
+	pub fn merge_jsx_options(dest: JsxOptions, src: JsxOptions) -> JsxOptions {
+		JsxOptions {
+			pragma: dest.pragma.or(src.pragma),
+			pragma_frag: dest.pragma_frag.or(src.pragma_frag),
+			import_source: dest.import_source.or(src.import_source),
+			..dest
+		}
+	}
 }

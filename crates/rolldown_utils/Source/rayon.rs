@@ -6,8 +6,10 @@ mod wasm_shims {
 		fn par_bridge(self) -> Self;
 	}
 
-	impl<T:Iterator + Send> ParallelBridge for T {
-		fn par_bridge(self) -> Self { self }
+	impl<T: Iterator + Send> ParallelBridge for T {
+		fn par_bridge(self) -> Self {
+			self
+		}
 	}
 
 	pub trait IntoParallelIterator: Sized {
@@ -25,7 +27,9 @@ mod wasm_shims {
 		type Item = I::Item;
 		type Iter = I::IntoIter;
 
-		fn into_par_iter(self) -> Self::Iter { self.into_iter() }
+		fn into_par_iter(self) -> Self::Iter {
+			self.into_iter()
+		}
 	}
 
 	pub trait IntoParallelRefIterator<'data> {
@@ -36,14 +40,16 @@ mod wasm_shims {
 		fn par_iter(&'data self) -> Self::Iter;
 	}
 
-	impl<'data, I:'data + ?Sized> IntoParallelRefIterator<'data> for I
+	impl<'data, I: 'data + ?Sized> IntoParallelRefIterator<'data> for I
 	where
 		&'data I: IntoParallelIterator,
 	{
 		type Item = <&'data I as IntoParallelIterator>::Item;
 		type Iter = <&'data I as IntoParallelIterator>::Iter;
 
-		fn par_iter(&'data self) -> Self::Iter { self.into_par_iter() }
+		fn par_iter(&'data self) -> Self::Iter {
+			self.into_par_iter()
+		}
 	}
 
 	pub trait IntoParallelRefMutIterator<'data> {
@@ -54,33 +60,27 @@ mod wasm_shims {
 		fn par_iter_mut(&'data mut self) -> Self::Iter;
 	}
 
-	impl<'data, I:'data + ?Sized> IntoParallelRefMutIterator<'data> for I
+	impl<'data, I: 'data + ?Sized> IntoParallelRefMutIterator<'data> for I
 	where
 		&'data mut I: IntoParallelIterator,
 	{
 		type Item = <&'data mut I as IntoParallelIterator>::Item;
 		type Iter = <&'data mut I as IntoParallelIterator>::Iter;
 
-		fn par_iter_mut(&'data mut self) -> Self::Iter { self.into_par_iter() }
+		fn par_iter_mut(&'data mut self) -> Self::Iter {
+			self.into_par_iter()
+		}
 	}
 }
 
 #[cfg(not(target_family = "wasm"))]
 pub use rayon::iter::{
-	IndexedParallelIterator,
-	IntoParallelIterator,
-	IntoParallelRefIterator,
-	IntoParallelRefMutIterator,
-	ParallelBridge,
+	IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelBridge,
 	ParallelIterator,
 };
 #[cfg(target_family = "wasm")]
 pub use wasm_shims::{
-	IntoParallelIterator,
-	IntoParallelRefIterator,
-	IntoParallelRefMutIterator,
-	ParallelBridge,
-	ParallelIterator,
+	IntoParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelBridge, ParallelIterator,
 };
 
 fn _usages() {

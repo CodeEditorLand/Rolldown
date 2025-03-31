@@ -12,7 +12,7 @@ pub enum SourceMapType {
 }
 
 impl From<String> for SourceMapType {
-	fn from(value:String) -> Self {
+	fn from(value: String) -> Self {
 		match value.as_str() {
 			"file" => SourceMapType::File,
 			"inline" => SourceMapType::Inline,

@@ -25,7 +25,9 @@ impl OutputFormat {
 	}
 
 	#[inline]
-	pub fn keep_esm_import_export_syntax(&self) -> bool { matches!(self, Self::Esm) }
+	pub fn keep_esm_import_export_syntax(&self) -> bool {
+		matches!(self, Self::Esm)
+	}
 
 	#[inline]
 	/// https://github.com/evanw/esbuild/blob/d34e79e2a998c21bb71d57b92b0017ca11756912/internal/config/config.go#L664-L666
@@ -37,7 +39,7 @@ impl OutputFormat {
 }
 
 impl Display for OutputFormat {
-	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
 		match self {
 			Self::Esm => write!(f, "esm"),
 			Self::Cjs => write!(f, "cjs"),

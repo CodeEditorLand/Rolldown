@@ -2,7 +2,7 @@ use anyhow::anyhow;
 use url::Url;
 
 /// The caller should check if the url has file scheme.
-pub fn file_url_str_to_path(url:&str) -> anyhow::Result<String> {
+pub fn file_url_str_to_path(url: &str) -> anyhow::Result<String> {
 	let url = Url::parse(url)?;
 	// it seems url.to_file_path() does not work in some cases
 	// https://github.com/servo/rust-url/issues/505
@@ -10,7 +10,7 @@ pub fn file_url_str_to_path(url:&str) -> anyhow::Result<String> {
 	file_url_to_path(url)
 }
 
-fn file_url_to_path(url:Url) -> anyhow::Result<String> {
+fn file_url_to_path(url: Url) -> anyhow::Result<String> {
 	#[cfg(target_family = "wasm")]
 	{
 		use crate::utils::is_windows_drive_path;
@@ -35,7 +35,7 @@ fn file_url_to_path(url:Url) -> anyhow::Result<String> {
 }
 
 #[cfg(any(windows, target_family = "wasm"))]
-fn get_path_from_url_windows(url:Url) -> anyhow::Result<String> {
+fn get_path_from_url_windows(url: Url) -> anyhow::Result<String> {
 	use cow_utils::CowUtils;
 
 	use crate::utils::is_windows_drive_path;
@@ -63,7 +63,7 @@ fn get_path_from_url_windows(url:Url) -> anyhow::Result<String> {
 }
 
 #[cfg(not(windows))]
-fn get_path_from_url_posix(url:Url) -> anyhow::Result<String> {
+fn get_path_from_url_posix(url: Url) -> anyhow::Result<String> {
 	if url.host_str().is_some() {
 		return Err(anyhow!("Invalid file URL: must not contain hostname {}", url));
 	}

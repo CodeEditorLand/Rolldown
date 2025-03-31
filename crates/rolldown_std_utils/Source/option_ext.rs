@@ -32,8 +32,12 @@ impl<T> OptionExt<T> for Option<T> {
 	}
 
 	/// Shorthand for `self.as_ref().unpack()`.
-	fn unpack_ref(&self) -> &T { self.as_ref().unpack() }
+	fn unpack_ref(&self) -> &T {
+		self.as_ref().unpack()
+	}
 
 	/// Shorthand for `self.as_mut().unpack()`.
-	fn unpack_ref_mut(&mut self) -> &mut T { self.as_mut().unpack() }
+	fn unpack_ref_mut(&mut self) -> &mut T {
+		self.as_mut().unpack()
+	}
 }

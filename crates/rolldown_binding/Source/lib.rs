@@ -37,8 +37,8 @@ pub mod worker_manager;
 /// This is required for the wasm target with `tokio_unstable` cfg.
 /// In the wasm runtime, the `park` threads will hang there until the tokio::Runtime is shutdown.
 pub fn shutdown_async_runtime() {
-  #[cfg(all(target_family = "wasm", tokio_unstable))]
-  napi::bindgen_prelude::shutdown_async_runtime();
+	#[cfg(all(target_family = "wasm", tokio_unstable))]
+	napi::bindgen_prelude::shutdown_async_runtime();
 }
 
 #[napi]
@@ -47,6 +47,6 @@ pub fn shutdown_async_runtime() {
 /// This is required when the async runtime is shutdown manually.
 /// Usually it's used in test.
 pub fn start_async_runtime() {
-  #[cfg(all(target_family = "wasm", tokio_unstable))]
-  napi::bindgen_prelude::start_async_runtime();
+	#[cfg(all(target_family = "wasm", tokio_unstable))]
+	napi::bindgen_prelude::start_async_runtime();
 }

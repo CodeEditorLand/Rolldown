@@ -5,8 +5,8 @@ use crate::{chunk_graph::ChunkGraph, stages::link_stage::LinkStageOutput};
 
 #[derive(Debug, Ord, PartialEq, Eq, PartialOrd)]
 pub struct RenderImportSpecifier {
-	pub imported:ArcStr,
-	pub alias:Option<ArcStr>,
+	pub imported: ArcStr,
+	pub alias: Option<ArcStr>,
 }
 
 #[derive(Debug)]
@@ -17,10 +17,10 @@ pub enum RenderImportDeclarationSpecifier {
 
 #[derive(Debug)]
 pub struct ExternalRenderImportStmt {
-	pub path:ArcStr,
-	pub binding_name_token:SymbolRef, /* for cjs __toESM(require('foo')) and iife get deconflict
-	                                   * name */
-	pub specifiers:RenderImportDeclarationSpecifier,
+	pub path: ArcStr,
+	pub binding_name_token: SymbolRef, /* for cjs __toESM(require('foo')) and iife get deconflict
+	                                    * name */
+	pub specifiers: RenderImportDeclarationSpecifier,
 }
 
 #[derive(Debug)]
@@ -30,10 +30,10 @@ pub enum RenderImportStmt {
 }
 
 pub fn collect_render_chunk_imports(
-	chunk:&Chunk,
-	graph:&LinkStageOutput,
-	_chunk_graph:&ChunkGraph,
-	format:&OutputFormat,
+	chunk: &Chunk,
+	graph: &LinkStageOutput,
+	_chunk_graph: &ChunkGraph,
+	format: &OutputFormat,
 ) -> Vec<RenderImportStmt> {
 	let mut render_import_stmts = vec![];
 
@@ -51,8 +51,8 @@ pub fn collect_render_chunk_imports(
 				};
 
 				RenderImportSpecifier {
-					imported:export_alias.as_str().into(),
-					alias:if export_alias == local_binding {
+					imported: export_alias.as_str().into(),
+					alias: if export_alias == local_binding {
 						None
 					} else {
 						Some(local_binding.as_str().into())
@@ -100,41 +100,30 @@ pub fn collect_render_chunk_imports(
 
 							render_import_stmts.push(RenderImportStmt::ExternalRenderImportStmt(
 								ExternalRenderImportStmt {
-									path:importee.name.clone(),
-									binding_name_token:importee.namespace_ref,
-									specifiers:
-										RenderImportDeclarationSpecifier::ImportStarSpecifier(),
+									path: importee.name.clone(),
+									binding_name_token: importee.namespace_ref,
+									specifiers: RenderImportDeclarationSpecifier::ImportStarSpecifier(),
 								},
 							));
 
 							None
 						},
-						Specifier::Literal(imported) => {
-							Some(RenderImportSpecifier {
-								imported:imported.as_str().into(),
-								alias:if alias == imported {
-									None
-								} else {
-									Some(alias.as_str().into())
-								},
-							})
-						},
+						Specifier::Literal(imported) => Some(RenderImportSpecifier {
+							imported: imported.as_str().into(),
+							alias: if alias == imported { None } else { Some(alias.as_str().into()) },
+						}),
 					}
 				})
 				.collect::<Vec<_>>();
 
 			specifiers.sort_unstable();
 
-			if !specifiers.is_empty()
-				|| (importee.side_effects.has_side_effects() && !has_importee_imported)
-			{
-				render_import_stmts.push(RenderImportStmt::ExternalRenderImportStmt(
-					ExternalRenderImportStmt {
-						path:importee.name.clone(),
-						binding_name_token:importee.namespace_ref,
-						specifiers:RenderImportDeclarationSpecifier::ImportSpecifier(specifiers),
-					},
-				));
+			if !specifiers.is_empty() || (importee.side_effects.has_side_effects() && !has_importee_imported) {
+				render_import_stmts.push(RenderImportStmt::ExternalRenderImportStmt(ExternalRenderImportStmt {
+					path: importee.name.clone(),
+					binding_name_token: importee.namespace_ref,
+					specifiers: RenderImportDeclarationSpecifier::ImportSpecifier(specifiers),
+				}));
 			}
 		});
 

@@ -1,10 +1,9 @@
 /// Authored by @ikkz and adapted by @7086cmd.
 use std::str;
 
-const HEX:[char; 16] =
-	['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+const HEX: [char; 16] = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
 // adapted from "https://github.com/evanw/esbuild/blob/67cbf87a4909d87a902ca8c3b69ab5330defab0a/scripts/dataurl-escapes.html" for how this was derived
-pub fn encode_as_percent_escaped(buf:&[u8]) -> Option<String> {
+pub fn encode_as_percent_escaped(buf: &[u8]) -> Option<String> {
 	str::from_utf8(buf)
 		.map(|text| {
 			let mut url = String::with_capacity(text.len() * 3);
@@ -43,7 +42,7 @@ pub fn encode_as_percent_escaped(buf:&[u8]) -> Option<String> {
 mod tests {
 	use super::*;
 
-	fn check(raw:&str, expected:&str) {
+	fn check(raw: &str, expected: &str) {
 		let result = encode_as_percent_escaped(raw.as_bytes());
 
 		assert!(result.is_some(), "Failed to encode {raw:?}");

@@ -1,42 +1,46 @@
-import nodePath from 'node:path'
+import nodePath from "node:path";
+import fsExtra from "fs-extra";
+import { globSync } from "glob";
 
-import fsExtra from 'fs-extra'
-import { globSync } from 'glob'
+import pkgJson from "./package.json" with { type: "json" };
+import { colors } from "./src/cli/colors";
+import {
+	defineConfig,
+	OutputOptions,
+	rolldown,
+	type Plugin,
+} from "./src/index";
 
-import { defineConfig, OutputOptions, rolldown, type Plugin } from './src/index'
-import pkgJson from './package.json' with { type: 'json' }
-import { colors } from './src/cli/colors'
-
-const IS_RELEASING_CI = !!process.env.RELEASING
-const IS_BUILD_WASI_PKG = !!process.env.WASI_PKG
+const IS_RELEASING_CI = !!process.env.RELEASING;
+const IS_BUILD_WASI_PKG = !!process.env.WASI_PKG;
 
 const outputDir = IS_BUILD_WASI_PKG
-  ? nodePath.resolve(__dirname, '../wasi/dist')
-  : nodePath.resolve(__dirname, 'dist')
+	? nodePath.resolve(__dirname, "../wasi/dist")
+	: nodePath.resolve(__dirname, "dist");
 
 const shared = defineConfig({
-  input: {
-    index: './src/index',
-    cli: './src/cli/index',
-    'parallel-plugin': './src/parallel-plugin',
-    'parallel-plugin-worker': './src/parallel-plugin-worker',
-    'experimental-index': './src/experimental-index',
-    'parse-ast-index': './src/parse-ast-index',
-  },
-  platform: 'node',
-  resolve: {
-    extensions: ['.js', '.cjs', '.mjs', '.ts'],
-  },
-  external: [
-    /rolldown-binding\..*\.node/,
-    /rolldown-binding\..*\.wasm/,
-    /@rolldown\/binding-.*/,
-    /\.\/rolldown-binding\.wasi\.cjs/,
-    // some dependencies, e.g. zod, cannot be inlined because their types
-    // are used in public APIs
-    ...Object.keys(pkgJson.dependencies),
-  ],
-})
+	input: {
+		index: "./src/index",
+		cli: "./src/cli/index",
+		"parallel-plugin": "./src/parallel-plugin",
+		"parallel-plugin-worker": "./src/parallel-plugin-worker",
+		"experimental-index": "./src/experimental-index",
+		"parse-ast-index": "./src/parse-ast-index",
+	},
+	platform: "node",
+	resolve: {
+		extensions: [".js", ".cjs", ".mjs", ".ts"],
+	},
+	external: [
+		/rolldown-binding\..*\.node/,
+		/rolldown-binding\..*\.wasm/,
+		/@rolldown\/binding-.*/,
+		/\.\/rolldown-binding\.wasi\.cjs/,
+		// some dependencies, e.g. zod, cannot be inlined because their types
+		// are used in public APIs
+		...Object.keys(pkgJson.dependencies),
+	],
+});
 
 const configs = defineConfig([
 	{
@@ -84,130 +88,161 @@ const configs = defineConfig([
 						throw new Error("No binary files found");
 					}
 
-          const copyTo = nodePath.resolve(outputDir)
-          fsExtra.ensureDirSync(copyTo)
+					const copyTo = nodePath.resolve(outputDir);
+					fsExtra.ensureDirSync(copyTo);
 
 					if (!IS_RELEASING_CI) {
 						// Released `rolldown` package import binary via `@rolldown/binding-<platform>` packages.
 						// There's no need to copy binary files to dist folder.
 
-            if (isWasmBuild) {
-              // Move the binary file to dist
-              wasmFiles.forEach((file) => {
-                const fileName = nodePath.basename(file)
-                if (IS_BUILD_WASI_PKG && fileName.includes('debug')) {
-                  // NAPI-RS now generates a debug wasm binary no matter how and we don't want to ship it to npm.
-                  console.log(colors.yellow('[build:done]'), 'Skipping', file)
-                } else {
-                  console.log(
-                    colors.green('[build:done]'),
-                    'Copying',
-                    file,
-                    `to ${copyTo}`,
-                  )
-                  fsExtra.copyFileSync(file, nodePath.join(copyTo, fileName))
-                }
-                console.log(colors.green('[build:done]'), `Cleaning ${file}`)
-                try {
-                  // GitHub windows runner emits `operation not permitted` error, most likely because of the file is still in use.
-                  // We could safely ignore the error.
-                  fsExtra.rmSync(file)
-                } catch {}
-              })
-            } else {
-              // Move the binary file to dist
-              nodeFiles.forEach((file) => {
-                const fileName = nodePath.basename(file)
-                console.log(
-                  colors.green('[build:done]'),
-                  'Copying',
-                  file,
-                  `to ${copyTo}`,
-                )
-                fsExtra.copyFileSync(file, nodePath.join(copyTo, fileName))
-                console.log(colors.green('[build:done]'), `Cleaning ${file}`)
-              })
-            }
+						if (isWasmBuild) {
+							// Move the binary file to dist
+							wasmFiles.forEach((file) => {
+								const fileName = nodePath.basename(file);
+								if (
+									IS_BUILD_WASI_PKG &&
+									fileName.includes("debug")
+								) {
+									// NAPI-RS now generates a debug wasm binary no matter how and we don't want to ship it to npm.
+									console.log(
+										colors.yellow("[build:done]"),
+										"Skipping",
+										file,
+									);
+								} else {
+									console.log(
+										colors.green("[build:done]"),
+										"Copying",
+										file,
+										`to ${copyTo}`,
+									);
+									fsExtra.copyFileSync(
+										file,
+										nodePath.join(copyTo, fileName),
+									);
+								}
+								console.log(
+									colors.green("[build:done]"),
+									`Cleaning ${file}`,
+								);
+								try {
+									// GitHub windows runner emits `operation not permitted` error, most likely because of the file is still in use.
+									// We could safely ignore the error.
+									fsExtra.rmSync(file);
+								} catch {}
+							});
+						} else {
+							// Move the binary file to dist
+							nodeFiles.forEach((file) => {
+								const fileName = nodePath.basename(file);
+								console.log(
+									colors.green("[build:done]"),
+									"Copying",
+									file,
+									`to ${copyTo}`,
+								);
+								fsExtra.copyFileSync(
+									file,
+									nodePath.join(copyTo, fileName),
+								);
+								console.log(
+									colors.green("[build:done]"),
+									`Cleaning ${file}`,
+								);
+							});
+						}
 
-            wasiShims.forEach((file) => {
-              const fileName = nodePath.basename(file)
-              console.log(
-                colors.green('[build:done]'),
-                'Copying',
-                file,
-                'to ./dist/shared',
-              )
-              fsExtra.copyFileSync(file, nodePath.join(copyTo, fileName))
-            })
-          }
+						wasiShims.forEach((file) => {
+							const fileName = nodePath.basename(file);
+							console.log(
+								colors.green("[build:done]"),
+								"Copying",
+								file,
+								"to ./dist/shared",
+							);
+							fsExtra.copyFileSync(
+								file,
+								nodePath.join(copyTo, fileName),
+							);
+						});
+					}
 
-          // Copy binding types and rollup types to dist
-          const distTypesDir = nodePath.resolve(outputDir, 'types')
-          fsExtra.ensureDirSync(distTypesDir)
-          const types = globSync(['./src/*.d.ts'], {
-            absolute: true,
-          })
-          types.forEach((file) => {
-            const fileName = nodePath.basename(file)
-            console.log(
-              colors.green('[build:done]'),
-              'Copying',
-              file,
-              'to ./dist/shared',
-            )
-            fsExtra.copyFileSync(file, nodePath.join(distTypesDir, fileName))
-          })
-        },
-      },
-      patchBindingJs(),
-    ],
-  },
-  {
-    ...shared,
-    plugins: [
-      {
-        name: 'shim-import-meta',
-        transform: {
-          filter: {
-            code: {
-              include: ['import.meta.resolve'],
-            },
-          },
-          handler(code, id) {
-            if (id.endsWith('.ts') && code.includes('import.meta.resolve')) {
-              return code.replace('import.meta.resolve', 'undefined')
-            }
-          },
-        },
-      },
-      patchBindingJs(),
-    ],
-    output: {
-      dir: outputDir,
-      format: 'cjs',
-      entryFileNames: 'cjs/[name].cjs',
-      chunkFileNames: 'shared/[name]-[hash].cjs',
-    },
-  },
-])
+					// Copy binding types and rollup types to dist
+					const distTypesDir = nodePath.resolve(outputDir, "types");
+					fsExtra.ensureDirSync(distTypesDir);
+					const types = globSync(["./src/*.d.ts"], {
+						absolute: true,
+					});
+					types.forEach((file) => {
+						const fileName = nodePath.basename(file);
+						console.log(
+							colors.green("[build:done]"),
+							"Copying",
+							file,
+							"to ./dist/shared",
+						);
+						fsExtra.copyFileSync(
+							file,
+							nodePath.join(distTypesDir, fileName),
+						);
+					});
+				},
+			},
+			patchBindingJs(),
+		],
+	},
+	{
+		...shared,
+		plugins: [
+			{
+				name: "shim-import-meta",
+				transform: {
+					filter: {
+						code: {
+							include: ["import.meta.resolve"],
+						},
+					},
+					handler(code, id) {
+						if (
+							id.endsWith(".ts") &&
+							code.includes("import.meta.resolve")
+						) {
+							return code.replace(
+								"import.meta.resolve",
+								"undefined",
+							);
+						}
+					},
+				},
+			},
+			patchBindingJs(),
+		],
+		output: {
+			dir: outputDir,
+			format: "cjs",
+			entryFileNames: "cjs/[name].cjs",
+			chunkFileNames: "shared/[name]-[hash].cjs",
+		},
+	},
+]);
 
 function patchBindingJs(): Plugin {
-  return {
-    name: 'patch-binding-js',
-    transform: {
-      filter: {
-        id: 'src/binding.js',
-      },
-      handler(code) {
-        return (
-          code
-            // strip off unneeded createRequire in cjs, which breaks mjs
-            .replace('require = createRequire(__filename)', '')
-            // inject binding auto download fallback for webcontainer
-            .replace(
-              '\nif (!nativeBinding) {',
-              (s) =>
-                `
+	return {
+		name: "patch-binding-js",
+		transform: {
+			filter: {
+				id: "src/binding.js",
+			},
+			handler(code) {
+				return (
+					code
+						// strip off unneeded createRequire in cjs, which breaks mjs
+						.replace("require = createRequire(__filename)", "")
+						// inject binding auto download fallback for webcontainer
+						.replace(
+							"\nif (!nativeBinding) {",
+							(s) =>
+								`
 if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
   try {
     nativeBinding = require('./webcontainer-fallback.js');
@@ -216,15 +251,15 @@ if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
   }
 }
 ` + s,
-            )
-        )
-      },
-    },
-  }
+						)
+				);
+			},
+		},
+	};
 }
 
-;(async () => {
-  for (const config of configs) {
-    await (await rolldown(config)).write(config.output as OutputOptions)
-  }
-})()
+(async () => {
+	for (const config of configs) {
+		await (await rolldown(config)).write(config.output as OutputOptions);
+	}
+})();
