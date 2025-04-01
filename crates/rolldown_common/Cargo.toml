@@ -47,7 +47,7 @@ workspace = true
 [package.homepage]
 workspace = true
 
-[package.license]
+[package.license-file]
 workspace = true
 
 [package.repository]
