@@ -1,12 +1,23 @@
-[package]
-edition.workspace    = true
-homepage.workspace   = true
-license.workspace    = true
-name                 = "rolldown_workspace"
-repository.workspace = true
-version              = "0.1.0"
-
 [dependencies]
 
+[lib]
+path = "Source/lib.rs"
+
 [lints]
+workspace = true
+
+[package]
+name = "rolldown_workspace"
+version = "0.1.0"
+
+[package.edition]
+workspace = true
+
+[package.homepage]
+workspace = true
+
+[package.license]
+workspace = true
+
+[package.repository]
 workspace = true

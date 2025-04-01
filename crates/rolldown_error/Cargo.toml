@@ -2,6 +2,8 @@
 anyhow = { workspace = true }
 arcstr = { workspace = true }
 ariadne = { workspace = true }
+bitflags = { workspace = true }
+derive_more = { workspace = true }
 heck = { workspace = true }
 napi = { workspace = true, optional = true }
 oxc = { workspace = true }
@@ -19,18 +21,19 @@ path = "Source/lib.rs"
 [lints]
 workspace = true
 
-[dependencies]
-anyhow         = { workspace = true }
-arcstr         = { workspace = true }
-ariadne        = { workspace = true }
-bitflags       = { workspace = true }
-derive_more    = { workspace = true }
-heck           = { workspace = true }
-napi           = { workspace = true, optional = true }
-oxc            = { workspace = true }
-oxc_resolver   = { workspace = true }
-oxc_sourcemap  = { workspace = true }
-rolldown_utils = { workspace = true }
-ropey          = { workspace = true }
-rustc-hash     = { workspace = true }
-sugar_path     = { workspace = true }
+[package]
+description = "rolldown_error"
+name = "rolldown_error"
+version = "0.1.0"
+
+[package.edition]
+workspace = true
+
+[package.homepage]
+workspace = true
+
+[package.license]
+workspace = true
+
+[package.repository]
+workspace = true

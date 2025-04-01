@@ -1,26 +1,33 @@
-[package]
-edition.workspace    = true
-homepage.workspace   = true
-license.workspace    = true
-name                 = "rolldown_plugin_isolated_declaration"
-repository.workspace = true
-version              = "0.1.0"
+[dependencies]
+anyhow = { workspace = true }
+oxc = { workspace = true }
+rolldown_common = { workspace = true }
+rolldown_plugin = { workspace = true }
+sugar_path = { workspace = true }
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dev-dependencies]
+rolldown_testing = { workspace = true }
+testing_macros = { workspace = true }
 
 [lib]
 doctest = false
+path = "Source/lib.rs"
 
 [lints]
 workspace = true
 
-[dependencies]
-anyhow          = { workspace = true }
-oxc             = { workspace = true }
-rolldown_common = { workspace = true }
-rolldown_plugin = { workspace = true }
-sugar_path      = { workspace = true }
+[package]
+name = "rolldown_plugin_isolated_declaration"
+version = "0.1.0"
 
-[dev-dependencies]
-rolldown_testing = { workspace = true }
-testing_macros   = { workspace = true }
+[package.edition]
+workspace = true
+
+[package.homepage]
+workspace = true
+
+[package.license]
+workspace = true
+
+[package.repository]
+workspace = true

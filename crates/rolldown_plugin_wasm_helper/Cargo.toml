@@ -1,4 +1,5 @@
 [dependencies]
+arcstr = { workspace = true }
 rolldown_common = { workspace = true }
 rolldown_plugin = { workspace = true }
 rolldown_utils = { workspace = true }
@@ -10,8 +11,18 @@ path = "Source/lib.rs"
 [lints]
 workspace = true
 
-[dependencies]
-arcstr          = { workspace = true }
-rolldown_common = { workspace = true }
-rolldown_plugin = { workspace = true }
-rolldown_utils  = { workspace = true }
+[package]
+name = "rolldown_plugin_wasm_helper"
+version = "0.1.0"
+
+[package.edition]
+workspace = true
+
+[package.homepage]
+workspace = true
+
+[package.license]
+workspace = true
+
+[package.repository]
+workspace = true

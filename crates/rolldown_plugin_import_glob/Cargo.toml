@@ -3,6 +3,7 @@ anyhow = { workspace = true }
 glob = { workspace = true }
 itoa = { workspace = true }
 oxc = { workspace = true }
+rolldown_ecmascript_utils = { workspace = true }
 rolldown_plugin = { workspace = true }
 rustc-hash = { workspace = true }
 sugar_path = { workspace = true }
@@ -14,12 +15,18 @@ path = "Source/lib.rs"
 [lints]
 workspace = true
 
-[dependencies]
-anyhow                    = { workspace = true }
-glob                      = { workspace = true }
-itoa                      = { workspace = true }
-oxc                       = { workspace = true }
-rolldown_ecmascript_utils = { workspace = true }
-rolldown_plugin           = { workspace = true }
-rustc-hash                = { workspace = true }
-sugar_path                = { workspace = true }
+[package]
+name = "rolldown_plugin_import_glob"
+version = "0.1.0"
+
+[package.edition]
+workspace = true
+
+[package.homepage]
+workspace = true
+
+[package.license]
+workspace = true
+
+[package.repository]
+workspace = true

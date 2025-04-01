@@ -1,6 +1,5 @@
 [dependencies]
 base64-simd = { workspace = true }
-regex = { workspace = true }
 rolldown_common = { workspace = true }
 rolldown_plugin = { workspace = true }
 rolldown_utils = { workspace = true }
@@ -10,9 +9,8 @@ urlencoding = { workspace = true }
 doctest = false
 path = "Source/lib.rs"
 
-[dependencies]
-base64-simd     = { workspace = true }
-rolldown_common = { workspace = true }
-rolldown_plugin = { workspace = true }
-rolldown_utils  = { workspace = true }
-urlencoding     = { workspace = true }
+[package]
+edition = "2021"
+license = "MIT"
+name = "rolldown_plugin_data_url"
+version = "0.1.0"

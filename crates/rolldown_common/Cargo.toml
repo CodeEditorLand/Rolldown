@@ -3,7 +3,8 @@ anyhow = { workspace = true }
 arcstr = { workspace = true }
 bitflags = { workspace = true }
 dashmap = { workspace = true }
-glob-match = { workspace = true }
+derive_more = { workspace = true }
+fast-glob = { workspace = true }
 itertools = { workspace = true }
 oxc = { workspace = true }
 oxc_index = { workspace = true }
@@ -35,31 +36,10 @@ path = "Source/lib.rs"
 [lints]
 workspace = true
 
-[dependencies]
-anyhow              = { workspace = true }
-arcstr              = { workspace = true }
-bitflags            = { workspace = true }
-dashmap             = { workspace = true }
-derive_more         = { workspace = true }
-fast-glob           = { workspace = true }
-itertools           = { workspace = true }
-oxc                 = { workspace = true }
-oxc_index           = { workspace = true }
-oxc_resolver        = { workspace = true }
-rolldown_ecmascript = { workspace = true }
-rolldown_error      = { workspace = true }
-rolldown_fs         = { workspace = true }
-rolldown_rstr       = { workspace = true }
-rolldown_sourcemap  = { workspace = true }
-rolldown_std_utils  = { workspace = true }
-rolldown_utils      = { workspace = true }
-rustc-hash          = { workspace = true }
-schemars            = { workspace = true, optional = true }
-serde               = { workspace = true, features = ["derive"], optional = true }
-serde_json          = { workspace = true }
-string_wizard       = { workspace = true }
-sugar_path          = { workspace = true }
-tokio               = { workspace = true }
+[package]
+description = "This crate is mostly for sharing code between rolldwon crates."
+name = "rolldown_common"
+version = "0.1.0"
 
 [package.edition]
 workspace = true
@@ -67,7 +47,7 @@ workspace = true
 [package.homepage]
 workspace = true
 
-[package.license-file]
+[package.license]
 workspace = true
 
 [package.repository]

@@ -10,26 +10,26 @@ name = "scan"
 harness = false
 name = "remapping"
 
+[[bench]]
+harness = false
+name = "bundle"
+
+[[bench]]
+harness = false
+name = "scan"
+
+[[bench]]
+harness = false
+name = "remapping"
+
 [dependencies]
 criterion2 = { workspace = true }
 oxc = { workspace = true }
 rolldown = { workspace = true }
 rolldown_sourcemap = { workspace = true }
-rolldown_testing   = { workspace = true }
+rolldown_testing = { workspace = true }
 rolldown_workspace = { workspace = true }
-tokio              = { workspace = true, features = ["full"] }
-
-[[bench]]
-harness = false
-name    = "bundle"
-
-[[bench]]
-harness = false
-name    = "scan"
-
-[[bench]]
-harness = false
-name    = "remapping"
+tokio = { workspace = true, features = ["full"] }
 
 [features]
 codspeed = ["criterion2/codspeed"]
