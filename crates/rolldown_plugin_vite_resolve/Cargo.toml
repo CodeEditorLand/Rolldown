@@ -22,7 +22,7 @@ doctest = false
 path = "Source/lib.rs"
 
 [package]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 name = "rolldown_plugin_vite_resolve"
 version = "0.1.0"
