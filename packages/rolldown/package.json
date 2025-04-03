@@ -92,7 +92,7 @@
 		"@codeeditorland/testing": "workspace:*",
 		"@jridgewell/sourcemap-codec": "1.5.0",
 		"@napi-rs/cli": "3.0.0-alpha.74",
-		"@napi-rs/wasm-runtime": "0.2.7",
+		"@napi-rs/wasm-runtime": "0.2.8",
 		"@playform/build": "0.2.1",
 		"@types/fs-extra": "11.0.4",
 		"@types/lodash-es": "4.17.12",
@@ -109,7 +109,7 @@
 		"signal-exit": "4.1.0",
 		"source-map": "0.7.4",
 		"tsx": "4.19.3",
-		"type-fest": "4.38.0",
+		"type-fest": "4.39.1",
 		"typedoc": "0.28.1",
 		"unbuild": "3.5.0",
 		"why-is-node-running": "3.2.2"

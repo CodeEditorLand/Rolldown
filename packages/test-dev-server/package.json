@@ -38,7 +38,7 @@
 		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
 	"dependencies": {
-		"@types/ws": "8.18.0",
+		"@types/ws": "8.18.1",
 		"chokidar": "4.0.3",
 		"connect": "3.7.0",
 		"rolldown": "workspace:*",

@@ -72,7 +72,7 @@
 	},
 	"dependencies": {
 		"@codeeditorland-project/types": "0.58.1",
-		"@napi-rs/wasm-runtime": "0.2.7",
+		"@napi-rs/wasm-runtime": "0.2.8",
 		"@valibot/to-json-schema": "1.0.0",
 		"valibot": "1.0.0"
 	},
