@@ -30,7 +30,7 @@
 	"dependencies": {},
 	"devDependencies": {
 		"@codeeditorland-node/core": "0.0.21",
-		"@playform/build": "0.2.1",
+		"@playform/build": "0.2.2",
 		"@types/lodash-es": "4.17.12",
 		"chalk": "5.4.1",
 		"esbuild": "0.25.2",

@@ -50,7 +50,7 @@
 	},
 	"devDependencies": {
 		"@codeeditorland-node/core": "0.0.21",
-		"@playform/build": "0.2.1",
+		"@playform/build": "0.2.2",
 		"@types/diff": "7.0.2",
 		"@types/lodash-es": "4.17.12",
 		"acorn": "8.14.1",
