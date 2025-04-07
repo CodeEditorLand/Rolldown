@@ -31,7 +31,7 @@
 	"dependencies": {},
 	"devDependencies": {
 		"@iconify-json/vscode-icons": "1.2.18",
-		"@playform/build": "0.2.2",
+		"@playform/build": "0.2.3",
 		"vitepress": "1.6.3",
 		"vitepress-plugin-group-icons": "1.3.8",
 		"zx": "8.5.0"

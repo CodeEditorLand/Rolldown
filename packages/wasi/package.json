@@ -77,7 +77,7 @@
 		"valibot": "1.0.0"
 	},
 	"devDependencies": {
-		"@playform/build": "0.2.2"
+		"@playform/build": "0.2.3"
 	},
 	"peerDependenciesMeta": {
 		"@oxc-project/runtime": {

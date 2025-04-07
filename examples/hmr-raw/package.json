@@ -29,7 +29,7 @@
 	"dependencies": {},
 	"devDependencies": {
 		"@codeeditorland/test-dev-server": "workspace:*",
-		"@playform/build": "0.2.2",
+		"@playform/build": "0.2.3",
 		"rolldown": "workspace:*"
 	},
 	"publishConfig": {

@@ -55,7 +55,7 @@
 		"@actions/core": "1.11.1",
 		"@codeeditorland-node/core": "0.0.21",
 		"@codeeditorland-project/runtime": "0.61.2",
-		"@playform/build": "0.2.2",
+		"@playform/build": "0.2.3",
 		"@taplo/cli": "0.7.0",
 		"@types/node": "22.14.0",
 		"cjs-module-lexer": "2.1.0",

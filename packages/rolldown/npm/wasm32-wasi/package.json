@@ -39,7 +39,7 @@
 		"@napi-rs/wasm-runtime": "0.2.8"
 	},
 	"devDependencies": {
-		"@playform/build": "0.2.2"
+		"@playform/build": "0.2.3"
 	},
 	"cpu": [
 		"wasm32"

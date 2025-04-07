@@ -46,7 +46,7 @@
 		"ws": "8.18.1"
 	},
 	"devDependencies": {
-		"@playform/build": "0.2.2",
+		"@playform/build": "0.2.3",
 		"@types/connect": "3.4.38",
 		"@types/serve-static": "1.15.7"
 	},
