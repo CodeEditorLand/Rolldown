@@ -1,6 +1,10 @@
-[dependencies]
-oxc_resolver = { workspace = true }
-vfs = { workspace = true }
+[package]
+name = "rolldown_fs"
+version = "0.1.0"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [features]
 memory = []
@@ -13,18 +17,10 @@ path = "Source/lib.rs"
 [lints]
 workspace = true
 
-[package]
-name = "rolldown_fs"
-version = "0.1.0"
+[features]
+memory = []
+os = []
 
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true
+[dependencies]
+oxc_resolver = { workspace = true }
+vfs = { workspace = true }

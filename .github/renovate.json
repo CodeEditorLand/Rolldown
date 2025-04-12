@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "github>Boshen/renovate",
+    "helpers:pinGitHubActionDigestsToSemver"
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/examples/**",
+    "**/crates/rolldown/tests/**"
+  ],
+  "packageRules": [
+    {
+      "matchDepNames": ["oxlint"],
+      "rangeStrategy": "replace",
+      "groupName": "oxlint"
+    }
+  ]
+}

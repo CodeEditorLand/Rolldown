@@ -1,11 +1,12 @@
-[dependencies]
-anyhow = { workspace = true }
-arcstr = { workspace = true }
-glob = { workspace = true }
-memchr = { workspace = true }
-oxc = { workspace = true }
-phf = { workspace = true, features = ["phf_macros"] }
-rolldown_plugin = { workspace = true }
+[package]
+name = "rolldown_plugin_dynamic_import_vars"
+version = "0.0.1"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 doctest = false
@@ -14,18 +15,10 @@ path = "Source/lib.rs"
 [lints]
 workspace = true
 
-[package]
-name = "rolldown_plugin_dynamic_import_vars"
-version = "0.0.1"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true
+[dependencies]
+anyhow = { workspace = true }
+arcstr = { workspace = true }
+glob = { workspace = true }
+memchr = { workspace = true }
+oxc = { workspace = true }
+rolldown_plugin = { workspace = true }

@@ -1,30 +1,24 @@
-[dependencies]
-tracing = { workspace = true }
-tracing-chrome = { workspace = true }
-tracing-subscriber = { workspace = true, features = ["env-filter"] }
+[package]
+name = "rolldown_tracing"
+version = "0.1.0"
+description = "rolldown_tracing"
 
-[lib]
-bench = false
-doctest = false
-path = "Source/lib.rs"
-test = false
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [lints]
 workspace = true
 
-[package]
-description = "rolldown_tracing"
-name = "rolldown_tracing"
-version = "0.1.0"
+[lib]
+bench = false
+doctest = false
+test = false
 
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true
+[dependencies]
+tracing = { workspace = true }
+tracing-chrome = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }

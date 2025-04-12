@@ -1,10 +1,12 @@
-[dependencies]
-memchr = { workspace = true }
-rolldown_common = { workspace = true }
-rolldown_plugin = { workspace = true }
-rolldown_sourcemap = { workspace = true }
-rolldown_utils = { workspace = true }
-serde_json = { workspace = true }
+[package]
+name = "rolldown_plugin_json"
+version = "0.1.0"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 doctest = false
@@ -13,18 +15,10 @@ path = "Source/lib.rs"
 [lints]
 workspace = true
 
-[package]
-name = "rolldown_plugin_json"
-version = "0.1.0"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true
+[dependencies]
+memchr = { workspace = true }
+rolldown_common = { workspace = true }
+rolldown_plugin = { workspace = true }
+rolldown_sourcemap = { workspace = true }
+rolldown_utils = { workspace = true }
+serde_json = { workspace = true }

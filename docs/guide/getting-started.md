@@ -30,7 +30,6 @@ $ bun add -D rolldown
 
 - **Latest**: currently `1.0.0-beta.*`
 - **Nightly releases**: published nightly from the `main` branch under the `nightly` npm dist tag. You can install it with `npm i rolldown@nightly`.
-- **Continuous releases**: every commit on the `main` branch is published to [pkg.pr.new](https://pkg.pr.new). You can install them via URLs with e.g. `npm i rolldown@https://pkg.pr.new/rolldown@45f463a`.
 
 ## Using the CLI
 
@@ -51,14 +50,14 @@ $ ./node_modules/.bin/rolldown --help
 Let's create two source JavaScript files:
 
 ```js [src/main.js]
-import { hello } from './hello.js'
+import { hello } from './hello.js';
 
-hello()
+hello();
 ```
 
 ```js [src/hello.js]
 export function hello() {
-  console.log('Hello Rolldown!')
+  console.log('Hello Rolldown!');
 }
 ```
 
@@ -104,14 +103,14 @@ $ npm run build
 When more options are needed, it is recommended to use a config file for more flexibility. Let's create the following config file:
 
 ```js [rolldown.config.js]
-import { defineConfig } from 'rolldown'
+import { defineConfig } from 'rolldown';
 
 export default defineConfig({
   input: 'src/main.js',
   output: {
     file: 'bundle.js',
   },
-})
+});
 ```
 
 Rolldown supports most of the [Rollup config options](https://rollupjs.org/configuration-options), with some [notable additional features](./features.md).
@@ -151,14 +150,14 @@ TypeScript config file is also supported out of the box:
 ```
 
 ```js [rolldown.config.ts]
-import { defineConfig } from 'rolldown'
+import { defineConfig } from 'rolldown';
 
 export default defineConfig({
   input: 'src/main.js',
   output: {
     file: 'bundle.js',
   },
-})
+});
 ```
 
 :::warning Specifying config file name
@@ -170,7 +169,7 @@ The default config file used with the `-c` flag is `rolldown.config.js`. If you 
 You can also specify multiple configurations as an array, and Rolldown will bundle them in parallel.
 
 ```js [rolldown.config.js]
-import { defineConfig } from 'rolldown'
+import { defineConfig } from 'rolldown';
 
 export default defineConfig([
   {
@@ -186,7 +185,7 @@ export default defineConfig([
       dir: 'dist/worker',
     },
   },
-])
+]);
 ```
 
 ## Using Plugins
@@ -198,33 +197,33 @@ Rolldown's plugin API is identical to that of Rollup's, so you can reuse most of
 Rolldown provides a JavaScript API that is compatible with [Rollup's](https://rollupjs.org/javascript-api/), which separates `input` and `output` options:
 
 ```js
-import { rolldown } from 'rolldown'
+import { rolldown } from 'rolldown';
 
 const bundle = await rolldown({
   // input options
   input: 'src/main.js',
-})
+});
 
 // generate bundles in memory with different output options
 await bundle.generate({
   // output options
   format: 'esm',
-})
+});
 await bundle.generate({
   // output options
   format: 'cjs',
-})
+});
 
 // or directly write to disk
 await bundle.write({
   file: 'bundle.js',
-})
+});
 ```
 
 Alternatively, you can also use the more concise `build` API, which accepts the exact same options as the config file export:
 
 ```js
-import { build } from 'rolldown'
+import { build } from 'rolldown';
 
 // build writes to disk by default
 await build({
@@ -232,7 +231,7 @@ await build({
   output: {
     file: 'bundle.js',
   },
-})
+});
 ```
 
 ## Using the Watcher
@@ -240,13 +239,13 @@ await build({
 The rolldown watcher api is compatible with rollup [watch](https://rollupjs.org/javascript-api/#rollup-watch).
 
 ```js
-import { watch } from 'rolldown'
+import { watch } from 'rolldown';
 
 const watcher = watch({
   /* option */
-}) // or watch([/* multiply option */] )
+}); // or watch([/* multiply option */] )
 
-watcher.on('event', () => {})
+watcher.on('event', () => {});
 
-await watcher.close() // Here is different with rollup, the rolldown returned the promise at here.
+await watcher.close(); // Here is different with rollup, the rolldown returned the promise at here.
 ```

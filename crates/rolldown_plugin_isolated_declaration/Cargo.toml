@@ -1,9 +1,10 @@
-[dependencies]
-anyhow = { workspace = true }
-oxc = { workspace = true }
-rolldown_common = { workspace = true }
-rolldown_plugin = { workspace = true }
-sugar_path = { workspace = true }
+[package]
+name = "rolldown_plugin_isolated_declaration"
+version = "0.1.0"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dev-dependencies]
 rolldown_testing = { workspace = true }
@@ -16,18 +17,13 @@ path = "Source/lib.rs"
 [lints]
 workspace = true
 
-[package]
-name = "rolldown_plugin_isolated_declaration"
-version = "0.1.0"
+[dependencies]
+anyhow = { workspace = true }
+oxc = { workspace = true }
+rolldown_common = { workspace = true }
+rolldown_plugin = { workspace = true }
+sugar_path = { workspace = true }
 
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true
+[dev-dependencies]
+rolldown_testing = { workspace = true }
+testing_macros = { workspace = true }

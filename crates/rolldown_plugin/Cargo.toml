@@ -1,3 +1,23 @@
+[package]
+name = "rolldown_plugin"
+version = "0.1.0"
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+doctest = false
+
+[features]
+default = ["serde"]
+serde = ["dep:serde", "oxc_index/serde"]
+
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = { workspace = true }
 arcstr = { workspace = true }
@@ -18,32 +38,6 @@ sugar_path = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }
 tracing = { workspace = true }
 typedmap = { workspace = true, features = ["dashmap"] }
-
-[features]
-default = ["serde"]
-serde = ["dep:serde", "oxc_index/serde"]
-
-[lib]
-doctest = false
-path = "Source/lib.rs"
-
-[lints]
-workspace = true
-
-[package]
-name = "rolldown_plugin"
-version = "0.1.0"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.metadata]
 
 [package.metadata.cargo-shear]
 ignored = ["serde"]

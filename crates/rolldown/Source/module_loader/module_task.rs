@@ -79,6 +79,12 @@ impl ModuleTask {
     if let Err(errs) = self.run_inner().await {
       self
         .ctx
+        .plugin_driver
+        .mark_context_load_modules_loaded(&ModuleId::new(&self.resolved_id.id), false)
+        .await
+        .expect("Mark context load modules loaded should not fail");
+      self
+        .ctx
         .tx
         .send(ModuleLoaderMsg::BuildErrors(errs.into_vec()))
         .await
@@ -211,7 +217,7 @@ impl ModuleTask {
     let module_info = Arc::new(module.to_module_info(Some(&raw_import_records)));
     self.ctx.plugin_driver.set_module_info(&module.id, Arc::clone(&module_info));
     self.ctx.plugin_driver.module_parsed(Arc::clone(&module_info), &module).await?;
-    self.ctx.plugin_driver.mark_context_load_modules_loaded(&module.id).await?;
+    self.ctx.plugin_driver.mark_context_load_modules_loaded(&module.id, true).await?;
 
     let result = ModuleLoaderMsg::NormalModuleDone(NormalModuleTaskResult {
       module: module.into(),
@@ -280,7 +286,7 @@ impl ModuleTask {
         "`{:?}` is not specified module type,  rolldown can't handle this asset correctly. Please use the load/transform hook to transform the resource",
         self.resolved_id.id
       ))?;
-    };
+    }
     Ok((source, module_type))
   }
 
@@ -444,7 +450,7 @@ impl ModuleTask {
                 None,
               ));
             }
-          };
+          }
         }
       }
     }

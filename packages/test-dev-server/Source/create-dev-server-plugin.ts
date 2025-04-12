@@ -1,14 +1,14 @@
-import { Plugin } from "rolldown";
+import { Plugin } from 'rolldown';
 
 export function createDevServerPlugin(): Plugin {
-	return {
-		name: "rolldown-dev-server",
-		generateBundle() {
-			console.log("Generating index.html...");
-			this.emitFile({
-				type: "asset",
-				fileName: "index.html",
-				source: `<!doctype html>
+  return {
+    name: 'rolldown-dev-server',
+    generateBundle() {
+      console.log('Generating index.html...');
+      this.emitFile({
+        type: 'asset',
+        fileName: 'index.html',
+        source: `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -22,7 +22,7 @@ export function createDevServerPlugin(): Plugin {
   </body>
 </html>
 `,
-			});
-		},
-	};
+      });
+    },
+  };
 }

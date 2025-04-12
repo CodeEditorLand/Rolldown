@@ -1,13 +1,19 @@
-[[bin]]
+[package]
+name = "rolldown_testing"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
 doctest = false
-name = "run-fixture"
-path = "./bin/run_fixture.rs"
 test = false
 
-[build-dependencies]
-rolldown_testing_config = { workspace = true }
-schemars = { workspace = true }
-serde_json = { workspace = true }
+[lints]
+workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
@@ -27,26 +33,13 @@ serde_json = { workspace = true }
 sugar_path = { workspace = true }
 tokio = { workspace = true, features = ["rt", "macros", "sync", "rt-multi-thread"] }
 
-[lib]
+[build-dependencies]
+rolldown_testing_config = { workspace = true }
+schemars = { workspace = true }
+serde_json = { workspace = true }
+
+[[bin]]
 doctest = false
-path = "Source/lib.rs"
+name = "run-fixture"
+path = "./bin/run_fixture.rs"
 test = false
-
-[lints]
-workspace = true
-
-[package]
-name = "rolldown_testing"
-version = "0.1.0"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true

@@ -12,9 +12,8 @@ use napi::bindgen_prelude::{Either, FnArgs};
 use oxc::transformer::TransformOptions;
 use rolldown::{
   AddonOutputOption, AdvancedChunksOptions, AssetFilenamesOutputOption, BundlerOptions,
-  ChunkFilenamesOutputOption, DeferSyncScanDataOption, ExperimentalOptions, HashCharacters,
-  IsExternal, MatchGroup, ModuleType, OutputExports, OutputFormat, Platform, RawMinifyOptions,
-  SanitizeFilename,
+  ChunkFilenamesOutputOption, DeferSyncScanDataOption, HashCharacters, IsExternal, MatchGroup,
+  ModuleType, OutputExports, OutputFormat, Platform, RawMinifyOptions, SanitizeFilename,
 };
 use rolldown_common::DeferSyncScanData;
 use rolldown_plugin::__inner::SharedPluginable;
@@ -256,15 +255,7 @@ pub fn normalize_binding_options(
     }),
     globals: normalize_globals_option(output_options.globals),
     module_types,
-    experimental: input_options.experimental.map(|inner| ExperimentalOptions {
-      strict_execution_order: inner.strict_execution_order,
-      disable_live_bindings: inner.disable_live_bindings,
-      vite_mode: inner.vite_mode,
-      resolve_new_url_to_asset: inner.resolve_new_url_to_asset,
-      // TODO: binding
-      incremental_build: None,
-      hmr: inner.hmr,
-    }),
+    experimental: input_options.experimental.map(Into::into),
     minify: output_options
       .minify
       .map(|opts| match opts {
@@ -307,6 +298,7 @@ pub fn normalize_binding_options(
           })
           .collect::<Vec<_>>()
       }),
+      include_dependencies_recursively: None,
     }),
     checks: input_options.checks.map(Into::into),
     profiler_names: input_options.profiler_names,
