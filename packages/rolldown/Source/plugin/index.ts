@@ -1,85 +1,86 @@
-import type { InputOptions, OutputOptions } from "..";
+import type { InputOptions, OutputOptions } from '..';
 import type {
-	BindingHookResolveIdExtraArgs,
-	BindingTransformHookExtraArgs,
-} from "../binding";
-import type { BuiltinPlugin } from "../builtin-plugin/constructors";
-import type { DEFINED_HOOK_NAMES, DefinedHookNames } from "../constants/plugin";
-import type { SYMBOL_FOR_RESOLVE_CALLER_THAT_SKIP_SELF } from "../constants/plugin-context";
-import type { LogLevel } from "../log/logging";
-import type { NormalizedInputOptions } from "../options/normalized-input-options";
-import type { NormalizedOutputOptions } from "../options/normalized-output-options";
-import type { RollupLog } from "../types/misc";
-import type { ModuleInfo } from "../types/module-info";
-import type { OutputBundle } from "../types/output-bundle";
-import { RenderedChunk } from "../types/rolldown-output";
-import type { SourceMapInput } from "../types/sourcemap";
+  BindingHookResolveIdExtraArgs,
+  BindingTransformHookExtraArgs,
+} from '../binding';
+import type { BuiltinPlugin } from '../builtin-plugin/constructors';
+import type { DefinedHookNames } from '../constants/plugin';
+import type { DEFINED_HOOK_NAMES } from '../constants/plugin';
+import type { SYMBOL_FOR_RESOLVE_CALLER_THAT_SKIP_SELF } from '../constants/plugin-context';
+import type { LogLevel } from '../log/logging';
+import type { NormalizedInputOptions } from '../options/normalized-input-options';
+import type { NormalizedOutputOptions } from '../options/normalized-output-options';
+import type { RollupLog } from '../types/misc';
+import type { ModuleInfo } from '../types/module-info';
+import type { OutputBundle } from '../types/output-bundle';
+import { RenderedChunk } from '../types/rolldown-output';
+import type { SourceMapInput } from '../types/sourcemap';
 import type {
-	MakeAsync,
-	MaybePromise,
-	NullValue,
-	PartialNull,
-} from "../types/utils";
-import type { HookFilter, StringFilter } from "./hook-filter";
-import type { MinimalPluginContext } from "./minimal-plugin-context";
-import type { ParallelPlugin } from "./parallel-plugin";
-import type { PluginContext } from "./plugin-context";
-import type { TransformPluginContext } from "./transform-plugin-context";
+  MakeAsync,
+  MaybePromise,
+  NullValue,
+  PartialNull,
+} from '../types/utils';
+import type { HookFilter, StringFilter } from './hook-filter';
+import type { MinimalPluginContext } from './minimal-plugin-context';
+import type { ParallelPlugin } from './parallel-plugin';
+import type { PluginContext } from './plugin-context';
+import type { TransformPluginContext } from './transform-plugin-context';
 
-export type ModuleSideEffects = boolean | "no-treeshake" | null;
+export type ModuleSideEffects = boolean | 'no-treeshake' | null;
 
 // ref: https://github.com/microsoft/TypeScript/issues/33471#issuecomment-1376364329
 export type ModuleType =
-	| "js"
-	| "jsx"
-	| "ts"
-	| "tsx"
-	| "json"
-	| "text"
-	| "base64"
-	| "dataurl"
-	| "binary"
-	| "empty"
-	| (string & {});
+  | 'js'
+  | 'jsx'
+  | 'ts'
+  | 'tsx'
+  | 'json'
+  | 'text'
+  | 'base64'
+  | 'dataurl'
+  | 'binary'
+  | 'empty'
+  | (string & {});
 
-export type ImportKind = BindingHookResolveIdExtraArgs["kind"];
+export type ImportKind = BindingHookResolveIdExtraArgs['kind'];
 
 export interface CustomPluginOptions {
-	[plugin: string]: any;
+  [plugin: string]: any;
 }
 
 export interface ModuleOptions {
-	moduleSideEffects: ModuleSideEffects;
-	meta: CustomPluginOptions;
-	// flag used to check if user directly modified the `ModuleInfo`
-	// this is used to sync state between rust and js
-	invalidate?: boolean;
+  moduleSideEffects: ModuleSideEffects;
+  meta: CustomPluginOptions;
+  // flag used to check if user directly modified the `ModuleInfo`
+  // this is used to sync state between rust and js
+  invalidate?: boolean;
 }
 
 export interface ResolvedId extends ModuleOptions {
-	external: boolean | "absolute";
-	id: string;
+  external: boolean | 'absolute';
+  id: string;
 }
 
 export interface PartialResolvedId extends Partial<PartialNull<ModuleOptions>> {
-	external?: boolean | "absolute" | "relative";
-	id: string;
+  external?: boolean | 'absolute' | 'relative';
+  id: string;
 }
 
 export interface SourceDescription extends Partial<PartialNull<ModuleOptions>> {
-	code: string;
-	map?: SourceMapInput;
-	moduleType?: ModuleType;
+  code: string;
+  map?: SourceMapInput;
+  moduleType?: ModuleType;
 }
 
-interface ResolveIdExtraOptions {
-	custom?: CustomPluginOptions;
-	isEntry: boolean;
-	kind: "import" | "dynamic-import" | "require-call";
+export interface ResolveIdExtraOptions {
+  custom?: CustomPluginOptions;
+  isEntry: boolean;
+  kind: 'import' | 'dynamic-import' | 'require-call';
 }
 
 export interface PrivateResolveIdExtraOptions extends ResolveIdExtraOptions {
-	[SYMBOL_FOR_RESOLVE_CALLER_THAT_SKIP_SELF]?: symbol;
+  [SYMBOL_FOR_RESOLVE_CALLER_THAT_SKIP_SELF]?: symbol;
 }
 
 export type ResolveIdResult = string | NullValue | false | PartialResolvedId;
@@ -88,240 +89,241 @@ export type LoadResult = NullValue | string | SourceDescription;
 
 export type TransformResult = NullValue | string | Partial<SourceDescription>;
 
+export type RenderedChunkMeta = { chunks: Record<string, RenderedChunk> };
+
 export interface FunctionPluginHooks {
-	[DEFINED_HOOK_NAMES.onLog]: (
-		this: MinimalPluginContext,
-		level: LogLevel,
-		log: RollupLog,
-	) => NullValue | boolean;
+  [DEFINED_HOOK_NAMES.onLog]: (
+    this: MinimalPluginContext,
+    level: LogLevel,
+    log: RollupLog,
+  ) => NullValue | boolean;
 
-	[DEFINED_HOOK_NAMES.options]: (
-		this: MinimalPluginContext,
-		options: InputOptions,
-	) => NullValue | InputOptions;
+  [DEFINED_HOOK_NAMES.options]: (
+    this: MinimalPluginContext,
+    options: InputOptions,
+  ) => NullValue | InputOptions;
 
-	// TODO find a way to make `this: PluginContext` work.
-	[DEFINED_HOOK_NAMES.outputOptions]: (
-		this: null,
-		options: OutputOptions,
-	) => NullValue | OutputOptions;
+  // TODO find a way to make `this: PluginContext` work.
+  [DEFINED_HOOK_NAMES.outputOptions]: (
+    this: MinimalPluginContext,
+    options: OutputOptions,
+  ) => NullValue | OutputOptions;
 
-	// --- Build hooks ---
+  // --- Build hooks ---
 
-	[DEFINED_HOOK_NAMES.buildStart]: (
-		this: PluginContext,
-		options: NormalizedInputOptions,
-	) => void;
+  [DEFINED_HOOK_NAMES.buildStart]: (
+    this: PluginContext,
+    options: NormalizedInputOptions,
+  ) => void;
 
-	[DEFINED_HOOK_NAMES.resolveId]: (
-		this: PluginContext,
-		source: string,
-		importer: string | undefined,
-		extraOptions: ResolveIdExtraOptions,
-	) => ResolveIdResult;
+  [DEFINED_HOOK_NAMES.resolveId]: (
+    this: PluginContext,
+    source: string,
+    importer: string | undefined,
+    extraOptions: ResolveIdExtraOptions,
+  ) => ResolveIdResult;
 
-	/**
-	 * @deprecated
-	 * This hook is only for rollup plugin compatibility. Please use `resolveId` instead.
-	 */
-	[DEFINED_HOOK_NAMES.resolveDynamicImport]: (
-		this: PluginContext,
-		source: string,
-		importer: string | undefined,
-	) => ResolveIdResult;
+  /**
+   * @deprecated
+   * This hook is only for rollup plugin compatibility. Please use `resolveId` instead.
+   */
+  [DEFINED_HOOK_NAMES.resolveDynamicImport]: (
+    this: PluginContext,
+    source: string,
+    importer: string | undefined,
+  ) => ResolveIdResult;
 
-	[DEFINED_HOOK_NAMES.load]: (
-		this: PluginContext,
-		id: string,
-	) => MaybePromise<LoadResult>;
+  [DEFINED_HOOK_NAMES.load]: (
+    this: PluginContext,
+    id: string,
+  ) => MaybePromise<LoadResult>;
 
-	[DEFINED_HOOK_NAMES.transform]: (
-		this: TransformPluginContext,
-		code: string,
-		id: string,
-		meta: BindingTransformHookExtraArgs & { moduleType: ModuleType },
-	) => TransformResult;
+  [DEFINED_HOOK_NAMES.transform]: (
+    this: TransformPluginContext,
+    code: string,
+    id: string,
+    meta: BindingTransformHookExtraArgs & { moduleType: ModuleType },
+  ) => TransformResult;
 
-	[DEFINED_HOOK_NAMES.moduleParsed]: (
-		this: PluginContext,
-		moduleInfo: ModuleInfo,
-	) => void;
+  [DEFINED_HOOK_NAMES.moduleParsed]: (
+    this: PluginContext,
+    moduleInfo: ModuleInfo,
+  ) => void;
 
-	[DEFINED_HOOK_NAMES.buildEnd]: (this: PluginContext, err?: Error) => void;
+  [DEFINED_HOOK_NAMES.buildEnd]: (this: PluginContext, err?: Error) => void;
 
-	// --- Generate hooks ---
+  // --- Generate hooks ---
 
-	[DEFINED_HOOK_NAMES.renderStart]: (
-		this: PluginContext,
-		outputOptions: NormalizedOutputOptions,
-		inputOptions: NormalizedInputOptions,
-	) => void;
+  [DEFINED_HOOK_NAMES.renderStart]: (
+    this: PluginContext,
+    outputOptions: NormalizedOutputOptions,
+    inputOptions: NormalizedInputOptions,
+  ) => void;
 
-	[DEFINED_HOOK_NAMES.renderChunk]: (
-		this: PluginContext,
-		code: string,
-		chunk: RenderedChunk,
-		outputOptions: NormalizedOutputOptions,
-		meta: { chunks: Record<string, RenderedChunk> },
-	) =>
-		| NullValue
-		| string
-		| {
-				code: string;
-				map?: SourceMapInput;
-		  };
+  [DEFINED_HOOK_NAMES.renderChunk]: (
+    this: PluginContext,
+    code: string,
+    chunk: RenderedChunk,
+    outputOptions: NormalizedOutputOptions,
+    meta: RenderedChunkMeta,
+  ) =>
+    | NullValue
+    | string
+    | {
+      code: string;
+      map?: SourceMapInput;
+    };
 
-	[DEFINED_HOOK_NAMES.augmentChunkHash]: (
-		this: PluginContext,
-		chunk: RenderedChunk,
-	) => string | void;
+  [DEFINED_HOOK_NAMES.augmentChunkHash]: (
+    this: PluginContext,
+    chunk: RenderedChunk,
+  ) => string | void;
 
-	[DEFINED_HOOK_NAMES.renderError]: (
-		this: PluginContext,
-		error: Error,
-	) => void;
+  [DEFINED_HOOK_NAMES.renderError]: (this: PluginContext, error: Error) => void;
 
-	[DEFINED_HOOK_NAMES.generateBundle]: (
-		this: PluginContext,
-		outputOptions: NormalizedOutputOptions,
-		bundle: OutputBundle,
-		isWrite: boolean,
-	) => void;
+  [DEFINED_HOOK_NAMES.generateBundle]: (
+    this: PluginContext,
+    outputOptions: NormalizedOutputOptions,
+    bundle: OutputBundle,
+    isWrite: boolean,
+  ) => void;
 
-	[DEFINED_HOOK_NAMES.writeBundle]: (
-		this: PluginContext,
-		outputOptions: NormalizedOutputOptions,
-		bundle: OutputBundle,
-	) => void;
+  [DEFINED_HOOK_NAMES.writeBundle]: (
+    this: PluginContext,
+    outputOptions: NormalizedOutputOptions,
+    bundle: OutputBundle,
+  ) => void;
 
-	[DEFINED_HOOK_NAMES.closeBundle]: (this: PluginContext) => void;
+  [DEFINED_HOOK_NAMES.closeBundle]: (this: PluginContext) => void;
 
-	// --- watch hooks ---
-	[DEFINED_HOOK_NAMES.watchChange]: (
-		this: PluginContext,
-		id: string,
-		event: { event: ChangeEvent },
-	) => void;
+  // --- watch hooks ---
+  [DEFINED_HOOK_NAMES.watchChange]: (
+    this: PluginContext,
+    id: string,
+    event: { event: ChangeEvent },
+  ) => void;
 
-	[DEFINED_HOOK_NAMES.closeWatcher]: (this: PluginContext) => void;
+  [DEFINED_HOOK_NAMES.closeWatcher]: (this: PluginContext) => void;
 }
 
-export type ChangeEvent = "create" | "update" | "delete";
+export type ChangeEvent = 'create' | 'update' | 'delete';
 
-export type PluginOrder = "pre" | "post" | null;
+export type PluginOrder = 'pre' | 'post' | null;
 
 export type ObjectHookMeta = { order?: PluginOrder };
 
 export type ObjectHook<T, O = {}> = T | ({ handler: T } & ObjectHookMeta & O);
 export type SyncPluginHooks = DefinedHookNames[
-	| "augmentChunkHash"
-	| "onLog"
-	| "outputOptions"];
+  | 'augmentChunkHash'
+  | 'onLog'
+  | 'outputOptions'
+];
 // | 'renderDynamicImport'
 // | 'resolveFileUrl'
 // | 'resolveImportMeta'
 
 export type AsyncPluginHooks = Exclude<
-	keyof FunctionPluginHooks,
-	SyncPluginHooks
+  keyof FunctionPluginHooks,
+  SyncPluginHooks
 >;
 
 export type FirstPluginHooks = DefinedHookNames[
-	| "load"
-	// | 'renderDynamicImport'
-	| "resolveDynamicImport"
-	// | 'resolveFileUrl'
-	| "resolveId"];
+  | 'load'
+  // | 'renderDynamicImport'
+  | 'resolveDynamicImport'
+  // | 'resolveFileUrl'
+  | 'resolveId'
+];
 // | 'resolveImportMeta'
 // | 'shouldTransformCachedModule'
 
 export type SequentialPluginHooks = DefinedHookNames[
-	| "augmentChunkHash"
-	| "generateBundle"
-	| "onLog"
-	| "options"
-	| "outputOptions"
-	| "renderChunk"
-	| "transform"];
+  | 'augmentChunkHash'
+  | 'generateBundle'
+  | 'onLog'
+  | 'options'
+  | 'outputOptions'
+  | 'renderChunk'
+  | 'transform'
+];
 
 export type AddonHooks = DefinedHookNames[
-	| "banner"
-	| "footer"
-	| "intro"
-	| "outro"];
+  | 'banner'
+  | 'footer'
+  | 'intro'
+  | 'outro'
+];
 
 export type OutputPluginHooks = DefinedHookNames[
-	| "augmentChunkHash"
-	| "generateBundle"
-	| "outputOptions"
-	| "renderChunk"
-	// | 'renderDynamicImport'
-	| "renderError"
-	| "renderStart"
-	// | 'resolveFileUrl'
-	// | 'resolveImportMeta'
-	| "writeBundle"];
+  | 'augmentChunkHash'
+  | 'generateBundle'
+  | 'outputOptions'
+  | 'renderChunk'
+  // | 'renderDynamicImport'
+  | 'renderError'
+  | 'renderStart'
+  // | 'resolveFileUrl'
+  // | 'resolveImportMeta'
+  | 'writeBundle'
+];
 
 export type ParallelPluginHooks = Exclude<
-	keyof FunctionPluginHooks | AddonHooks,
-	FirstPluginHooks | SequentialPluginHooks
+  keyof FunctionPluginHooks | AddonHooks,
+  FirstPluginHooks | SequentialPluginHooks
 >;
-export type HookFilterExtension<K extends keyof FunctionPluginHooks> =
-	K extends "transform"
-		? { filter?: HookFilter }
-		: K extends "load"
-			? { filter?: Pick<HookFilter, "id"> }
-			: K extends "resolveId"
-				? { filter?: { id: StringFilter<RegExp> } }
-				: {};
+export type HookFilterExtension<K extends keyof FunctionPluginHooks> = K extends
+  'transform' ? { filter?: HookFilter }
+  : K extends 'load' ? { filter?: Pick<HookFilter, 'id'> }
+  : K extends 'resolveId' ? { filter?: { id?: StringFilter<RegExp> } }
+  : {};
 
 export type PluginHooks = {
-	[K in keyof FunctionPluginHooks]: ObjectHook<
-		K extends AsyncPluginHooks
-			? MakeAsync<FunctionPluginHooks[K]>
-			: FunctionPluginHooks[K],
-		HookFilterExtension<K> &
-			(K extends ParallelPluginHooks
-				? {
-						/**
-						 * @deprecated
-						 * this is only for rollup Plugin type compatibility.
-						 * hooks always work as `sequential: true`.
-						 */
-						sequential?: boolean;
-					}
-				: {})
-	>;
+  [K in keyof FunctionPluginHooks]: ObjectHook<
+    K extends AsyncPluginHooks ? MakeAsync<FunctionPluginHooks[K]>
+      : FunctionPluginHooks[K],
+    & HookFilterExtension<K>
+    & (K extends ParallelPluginHooks ? {
+        /**
+         * @deprecated
+         * this is only for rollup Plugin type compatibility.
+         * hooks always work as `sequential: true`.
+         */
+        sequential?: boolean;
+      }
+      : {})
+  >;
 };
 
 export type AddonHookFunction = (
-	this: PluginContext,
-	chunk: RenderedChunk,
+  this: PluginContext,
+  chunk: RenderedChunk,
 ) => string | Promise<string>;
 
 export type AddonHook = string | AddonHookFunction;
 
 export interface OutputPlugin
-	extends Partial<{ [K in OutputPluginHooks]: PluginHooks[K] }>,
-		Partial<{ [K in AddonHooks]: ObjectHook<AddonHook> }> {
-	// cacheKey?: string
-	name: string;
-	// version?: string
+  extends
+    Partial<{ [K in OutputPluginHooks]: PluginHooks[K] }>,
+    Partial<{ [K in AddonHooks]: ObjectHook<AddonHook> }>
+{
+  // cacheKey?: string
+  name: string;
+  // version?: string
 }
 
 export interface Plugin<A = any> extends OutputPlugin, Partial<PluginHooks> {
-	// for inter-plugin communication
-	api?: A;
+  // for inter-plugin communication
+  api?: A;
 }
 
 export type RolldownPlugin<A = any> =
-	| Plugin<A>
-	| BuiltinPlugin
-	| ParallelPlugin;
+  | Plugin<A>
+  | BuiltinPlugin
+  | ParallelPlugin;
 export type RolldownPluginOption<A = any> = MaybePromise<
-	NullValue<RolldownPlugin<A>> | false | RolldownPluginOption[]
+  NullValue<RolldownPlugin<A>> | false | RolldownPluginOption[]
 >;
 export type RolldownOutputPlugin = OutputPlugin | BuiltinPlugin;
 export type RolldownOutputPluginOption = MaybePromise<
-	NullValue<RolldownOutputPlugin> | false | RolldownOutputPluginOption[]
+  NullValue<RolldownOutputPlugin> | false | RolldownOutputPluginOption[]
 >;

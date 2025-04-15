@@ -1,4 +1,4 @@
-import type { RolldownOptions } from "./rolldown-options";
+import type { RolldownOptions } from './rolldown-options';
 
 /**
  * Type for `default export` of `rolldown.config.js` file.
