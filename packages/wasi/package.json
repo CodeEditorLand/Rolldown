@@ -1,6 +1,28 @@
 {
-	"name": "@rolldown/wasi",
+	"name": "@codeeditorland/wasi",
+	"version": "0.0.1",
+	"private": false,
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "Source 🖋️ Open 👐🏻",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
+	},
+	"type": "module",
 	"imports": {
 		"#parallel-plugin-worker": "./dist/parallel-plugin-worker.mjs"
 	},
@@ -46,17 +68,24 @@
 		"build-pkg:debug": "cross-env WASI_PKG=1 pnpm run --filter rolldown build-wasi:debug",
 		"build-pkg:release": "cross-env WASI_PKG=1 pnpm run --filter rolldown build-wasi:release",
 		"build-types": "tsc -p ../rolldown/tsconfig.json --outDir ../wasi/dist/types --tsBuildInfoFile ../wasi/dist/.tsbuildinfo",
-		"preinstall": "npx only-allow pnpm"
+		"preinstall": "npx only-allow pnpm",
+		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
 	"dependencies": {
+		"@codeeditorland-project/types": "0.63.0",
 		"@napi-rs/wasm-runtime": "^0.2.4",
-		"@oxc-project/types": "0.63.0",
 		"@valibot/to-json-schema": "1.0.0",
 		"valibot": "1.0.0"
+	},
+	"devDependencies": {
+		"@playform/build": "0.2.3"
 	},
 	"peerDependenciesMeta": {
 		"@oxc-project/runtime": {
 			"optional": true
 		}
+	},
+	"publishConfig": {
+		"access": "public"
 	}
 }

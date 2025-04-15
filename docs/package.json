@@ -1,5 +1,5 @@
 {
-	"name": "rolldown-docs",
+	"name": "@codeeditorland/docs",
 	"version": "0.0.1",
 	"private": false,
 	"keywords": [
@@ -28,6 +28,7 @@
 		"prepublishOnly": "Build 'Source/**/*.ts'",
 		"preview": "vitepress preview"
 	},
+	"dependencies": {},
 	"devDependencies": {
 		"@iconify-json/vscode-icons": "^1.1.37",
 		"@playform/build": "0.2.3",

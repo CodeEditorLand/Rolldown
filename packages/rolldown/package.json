@@ -1,6 +1,28 @@
 {
 	"name": "rolldown",
+	"version": "0.0.1",
+	"private": false,
 	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+	"keywords": [
+		"codeeditorland",
+		"land",
+		"playform"
+	],
+	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
+	"bugs": {
+		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
+	},
+	"license": "SEE LICENSE IN LICENSE",
+	"author": {
+		"name": "Source 🖋️ Open 👐🏻",
+		"email": "Source/Open@Editor.Land",
+		"url": "HTTPS://Editor.Land"
+	},
+	"type": "module",
 	"imports": {
 		"#parallel-plugin-worker": "./dist/parallel-plugin-worker.mjs"
 	},
@@ -56,19 +78,22 @@
 		"build-wasi:debug": "pnpm run --sequential \"/^build-(binding|binding:wasi|node)$/\"",
 		"build-wasi:release": "pnpm run --sequential \"/^build-(binding|binding:wasi:release|node)$/\"",
 		"extract-options-doc": "typedoc",
-		"preinstall": "npx only-allow pnpm"
+		"preinstall": "npx only-allow pnpm",
+		"prepublishOnly": "Build 'Source/**/*.ts'"
 	},
 	"dependencies": {
-		"@oxc-project/types": "0.63.0",
+		"@codeeditorland-project/types": "0.63.0",
 		"@valibot/to-json-schema": "1.0.0",
 		"valibot": "1.0.0"
 	},
 	"devDependencies": {
+		"@codeeditorland-node/core": "^0.0.22",
+		"@codeeditorland/parser": "^0.63.0",
+		"@codeeditorland/testing": "workspace:*",
 		"@jridgewell/sourcemap-codec": "^1.5.0",
 		"@napi-rs/cli": "^3.0.0-alpha.74",
 		"@napi-rs/wasm-runtime": "^0.2.4",
-		"@oxc-node/core": "^0.0.22",
-		"@rolldown/testing": "workspace:*",
+		"@playform/build": "0.2.3",
 		"@types/fs-extra": "^11.0.4",
 		"@types/lodash-es": "^4.17.12",
 		"colorette": "^2.0.20",
@@ -78,7 +103,6 @@
 		"fs-extra": "^11.2.0",
 		"glob": "^11.0.0",
 		"locate-character": "^3.0.0",
-		"oxc-parser": "^0.63.0",
 		"remeda": "^2.10.0",
 		"rolldown": "workspace:*",
 		"signal-exit": "4.1.0",
@@ -107,6 +131,9 @@
 		"@rolldown/binding-win32-arm64-msvc": "workspace:*",
 		"@rolldown/binding-win32-ia32-msvc": "workspace:*",
 		"@rolldown/binding-win32-x64-msvc": "workspace:*"
+	},
+	"publishConfig": {
+		"access": "public"
 	},
 	"napi": {
 		"binaryName": "rolldown-binding",
