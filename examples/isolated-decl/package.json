@@ -30,7 +30,7 @@
 	"devDependencies": {
 		"@playform/build": "0.2.3",
 		"rolldown": "0.15.1",
-		"unplugin-isolated-decl": "0.13.6"
+		"unplugin-isolated-decl": "0.13.7"
 	},
 	"publishConfig": {
 		"access": "public"
