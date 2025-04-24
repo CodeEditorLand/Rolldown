@@ -101,7 +101,7 @@
 		"emnapi": "1.4.3",
 		"execa": "9.5.2",
 		"fs-extra": "11.3.0",
-		"glob": "11.0.1",
+		"glob": "11.0.2",
 		"locate-character": "3.0.0",
 		"remeda": "2.21.3",
 		"rolldown": "workspace:*",

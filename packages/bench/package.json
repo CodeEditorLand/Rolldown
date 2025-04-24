@@ -33,7 +33,7 @@
 		"@playform/build": "0.2.3",
 		"@types/lodash-es": "4.17.12",
 		"chalk": "5.4.1",
-		"esbuild": "0.25.2",
+		"esbuild": "0.25.3",
 		"lodash-es": "4.17.21",
 		"rolldown": "workspace:*",
 		"tinybench": "4.0.1"
