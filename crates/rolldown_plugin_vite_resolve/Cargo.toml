@@ -6,6 +6,7 @@ license = "MIT"
 
 [lib]
 doctest = false
+path = "Source/lib.rs"
 
 [dependencies]
 anyhow = { workspace = true }

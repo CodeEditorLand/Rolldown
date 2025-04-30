@@ -43,5 +43,7 @@ tracing = { workspace = true, features = ["valuable"] }
 typedmap = { workspace = true, features = ["dashmap"] }
 
 [package.metadata.cargo-shear]
-# `serde_json` is used in `trace_action` macro.
-ignored = ["serde", "serde_json"]
+ignored = ["serde"]
+
+[package.repository]
+workspace = true

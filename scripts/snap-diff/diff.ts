@@ -18,9 +18,9 @@ type Resolver = (
  * so hardcode some filename remapping
  */
 function defaultResolveFunction(
-  esbuildFilename: string,
-  rolldownFilename: string,
-  resolver?: Resolver,
+	esbuildFilename: string,
+	rolldownFilename: string,
+	resolver?: Resolver,
 ) {
   if (
     typeof resolver === 'function' &&

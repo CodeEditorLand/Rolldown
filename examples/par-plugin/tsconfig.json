@@ -1,4 +1,46 @@
 {
-  "extends": "../../tsconfig.json",
-  "include": ["./**/*.js", "./**/*.mjs", "./**/*.cjs", "./**/*.d.ts"]
+	"compilerOptions": {
+		"baseUrl": "./",
+		"outDir": "Target",
+		"rootDir": "src"
+	},
+	"extends": "@playform/build/tsconfig",
+	"include": [
+		"./**/*.js",
+		"./**/*.mjs",
+		"./**/*.cjs",
+		"./**/*.d.ts",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src",
+		"src"
+	]
 }

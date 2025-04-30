@@ -99,7 +99,7 @@ export function rewriteRolldown(code: string, config: RewriteConfig) {
 }
 
 function extractAssertArgument(
-  node: acorn.CallExpression,
+	node: acorn.CallExpression,
 ): acorn.Expression | undefined {
   let callee = node.callee;
   // extract assert.strictEqual(test, 1)

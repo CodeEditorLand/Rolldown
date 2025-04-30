@@ -2,7 +2,30 @@
 name = "rolldown_utils"
 version = "0.1.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+anyhow = { workspace = true }
+arcstr = { workspace = true }
+base-encode = { workspace = true }
+base64-simd = { workspace = true }
+cow-utils = { workspace = true }
+dashmap = { workspace = true }
+fast-glob = { workspace = true }
+futures = { workspace = true }
+indexmap = { workspace = true, features = ["serde"] }
+infer = { workspace = true }
+memchr = { workspace = true }
+mime = { workspace = true }
+nom = { workspace = true }
+oxc = { workspace = true }
+oxc_index = { workspace = true }
+phf = { workspace = true }
+regex = { workspace = true }
+regress = { workspace = true }
+rolldown_std_utils = { workspace = true }
+rustc-hash = { workspace = true }
+serde_json = { workspace = true }
+simdutf8 = { workspace = true }
+xxhash-rust = { workspace = true, features = ["xxh3"] }
 
 edition.workspace = true
 homepage.workspace = true
