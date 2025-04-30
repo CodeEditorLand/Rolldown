@@ -1,20 +1,29 @@
 {
-  "compilerOptions": {
-    "outDir": "dist",
-    "target": "esnext",
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "strict": true,
-    "noUnusedLocals": true,
-    "skipLibCheck": true,
-    "jsx": "preserve",
-    "baseUrl": ".",
-    "paths": {
-      "@theme/*": [".vitepress/theme/*"]
-    }
-  },
-  "include": ["env.d.ts", "src/**/*", ".vitepress/**/*"]
+	"compilerOptions": {
+		"allowJs": true,
+		"baseUrl": "./",
+		"esModuleInterop": true,
+		"jsx": "preserve",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"noUnusedLocals": true,
+		"outDir": "Target",
+		"paths": {
+			"@theme/*": [
+				".vitepress/theme/*"
+			]
+		},
+		"resolveJsonModule": true,
+		"rootDir": "src",
+		"skipLibCheck": true,
+		"strict": true,
+		"target": "esnext"
+	},
+	"extends": "@playform/build/tsconfig",
+	"include": [
+		"env.d.ts",
+		"src/**/*",
+		".vitepress/**/*",
+		"src"
+	]
 }
