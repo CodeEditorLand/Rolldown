@@ -30,11 +30,11 @@
 	},
 	"dependencies": {},
 	"devDependencies": {
-		"@iconify-json/vscode-icons": "^1.2.19",
+		"@iconify-json/vscode-icons": "^1.2.20",
 		"@playform/build": "0.2.3",
 		"vitepress": "^1.6.3",
 		"vitepress-plugin-group-icons": "^1.5.2",
-		"vitepress-plugin-llms": "^1.1.0",
+		"vitepress-plugin-llms": "^1.1.1",
 		"zx": "^8.5.3"
 	},
 	"publishConfig": {

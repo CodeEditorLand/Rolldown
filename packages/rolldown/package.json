@@ -107,8 +107,8 @@
 		"rolldown": "workspace:*",
 		"signal-exit": "4.1.0",
 		"source-map": "0.7.4",
-		"tsx": "4.19.3",
-		"type-fest": "4.40.0",
+		"tsx": "4.19.4",
+		"type-fest": "4.40.1",
 		"typedoc": "0.28.3",
 		"unbuild": "3.5.0",
 		"why-is-node-running": "3.2.2"
