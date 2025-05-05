@@ -1,0 +1,38 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Assets
+
+## assets/foo-gTZMu9ze.txt
+
+## chunks/dep-CTy6HCTO.js
+
+```js
+import "./foo-CC-QHWRg.js";
+
+//#region dep.js
+const url = new URL("../assets/foo-gTZMu9ze.txt", import.meta.url);
+
+//#endregion
+export { url };
+```
+## chunks/foo-CC-QHWRg.js
+
+```js
+//#region foo.txt
+var foo_default = "assets/foo-gTZMu9ze.txt";
+
+//#endregion
+```
+## main.js
+
+```js
+import "./chunks/foo-CC-QHWRg.js";
+
+//#region main.js
+const url = new URL("assets/foo-gTZMu9ze.txt", import.meta.url);
+const dep = import("./chunks/dep-CTy6HCTO.js");
+
+//#endregion
+export { dep, url };
+```

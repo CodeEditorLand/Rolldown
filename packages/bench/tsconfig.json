@@ -1,32 +1,12 @@
 {
-	"compilerOptions": {
-		"allowJs": true,
-		"baseUrl": "./",
-		"composite": true,
-		"isolatedDeclarations": false,
-		"outDir": "Target",
-		"rootDir": "src",
-		"tsBuildInfoFile": ".tsbuildinfo"
-	},
-	"extends": "@playform/build/tsconfig",
-	"include": [
-		"./src/**/*.ts",
-		"vite.config.ts",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src"
-	],
-	"references": [
-		{
-			"path": "../rolldown"
-		}
-	]
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "allowJs": true,
+    "isolatedDeclarations": false,
+    "outDir": "./dist",
+    "tsBuildInfoFile": ".tsbuildinfo"
+  },
+  "references": [{ "path": "../rolldown" }],
+  "include": ["./src/**/*.ts", "vite.config.ts"]
 }

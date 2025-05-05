@@ -1,91 +1,77 @@
 {
-	"name": "@codeeditorland/wasi",
-	"version": "0.0.1",
-	"private": false,
-	"description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
-	"keywords": [
-		"codeeditorland",
-		"land",
-		"playform"
-	],
-	"homepage": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown#readme",
-	"bugs": {
-		"url": "HTTPS://GitHub.Com/CodeEditorLand/Rolldown/issues"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+HTTPS://github.com/CodeEditorLand/Rolldown.git"
-	},
-	"license": "SEE LICENSE IN LICENSE",
-	"author": {
-		"name": "Source 🖋️ Open 👐🏻",
-		"email": "Source/Open@Editor.Land",
-		"url": "HTTPS://Editor.Land"
-	},
-	"type": "module",
-	"imports": {
-		"#parallel-plugin-worker": "./dist/parallel-plugin-worker.mjs"
-	},
-	"exports": {
-		".": {
-			"import": "./dist/index.mjs",
-			"require": "./dist/index.cjs",
-			"types": "./dist/types/index.d.ts"
-		},
-		"./experimental": {
-			"import": "./dist/experimental-index.mjs",
-			"require": "./dist/experimental-index.cjs",
-			"types": "./dist/types/experimental-index.d.ts"
-		},
-		"./package.json": "./package.json",
-		"./parallel-plugin": {
-			"import": "./dist/parallel-plugin.mjs",
-			"require": "./dist/parallel-plugin.cjs",
-			"types": "./dist/types/parallel-plugin.d.ts"
-		},
-		"./parseAst": {
-			"import": "./dist/parse-ast-index.mjs",
-			"require": "./dist/parse-ast-index.cjs",
-			"types": "./dist/types/parse-ast-index.d.ts"
-		}
-	},
-	"main": "./dist/index.cjs",
-	"types": "./dist/types/index.d.ts",
-	"bin": {
-		"rolldown": "./bin/cli.mjs"
-	},
-	"files": [
-		"bin",
-		"cli",
-		"dist",
-		"!dist/rolldown-binding.debug.wasm32-wasi.wasm",
-		"!dist/*.node"
-	],
-	"scripts": {
-		"build": "pnpm run build:debug",
-		"build:debug": "pnpm run --sequential \"/^build-(types|pkg:debug)$/\"",
-		"build:release": "pnpm run --sequential \"/^build-(types|pkg:release)$/\"",
-		"build-pkg:debug": "cross-env WASI_PKG=1 pnpm run --filter rolldown build-wasi:debug",
-		"build-pkg:release": "cross-env WASI_PKG=1 pnpm run --filter rolldown build-wasi:release",
-		"build-types": "tsc -p ../rolldown/tsconfig.json --outDir ../wasi/dist/types --tsBuildInfoFile ../wasi/dist/.tsbuildinfo",
-		"preinstall": "npx only-allow pnpm",
-		"prepublishOnly": "Build 'Source/**/*.ts'"
-	},
-	"dependencies": {
-		"@codeeditorland-project/types": "0.63.0",
-		"@napi-rs/wasm-runtime": "0.2.9",
-		"@valibot/to-json-schema": "1.0.0",
-		"valibot": "1.0.0"
-	},
-	"devDependencies": {
-		"@playform/build": "0.2.3"
-	},
-	"peerDependenciesMeta": {
-		"@oxc-project/runtime": {
-			"optional": true
-		}
-	},
-	"publishConfig": {
-		"access": "public"
-	}
+  "name": "@rolldown/browser",
+  "version": "1.0.0-beta.8",
+  "description": "Fast JavaScript/TypeScript bundler in Rust with Rollup-compatible API.",
+  "homepage": "https://rolldown.rs/",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rolldown/rolldown.git",
+    "directory": "packages/browser"
+  },
+  "license": "MIT",
+  "keywords": [
+    "webpack",
+    "parcel",
+    "esbuild",
+    "rollup",
+    "bundler",
+    "rolldown"
+  ],
+  "files": [
+    "bin",
+    "dist",
+    "!*/.tsbuildinfo"
+  ],
+  "bin": {
+    "rolldown": "./bin/cli.mjs"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "browser": "./dist/browser.mjs",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.mjs"
+    },
+    "./experimental": {
+      "require": "./dist/experimental-index.cjs",
+      "import": "./dist/experimental-index.mjs"
+    },
+    "./parallel-plugin": {
+      "require": "./dist/parallel-plugin.cjs",
+      "import": "./dist/parallel-plugin.mjs"
+    },
+    "./parseAst": {
+      "require": "./dist/parse-ast-index.cjs",
+      "import": "./dist/parse-ast-index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm run build:debug",
+    "build:debug": "pnpm run --filter rolldown build-browser:debug",
+    "build:release": "pnpm run --filter rolldown build-browser:release",
+    "build-node": "BROWSER_PKG=1 pnpm run --filter rolldown build-node",
+    "preinstall": "npx only-allow pnpm"
+  },
+  "dependencies": {
+    "@napi-rs/wasm-runtime": "^0.2.8",
+    "@oxc-project/types": "0.67.0",
+    "ansis": "^3.17.0",
+    "pathe": "^2.0.3"
+  },
+  "peerDependencies": {
+    "@oxc-project/runtime": "0.67.0"
+  },
+  "peerDependenciesMeta": {
+    "@oxc-project/runtime": {
+      "optional": true
+    }
+  }
 }

@@ -21,19 +21,3 @@ tokio = { workspace = true, features = ["rt", "macros", "sync", "rt-multi-thread
 
 [lints]
 workspace = true
-
-[package]
-name = "rolldown_plugin_replace"
-version = "0.1.0"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true

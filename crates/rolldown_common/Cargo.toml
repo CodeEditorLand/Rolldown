@@ -12,7 +12,6 @@ repository.workspace = true
 
 [lib]
 doctest = false
-path = "Source/lib.rs"
 
 [lints]
 workspace = true

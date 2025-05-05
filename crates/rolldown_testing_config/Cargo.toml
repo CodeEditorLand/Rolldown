@@ -20,19 +20,3 @@ serde_json = { workspace = true }
 
 [lints]
 workspace = true
-
-[package]
-name = "rolldown_testing_config"
-version = "0.1.0"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true

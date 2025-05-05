@@ -36,25 +36,3 @@ name = "remapping"
 
 [features]
 codspeed = ["criterion2/codspeed"]
-
-[lib]
-bench = false
-doctest = false
-path = "Source/lib.rs"
-test = false
-
-[package]
-name = "bench"
-version = "0.1.0"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true

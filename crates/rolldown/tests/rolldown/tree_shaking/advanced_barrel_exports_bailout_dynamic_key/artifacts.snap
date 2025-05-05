@@ -1,0 +1,30 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+snapshot_kind: text
+---
+# Assets
+
+## main.js
+
+```js
+import assert from "node:assert";
+
+
+//#region a.js
+var a_exports = {};
+__export(a_exports, {
+	a: () => a,
+	b: () => b,
+	c: () => c
+});
+const c = 1e3;
+const b = 500;
+const a = 100;
+
+//#endregion
+//#region main.js
+let q = "a";
+assert.equal(a_exports[q], 100);
+
+//#endregion
+```

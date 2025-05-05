@@ -1,0 +1,29 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# Errors
+
+## MISSING_EXPORT
+
+```text
+[MISSING_EXPORT] Warning: "default" is not exported by "keep/declare-class.ts".
+   ╭─[ entry.ts:1:8 ]
+   │
+ 1 │ import dc_def, { bar as dc } from './keep/declare-class'
+   │        ───┬──  
+   │           ╰──── Missing export
+───╯
+
+```
+## MISSING_EXPORT
+
+```text
+[MISSING_EXPORT] Warning: "default" is not exported by "keep/declare-let.ts".
+   ╭─[ entry.ts:2:8 ]
+   │
+ 2 │ import dl_def, { bar as dl } from './keep/declare-let'
+   │        ───┬──  
+   │           ╰──── Missing export
+───╯
+
+```

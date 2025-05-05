@@ -6,8 +6,7 @@ homepage.workspace = true
 license.workspace = true
 repository.workspace = true
 
-[lib]
-path = "Source/lib.rs"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lints]
 workspace = true

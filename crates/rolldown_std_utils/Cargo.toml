@@ -9,24 +9,5 @@ repository.workspace = true
 [dependencies]
 regex = { workspace = true }
 
-[lib]
-path = "Source/lib.rs"
-
 [lints]
-workspace = true
-
-[package]
-name = "rolldown_std_utils"
-version = "0.1.0"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
 workspace = true

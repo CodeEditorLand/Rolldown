@@ -21,17 +21,5 @@ default = ["sourcemap", "serde"]
 serde = ["dep:serde", "oxc_index/serde"]
 sourcemap = ["dep:oxc_sourcemap"]
 
-[lib]
-path = "Source/lib.rs"
-
-[package]
-description = "manipulate string like a wizard"
-edition = "2024"
-license-file = "LICENSE"
-name = "string_wizard"
-version = "0.0.26"
-
-[package.metadata]
-
 [package.metadata.cargo-shear]
 ignored = ["serde"]

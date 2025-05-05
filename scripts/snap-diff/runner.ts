@@ -10,7 +10,7 @@ const esbuildTestDir = path.join(
 );
 
 export function getEsbuildSnapFile(
-	includeList: string[],
+  includeList: string[],
 ): Array<{ normalizedName: string; content: string }> {
   let dirname = path.resolve(import.meta.dirname, './esbuild-snapshots/');
   let fileList = fs.readdirSync(dirname);
@@ -162,7 +162,7 @@ function getRolldownSnap(caseDir: string) {
 }
 
 function getDiffMarkdown(
-	diffResult: UnwrapPromise<ReturnType<typeof diffCase>>,
+  diffResult: UnwrapPromise<ReturnType<typeof diffCase>>,
 ) {
   if (typeof diffResult === 'string') {
     throw new Error('diffResult should not be string');
@@ -178,8 +178,8 @@ function getDiffMarkdown(
 }
 
 function generateStatsMarkdown(
-	aggregateStats: AggregateStats,
-	unsupportedCaseCount: number,
+  aggregateStats: AggregateStats,
+  unsupportedCaseCount: number,
 ) {
   const { stats, details } = aggregateStats;
   let markdown = '';
@@ -291,8 +291,8 @@ function getSummaryMarkdownAndStats(
 }
 
 function updateBypassOrDiffMarkdown(
-	markdownPath: string,
-	diffResult: UnwrapPromise<ReturnType<typeof diffCase>>,
+  markdownPath: string,
+  diffResult: UnwrapPromise<ReturnType<typeof diffCase>>,
 ) {
   let bypassContent = '';
   if (fs.existsSync(markdownPath)) {

@@ -1,27 +1,12 @@
 {
-	"compilerOptions": {
-		"allowJs": true,
-		"baseUrl": "./",
-		"checkJs": true,
-		"composite": true,
-		"isolatedDeclarations": false,
-		"noEmit": false,
-		"outDir": "Target",
-		"rootDir": "src"
-	},
-	"extends": "@playform/build/tsconfig",
-	"include": [
-		"src/**/*.ts",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src",
-		"src"
-	]
+  "extends": "../../tsconfig.json",
+  "include": ["src/**/*.ts"],
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": false,
+    "allowJs": true,
+    "checkJs": true,
+    "isolatedDeclarations": false,
+    "outDir": "./dist"
+  }
 }

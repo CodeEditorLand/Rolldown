@@ -1,0 +1,86 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# warnings
+
+## IMPORT_IS_UNDEFINED
+
+```text
+[IMPORT_IS_UNDEFINED] Warning: Import `default` will always be undefined because there is no matching export in 'empty.js'
+   ╭─[ entry-default.js:5:2 ]
+   │
+ 5 │     js.default,
+   │     ─────┬────  
+   │          ╰────── 
+───╯
+
+```
+## IMPORT_IS_UNDEFINED
+
+```text
+[IMPORT_IS_UNDEFINED] Warning: Import `default` will always be undefined because there is no matching export in 'empty.mjs'
+   ╭─[ entry-default.js:6:2 ]
+   │
+ 6 │     mjs.default,
+   │     ─────┬─────  
+   │          ╰─────── 
+───╯
+
+```
+## IMPORT_IS_UNDEFINED
+
+```text
+[IMPORT_IS_UNDEFINED] Warning: Import `nope` will always be undefined because there is no matching export in 'empty.js'
+   ╭─[ entry-nope.js:5:2 ]
+   │
+ 5 │     js.nope,
+   │     ───┬───  
+   │        ╰───── 
+───╯
+
+```
+## IMPORT_IS_UNDEFINED
+
+```text
+[IMPORT_IS_UNDEFINED] Warning: Import `nope` will always be undefined because there is no matching export in 'empty.mjs'
+   ╭─[ entry-nope.js:6:2 ]
+   │
+ 6 │     mjs.nope,
+   │     ────┬───  
+   │         ╰───── 
+───╯
+
+```
+# Assets
+
+## empty.js
+
+```js
+
+//#region empty.cjs
+var require_empty = __commonJS({ "empty.cjs"() {} });
+var import_empty = __toESM(require_empty());
+
+//#endregion
+export { import_empty };
+```
+## entry-default.js
+
+```js
+import { import_empty } from "./empty.js";
+
+//#region entry-default.js
+console.log(void 0, void 0, import_empty.default);
+
+//#endregion
+```
+## entry-nope.js
+
+```js
+import { import_empty } from "./empty.js";
+
+//#region entry-nope.js
+console.log(void 0, void 0, import_empty.nope);
+
+//#endregion
+```

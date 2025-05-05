@@ -1,0 +1,88 @@
+---
+source: crates/rolldown_testing/src/integration_test.rs
+---
+# warnings
+
+## IMPORT_IS_UNDEFINED
+
+```text
+[IMPORT_IS_UNDEFINED] Warning: Import `default` will always be undefined because there is no matching export in 'foo/no-side-effects.js'
+   ╭─[ entry-default.js:5:2 ]
+   │
+ 5 │     js.default,
+   │     ─────┬────  
+   │          ╰────── 
+───╯
+
+```
+## IMPORT_IS_UNDEFINED
+
+```text
+[IMPORT_IS_UNDEFINED] Warning: Import `default` will always be undefined because there is no matching export in 'foo/no-side-effects.mjs'
+   ╭─[ entry-default.js:6:2 ]
+   │
+ 6 │     mjs.default,
+   │     ─────┬─────  
+   │          ╰─────── 
+───╯
+
+```
+## IMPORT_IS_UNDEFINED
+
+```text
+[IMPORT_IS_UNDEFINED] Warning: Import `nope` will always be undefined because there is no matching export in 'foo/no-side-effects.js'
+   ╭─[ entry-nope.js:5:2 ]
+   │
+ 5 │     js.nope,
+   │     ───┬───  
+   │        ╰───── 
+───╯
+
+```
+## IMPORT_IS_UNDEFINED
+
+```text
+[IMPORT_IS_UNDEFINED] Warning: Import `nope` will always be undefined because there is no matching export in 'foo/no-side-effects.mjs'
+   ╭─[ entry-nope.js:6:2 ]
+   │
+ 6 │     mjs.nope,
+   │     ────┬───  
+   │         ╰───── 
+───╯
+
+```
+# Assets
+
+## entry-default.js
+
+```js
+import { import_no_side_effects } from "./no-side-effects.js";
+
+//#region entry-default.js
+console.log(void 0, void 0, import_no_side_effects.default);
+
+//#endregion
+```
+## entry-nope.js
+
+```js
+import { import_no_side_effects } from "./no-side-effects.js";
+
+//#region entry-nope.js
+console.log(void 0, void 0, import_no_side_effects.nope);
+
+//#endregion
+```
+## no-side-effects.js
+
+```js
+
+//#region foo/no-side-effects.cjs
+var require_no_side_effects = __commonJS({ "foo/no-side-effects.cjs"() {
+	console.log("cjs");
+} });
+var import_no_side_effects = __toESM(require_no_side_effects());
+
+//#endregion
+export { import_no_side_effects };
+```

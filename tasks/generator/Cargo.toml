@@ -20,19 +20,3 @@ quote = { workspace = true }
 syn = { workspace = true, features = ["clone-impls", "derive", "extra-traits", "full", "parsing", "printing", "proc-macro"] }
 [lints]
 workspace = true
-
-[package]
-name = "generator"
-version = "0.1.0"
-
-[package.edition]
-workspace = true
-
-[package.homepage]
-workspace = true
-
-[package.license-file]
-workspace = true
-
-[package.repository]
-workspace = true
