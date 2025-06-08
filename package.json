@@ -36,7 +36,7 @@
     "lint-staged": "^16.0.0",
     "oxlint": "^0.17.0",
     "remove-unused-vars": "^0.0.6",
-    "rolldown": "workspace:*",
+    "rolldown": "0.0.1",
     "typescript": "^5.6.3"
   },
   "pnpm": {

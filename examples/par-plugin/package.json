@@ -9,10 +9,10 @@
     "build": "echo success"
   },
   "devDependencies": {
-    "rolldown": "workspace:*",
-    "@babel/core": "^7.24.4",
-    "@babel/preset-env": "^7.24.4",
-    "@babel/preset-typescript": "^7.24.1"
+    "rolldown": "0.15.1",
+    "@babel/core": "^7.27.4",
+    "@babel/preset-env": "^7.27.2",
+    "@babel/preset-typescript": "^7.27.1"
   },
   "dependencies": {}
 }

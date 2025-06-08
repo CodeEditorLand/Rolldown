@@ -9,6 +9,6 @@
   "dependencies": {
   },
   "devDependencies": {
-    "@rolldown/test-dev-server": "workspace:*"
+    "@rolldown/test-dev-server": "0.0.1"
   }
 }

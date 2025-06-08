@@ -6,11 +6,11 @@
     "dev": "npm run build && http-server ./dist -p 8085 --cors"
   },
   "devDependencies": {
-    "rolldown": "workspace:*",
-    "http-server": "^14.0.1"
+    "rolldown": "0.15.1",
+    "http-server": "^14.1.1"
   },
   "dependencies": {
-    "@module-federation/runtime": "^0.8.8",
-    "react": "^19.0.0"
+    "@module-federation/runtime": "^0.15.0",
+    "react": "^19.1.0"
   }
 }

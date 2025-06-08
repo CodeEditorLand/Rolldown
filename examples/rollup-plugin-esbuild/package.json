@@ -6,9 +6,9 @@
     "build": "rolldown --config ./rolldown.config.js"
   },
   "devDependencies": {
-    "rolldown": "workspace:*"
+    "rolldown": "0.15.1"
   },
   "dependencies": {
-    "rollup-plugin-esbuild": "^6.1.1"
+    "rollup-plugin-esbuild": "^6.2.1"
   }
 }

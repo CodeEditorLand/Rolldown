@@ -6,9 +6,9 @@
     "build": "rolldown --config ./rolldown.config.js"
   },
   "devDependencies": {
-    "rolldown": "workspace:*"
+    "rolldown": "0.15.1"
   },
   "dependencies": {
-    "vue": "^3.4.21"
+    "vue": "^3.5.16"
   }
 }

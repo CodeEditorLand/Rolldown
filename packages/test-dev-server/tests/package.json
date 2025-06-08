@@ -6,11 +6,11 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@rolldown/test-dev-server": "workspace:*",
+    "@rolldown/test-dev-server": "0.0.1",
     "@types/kill-port": "^2.0.3",
-    "execa": "^9.2.0",
+    "execa": "^9.6.0",
     "kill-port": "^2.0.1",
     "rimraf": "^6.0.1",
-    "vitest": "^3.0.1"
+    "vitest": "^3.2.2"
   }
 }

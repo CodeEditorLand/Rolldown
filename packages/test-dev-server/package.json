@@ -19,15 +19,15 @@
     "dev": "tsc -b --watch"
   },
   "dependencies": {
-    "@types/ws": "^8.18.0",
+    "@types/ws": "^8.18.1",
     "chokidar": "^4.0.3",
     "connect": "^3.7.0",
-    "rolldown": "workspace:*",
-    "serve-static": "^2.0.0",
-    "ws": "^8.18.1"
+    "rolldown": "0.15.1",
+    "serve-static": "^2.2.0",
+    "ws": "^8.18.2"
   },
   "devDependencies": {
     "@types/connect": "^3.4.38",
-    "@types/serve-static": "^1.15.7"
+    "@types/serve-static": "^1.15.8"
   }
 }
