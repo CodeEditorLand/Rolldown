@@ -25,7 +25,7 @@
   },
   "devDependencies": {
     "@oxc-node/cli": "catalog:",
-    "acorn": "^8.14.1",
+    "acorn": "^8.15.0",
     "astring": "^1.9.0",
     "diff": "^8.0.2",
     "estree-toolkit": "^1.7.13",

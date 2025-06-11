@@ -148,7 +148,7 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "3.0.0-alpha.81",
-    "@napi-rs/wasm-runtime": "^0.2.10",
+    "@napi-rs/wasm-runtime": "^0.2.11",
     "@oxc-node/cli": "catalog:",
     "@rolldown/testing": "0.0.1",
     "@rollup/plugin-json": "^6.1.0",
@@ -159,7 +159,7 @@
     "execa": "^9.6.0",
     "glob": "^11.0.2",
     "oxc-parser": "catalog:",
-    "remeda": "^2.22.6",
+    "remeda": "^2.23.0",
     "rolldown": "0.15.1",
     "rolldown-plugin-dts": "catalog:",
     "rollup": "^4.42.0",
