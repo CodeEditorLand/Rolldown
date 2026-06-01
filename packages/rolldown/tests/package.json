@@ -13,7 +13,7 @@
   "dependencies": {
     "rolldown": "0.15.1",
     "vite": "^6.3.5",
-    "vitest": "^3.2.3"
+    "vitest": "^4.1.8"
   },
   "devDependencies": {
     "@types/node": "24.0.0",
