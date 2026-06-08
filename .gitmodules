@@ -1,3 +1,4 @@
 [submodule "rollup"]
 	path = rollup
-	url = https://github.com/rollup/rollup.git
+	url = ssh://git@github.com/DependencyCodeEditorLand/Rollup.git
+	ignore = all
