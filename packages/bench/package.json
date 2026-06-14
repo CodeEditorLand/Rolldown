@@ -23,7 +23,7 @@
     "@types/babel__core": "7.20.5",
     "@types/lodash-es": "^4.17.12",
     "chalk": "^5.4.1",
-    "esbuild": "^0.25.5",
+    "esbuild": "^0.28.1",
     "lodash-es": "^4.17.21",
     "rolldown": "0.15.1",
     "rollup": "^4.42.0",
